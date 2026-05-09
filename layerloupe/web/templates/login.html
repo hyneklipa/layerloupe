@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title_suffix %} · Sign in{% endblock %}
+
+{# Suppress the topbar's own Sign-in link while we're already on this page.
+   The theme toggle lives in the footer now and is rendered there for free. #}
+{% block topbar_actions %}{% endblock %}
+
+{% block main %}
+  <section class="auth-card" aria-labelledby="auth-h">
+    <h1 id="auth-h">Sign in to {{ title }}</h1>
+    <p class="muted">
+      Enter the credentials your registry recognizes.
+      They're stored only in your session cookie (encrypted).
+    </p>
+
+    {% if error %}
+      <p class="error-banner" role="alert">{{ error }}</p>
+    {% endif %}
+
+    <form method="post" action="/login" class="auth-form" autocomplete="on">
+      <input type="hidden" name="next" value="{{ next }}">
+
+      <label class="auth-field">
+        <span>Username</span>
+        <input
+          type="text"
+          name="username"
+          value="{{ username }}"
+          required
+          autofocus
+          autocomplete="username"
+        >
+      </label>
+
+      <label class="auth-field">
+        <span>Password</span>
+        <input
+          type="password"
+          name="password"
+          required
+          autocomplete="current-password"
+        >
+      </label>
+
+      <div class="auth-actions">
+        <button type="submit" class="btn-primary">Sign in</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

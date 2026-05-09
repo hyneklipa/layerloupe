@@ -1,0 +1,90 @@
+# LayerLoupe dev stack — registry, the app, and a seeder for sample images.
+#
+# Bring everything up:
+#
+#     docker compose up
+#
+# Then browse http://localhost:8080. The first start fetches the seed
+# images from Docker Hub (a few megabytes); subsequent starts are
+# offline-friendly thanks to the registry-data volume.
+
+services:
+
+  # -- Registry under test ----------------------------------------------
+  registry:
+    image: registry:2.8
+    container_name: layerloupe-registry
+    restart: unless-stopped
+    environment:
+      # Allow DELETE on manifests so the LayerLoupe delete-modal flow works.
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+    healthcheck:
+      # ``registry:2`` doesn't ship curl; use the embedded ``registry`` binary
+      # to confirm the HTTP listener is up.
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/v2/"]
+      interval: 5s
+      timeout: 2s
+      retries: 6
+      start_period: 5s
+
+  # -- LayerLoupe itself --------------------------------------------------
+  layerloupe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: layerloupe-app
+    restart: unless-stopped
+    depends_on:
+      registry:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      REGISTRY_URL: "http://registry:5000"
+      # What the user sees in copy-able ``docker pull`` strings:
+      REGISTRY_PUBLIC_URL: "http://localhost:5000"
+      SSL_VERIFY: "true"
+      ALLOW_DELETE: "true"
+      ALLOW_REGISTRY_LOGIN: "false"
+      # Dev-only fixed secret so sessions survive container restarts during
+      # development. **Generate a real one in production.**
+      SESSION_SECRET: "dev-only-replace-in-production"
+      # Pretty logs locally; the Dockerfile's default JSON is for prod.
+      LOG_JSON: "false"
+      LOG_LEVEL: "info"
+
+  # -- One-shot seeder: mirror a few public images into the registry ---
+  #
+  # Inline entrypoint (no bind mount) so this works the same on Linux,
+  # macOS, and WSL — bind mounting from a WSL filesystem into Docker
+  # Desktop is flaky enough that it's worth avoiding here. ``--insecure``
+  # tells crane the destination is plain HTTP. Single ``$$`` escapes
+  # Compose's variable interpolation so the shell sees ``$image``.
+  seed:
+    image: gcr.io/go-containerregistry/crane:debug
+    container_name: layerloupe-seed
+    depends_on:
+      registry:
+        condition: service_healthy
+    restart: "no"
+    entrypoint:
+      - /busybox/sh
+      - -c
+      - |
+        set -eu
+        echo "▶ Seeding registry:5000 with public test images..."
+        echo "  (this fetches a few MB from docker.io on first run)"
+        for image in alpine:3.20 alpine:latest hello-world:latest busybox:1.36; do
+          echo "  • $$image  →  registry:5000/$$image"
+          if ! /ko-app/crane copy --insecure "$$image" "registry:5000/$$image"; then
+            echo "  ⚠ Failed to mirror $$image (offline? rate-limited?). Continuing." >&2
+          fi
+        done
+        echo "✓ Seed complete. Open http://localhost:8080 in your browser."
+
+volumes:
+  registry-data:

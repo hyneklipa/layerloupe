@@ -1,0 +1,35 @@
+{# Repository list — used both inline in index.html and as htmx fragment.
+
+   Empty-state copy depends on whether a filter is active: an empty result
+   for a fresh registry is "registry is empty" (with hint), an empty result
+   under an active filter is "no matches for X". #}
+<ul class="item-list" id="repo-list" role="listbox" aria-label="Repositories">
+  {% for repo in repos %}
+    <li
+      class="item-row{% if selected_repo == repo %} item-row--active{% endif %}"
+      role="option"
+      aria-selected="{{ 'true' if selected_repo == repo else 'false' }}"
+    >
+      <a
+        href="/repositories/{{ repo }}/tags"
+        hx-get="/partials/repositories/{{ repo }}/tags"
+        hx-target="#tag-column-body"
+        hx-swap="innerHTML"
+        hx-push-url="/repositories/{{ repo }}/tags"
+        title="{{ repo }}"
+      >{{ repo }}</a>
+    </li>
+  {% else %}
+    {% if repo_filter %}
+      <li class="item-empty item-empty--hint muted">
+        No repositories match <code>{{ repo_filter }}</code>.
+      </li>
+    {% else %}
+      <li class="item-empty item-empty--hint muted">
+        This registry has no repositories yet. Push an image to see it here:
+        <br>
+        <code>docker push {{ registry_public_url|default('host')|replace('https://','')|replace('http://','') }}/your-image:tag</code>
+      </li>
+    {% endif %}
+  {% endfor %}
+</ul>

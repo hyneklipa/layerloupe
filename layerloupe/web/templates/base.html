@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}{% block title_suffix %}{% endblock %}</title>
+  {# Static asset paths stay site-relative — Starlette's ``url_for`` builds
+     absolute URLs based on the upstream scheme (``http`` from a TLS-
+     terminating proxy like Traefik), which trips mixed-content blocking
+     in the browser. ``/static/...`` works regardless of how the app is
+     fronted. #}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/layerloupe.css">
+  <script>
+    /* Inline pre-paint script: pick the correct theme before any HTML renders
+       to avoid the "flash of wrong color scheme" on dark-mode users' first load. */
+    {
+      const saved = localStorage.getItem('layerloupe-theme');
+      const theme = saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/" aria-label="{{ title }} home">
+        <img class="brand-logo brand-logo-light"
+             src="/static/img/layerloupe.svg"
+             alt="{{ title }}">
+        <img class="brand-logo brand-logo-dark"
+             src="/static/img/layerloupe-dark.svg"
+             alt="{{ title }}">
+      </a>
+      <nav class="topbar-actions">
+        {% block topbar_actions %}
+          {% if allow_registry_login %}
+            {% if session_username %}
+              <span class="user-pill" title="Logged in as {{ session_username }}">
+                {{ session_username }}
+              </span>
+              <form method="post" action="/web/logout" class="inline-form">
+                <button type="submit" class="link-btn">Sign out</button>
+              </form>
+            {% else %}
+              <a class="link-btn" href="/login?next={{ request.url.path }}">Sign in</a>
+            {% endif %}
+          {% endif %}
+        {% endblock %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block main %}{% endblock %}
+  </main>
+
+  <footer class="bottombar">
+    <div class="container bottombar-inner">
+      <span>Browsing <code>{{ registry_public_url }}</code></span>
+      <div class="bottombar-actions">
+        <button type="button" class="footer-icon-btn" data-modal-open="hotkey-modal"
+                aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
+          {# Keyboard outline glyph — small, neutral. #}
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+               stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
+            <path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M6.5 14h11"/>
+          </svg>
+        </button>
+        <button type="button" class="footer-icon-btn" id="theme-toggle"
+                aria-label="Toggle theme" title="Toggle theme">
+          {# Two SVGs — sun is shown when current theme is dark (click → light),
+             moon is shown when current theme is light (click → dark). The CSS
+             toggles visibility based on ``[data-theme]`` so we never hit the
+             ``currentColor`` mask quirk that left the icon invisible before. #}
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="16" height="16"
+               fill="none" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="16" height="16"
+               fill="currentColor" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+      <span class="bottombar-version muted">LayerLoupe v{{ version }}</span>
+    </div>
+  </footer>
+
+  {# Always-rendered cheat sheet — opened by the topbar button or the ? hotkey. #}
+  <dialog id="hotkey-modal" class="modal hotkey-modal" aria-labelledby="hotkey-modal-title">
+    <h3 id="hotkey-modal-title">Keyboard shortcuts</h3>
+    <table class="hotkey-table">
+      <tbody>
+        <tr><th><kbd>/</kbd></th><td>Focus the filter for the current column</td></tr>
+        <tr><th><kbd>↑</kbd> / <kbd>k</kbd></th><td>Move up in the current list</td></tr>
+        <tr><th><kbd>↓</kbd> / <kbd>j</kbd></th><td>Move down in the current list</td></tr>
+        <tr><th><kbd>Enter</kbd></th><td>Open the focused repository / tag</td></tr>
+        <tr><th><kbd>Esc</kbd></th><td>Close a modal or unfocus the filter</td></tr>
+        <tr><th><kbd>?</kbd></th><td>Show this cheat sheet</td></tr>
+      </tbody>
+    </table>
+    <p class="muted small">
+      Shortcuts are disabled while you're typing in a filter input —
+      press <kbd>Esc</kbd> first to step back out.
+    </p>
+    <div class="modal-actions">
+      <button type="button" class="link-btn" data-modal-close>Close</button>
+    </div>
+  </dialog>
+
+  <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/layerloupe.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+name: E2E
+
+# End-to-end test: spin up a real ``registry:2``, seed it with a handful
+# of real public images, then run the tests in ``tests/e2e/`` against it.
+# This is the level of fidelity ``httpx.MockTransport`` can't reach —
+# header casing, redirect behavior, what the registry actually does on
+# DELETE — and the place where compatibility regressions land first.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Live registry:2 + LayerLoupe client
+    runs-on: ubuntu-latest
+
+    services:
+      # Real distribution registry on plain HTTP. Delete is enabled so the
+      # destructive test can exercise the full HEAD → DELETE → 404 chain.
+      registry:
+        image: registry:2.8
+        ports:
+          - 5000:5000
+        env:
+          REGISTRY_STORAGE_DELETE_ENABLED: "true"
+        options: >-
+          --health-cmd "wget -q --spider http://localhost:5000/v2/ || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 6
+          --health-start-period 5s
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install crane
+        # Single static binary; no Docker daemon needed for the seeding step.
+        run: |
+          set -euo pipefail
+          CRANE_VERSION=v0.20.2
+          curl -fsSL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz" \
+            | tar -xz crane
+          sudo install -m 0755 crane /usr/local/bin/crane
+          crane version
+
+      - name: Seed registry with test images
+        run: |
+          set -euo pipefail
+          # Read-only fixtures the e2e tests assert against.
+          for image in alpine:3.20 alpine:3.19 alpine:latest hello-world:latest; do
+            echo "▶ Mirroring $image..."
+            crane copy --insecure "$image" "localhost:5000/$image"
+          done
+          # Dedicated throwaway for the destructive delete test — keep this
+          # in its own repo so a rerun doesn't fight other tests.
+          echo "▶ Mirroring delete-target..."
+          crane copy --insecure busybox:1.36 localhost:5000/scratch/delete-me:1.0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install Python deps
+        run: uv sync --frozen
+
+      - name: Run e2e tests
+        env:
+          E2E_REGISTRY: "http://localhost:5000"
+        run: uv run pytest tests/e2e/ -v

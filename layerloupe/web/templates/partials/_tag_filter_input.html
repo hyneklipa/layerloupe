@@ -1,0 +1,19 @@
+{# Tag filter input — used inline in index.html and OOB-swapped from
+   tag_list.html when the user picks a fresh repository (so the filter
+   appears when starting from the empty "no repo selected" state).
+   Expects ``repo`` (the repository whose tags we filter) and
+   ``tag_filter`` (the current filter value). #}
+<input
+  id="tag-filter-input"
+  class="filter-input"
+  type="search"
+  name="q"
+  placeholder="Filter tags…"
+  value="{{ tag_filter }}"
+  aria-label="Filter tags"
+  hx-get="/partials/repositories/{{ repo }}/tags"
+  hx-trigger="keyup changed delay:300ms, search"
+  hx-target="#tag-list"
+  hx-swap="outerHTML"
+  hx-include="this"
+>

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title_suffix %} · Page not found{% endblock %}
+
+{% block main %}
+  <section class="error-page">
+    <p class="error-status">404</p>
+    <h1>Page not found</h1>
+    <p class="muted">
+      The path <code>{{ path }}</code> doesn't match any route on this server.
+    </p>
+    <p>
+      <a class="link-btn link-btn--primary" href="/">Back to repositories</a>
+    </p>
+  </section>
+{% endblock %}

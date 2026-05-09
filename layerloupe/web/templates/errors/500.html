@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title_suffix %} · Something went wrong{% endblock %}
+
+{% block main %}
+  <section class="error-page">
+    <p class="error-status">500</p>
+    <h1>Something went wrong</h1>
+    <p class="muted">
+      LayerLoupe couldn't finish that request. The detail is in the server log
+      (search for request ID <code>{{ request_id|default('unknown', true) }}</code>).
+    </p>
+    {% if detail %}
+      <pre class="error-detail">{{ detail }}</pre>
+    {% endif %}
+    <p>
+      <a class="link-btn link-btn--primary" href="/">Back to repositories</a>
+    </p>
+  </section>
+{% endblock %}

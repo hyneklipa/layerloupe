@@ -1,0 +1,51 @@
+{
+  "architecture": "amd64",
+  "os": "linux",
+  "created": "2026-04-01T12:00:00Z",
+  "author": "LayerLoupe test fixtures",
+  "config": {
+    "Hostname": "",
+    "Domainname": "",
+    "User": "",
+    "ExposedPorts": {
+      "8080/tcp": {}
+    },
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "LANG=C.UTF-8"
+    ],
+    "Cmd": ["/bin/bash"],
+    "Entrypoint": ["/usr/local/bin/entrypoint.sh"],
+    "WorkingDir": "/app",
+    "Volumes": {
+      "/data": {}
+    },
+    "Labels": {
+      "org.opencontainers.image.source": "https://github.com/example/repo",
+      "org.opencontainers.image.version": "1.2.3"
+    }
+  },
+  "rootfs": {
+    "type": "layers",
+    "diff_ids": [
+      "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
+      "sha256:3c3a4604a545cdc127456d94e421cd355bca5b528f4a9c1905b15da2eb4a4c6b"
+    ]
+  },
+  "history": [
+    {
+      "created": "2026-04-01T11:00:00Z",
+      "created_by": "/bin/sh -c #(nop) ADD file:abc in /"
+    },
+    {
+      "created": "2026-04-01T11:30:00Z",
+      "created_by": "/bin/sh -c apt-get update && apt-get install -y curl",
+      "comment": "install curl"
+    },
+    {
+      "created": "2026-04-01T12:00:00Z",
+      "created_by": "/bin/sh -c #(nop)  CMD [\"/bin/bash\"]",
+      "empty_layer": true
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{# Tag list for a repository — fragment. #}
+{% if clear_info_column %}
+  {# OOB swap: when the user picks a different repo, populate the manifest
+     panel with the auto-selected first tag's manifest. If we couldn't
+     fetch it (or the repo is empty), fall back to a placeholder. #}
+  <div id="info-column-body" hx-swap-oob="innerHTML">
+    {% if auto_manifest %}
+      {# ``swap_actions=False`` keeps manifest_info.html from emitting its
+         own OOB block here — that block would be NESTED inside this OOB
+         wrapper, and htmx 2.x clones the wrapper's full subtree (with
+         the inner OOB element still attached) into the live DOM before
+         processing the inner OOB. The inner swap then writes into a new
+         element instead of consuming the cloned one, leaving a stray
+         duplicate icon inside #info-column-body. We OOB the icon at the
+         top level below instead. #}
+      {% with
+        manifest=auto_manifest,
+        reference=auto_tag,
+        annotations_rows=auto_annotations_rows,
+        annotations_fallback_source=auto_annotations_fallback_source,
+        layer_rows=auto_layer_rows,
+        display_platforms=auto_display_platforms,
+        referrers=auto_referrers,
+        parent_reference=None,
+        error=None,
+        swap_actions=False
+      %}
+        {% include "partials/manifest_info.html" %}
+      {% endwith %}
+    {% else %}
+      <p class="muted item-empty">Select a tag to see its manifest details.</p>
+    {% endif %}
+  </div>
+  {# Top-level OOB swap for the trash icon — sibling of #info-column-body,
+     not nested inside it. Filled when there's a manifest to delete,
+     cleared otherwise so the icon can't point at stale content. #}
+  <div id="manifest-actions" hx-swap-oob="innerHTML">
+    {% if auto_manifest and allow_delete %}
+      {% include "partials/_manifest_delete_icon.html" %}
+    {% endif %}
+  </div>
+  {# OOB swaps for the tag count and filter input. These slots exist in
+     index.html but are empty until the first repo selection — without OOB
+     refills, the filter input never appears unless the user reloads. We
+     skip these on the tag-filter trigger path (clear_info_column is False
+     there) to avoid replacing the input the user is typing into. #}
+  <span id="tag-count" class="muted small" hx-swap-oob="innerHTML">{{ tags|length }}</span>
+  <div id="tag-filter-slot" hx-swap-oob="innerHTML">
+    {% with repo=repository %}
+      {% include "partials/_tag_filter_input.html" %}
+    {% endwith %}
+  </div>
+{% endif %}
+{% if error %}
+  <p class="error-msg">{{ error }}</p>
+{% else %}
+  <ul class="item-list" id="tag-list" role="listbox" aria-label="Tags for {{ repository }}">
+    {% for tag in tags %}
+      <li
+        class="item-row{% if selected_tag == tag %} item-row--active{% endif %}"
+        role="option"
+        aria-selected="{{ 'true' if selected_tag == tag else 'false' }}"
+      >
+        <a
+          href="/repositories/{{ repository }}/manifests/{{ tag }}"
+          hx-get="/partials/repositories/{{ repository }}/manifests/{{ tag }}"
+          hx-target="#info-column-body"
+          hx-swap="innerHTML"
+          hx-push-url="/repositories/{{ repository }}/manifests/{{ tag }}"
+          title="{{ tag }}"
+        >{{ tag }}</a>
+      </li>
+    {% else %}
+      {% if tag_filter %}
+        <li class="item-empty item-empty--hint muted">
+          No tags match <code>{{ tag_filter }}</code>.
+        </li>
+      {% else %}
+        <li class="item-empty item-empty--hint muted">
+          <code>{{ repository }}</code> has no tags. They appear here as soon
+          as someone pushes an image.
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+{% endif %}

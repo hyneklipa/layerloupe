@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "name": "library/ubuntu",
+  "tag": "16.04",
+  "architecture": "amd64",
+  "fsLayers": [
+    {
+      "blobSum": "sha256:8a29a15cefaeccf6545f7ecf11298f9672d2f0cdaf9e357a95133ac3ad3e1f99"
+    },
+    {
+      "blobSum": "sha256:6c3332381368e1c46ae8b1d6c61dac68d9f2b13ef13d2f15deca4076d68a2a01"
+    }
+  ],
+  "history": [
+    {
+      "v1Compatibility": "{\"id\":\"abc123\",\"created\":\"2017-06-23T21:54:48Z\",\"container_config\":{\"Cmd\":[\"/bin/sh -c #(nop)  CMD [\\\"/bin/bash\\\"]\"]}}"
+    },
+    {
+      "v1Compatibility": "{\"id\":\"def456\",\"parent\":\"abc123\",\"created\":\"2017-06-23T21:54:46Z\",\"container_config\":{\"Cmd\":[\"/bin/sh -c #(nop) ADD file:abc in /\"]}}"
+    }
+  ],
+  "signatures": [
+    {
+      "header": {"alg": "ES256"},
+      "signature": "...",
+      "protected": "..."
+    }
+  ]
+}
