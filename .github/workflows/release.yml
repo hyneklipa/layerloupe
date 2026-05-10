@@ -117,13 +117,13 @@ jobs:
             Pull from GHCR:
 
             ```bash
-            docker pull ${{ env.GHCR_IMAGE }}:${{ github.ref_name }}
+            docker pull ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
             ```
 
             …or from Docker Hub:
 
             ```bash
-            docker pull ${{ env.DOCKERHUB_IMAGE }}:${{ github.ref_name }}
+            docker pull ${{ env.DOCKERHUB_IMAGE }}:${{ steps.meta.outputs.version }}
             ```
 
             Multi-arch: `linux/amd64` + `linux/arm64`.
