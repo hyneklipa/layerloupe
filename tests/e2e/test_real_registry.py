@@ -118,7 +118,7 @@ async def test_child_manifest_and_config_blob_round_trip(
     child = await client.get_manifest("alpine", amd64["digest"])
     assert child.kind in (ManifestKind.OCI_IMAGE, ManifestKind.DOCKER_V2)
     assert child.is_index is False
-    assert child.layers  # there should be at least one filesystem layer
+    assert child.body.get("layers")  # there should be at least one filesystem layer
 
     config = await client.get_image_config("alpine", child)
     assert config.architecture == "amd64"
