@@ -1,0 +1,36 @@
+name: Sync Docker Hub README
+
+# Pushes ``.dockerhub/overview.md`` to the Docker Hub repository description
+# on every change to that file. Keeps the marketing surface in version
+# control next to the code instead of in a Docker Hub UI form that nobody
+# ever audits.
+
+on:
+  push:
+    branches: [main]
+    paths: [".dockerhub/overview.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Opt JavaScript actions into Node.js 24 ahead of the GitHub-mandated
+  # 2026-06-02 default switch (Node 20 is removed entirely 2026-09-16).
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  sync:
+    name: Push README to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ vars.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PAT }}
+          repository: ${{ vars.DOCKER_USER }}/layerloupe
+          short-description: "Modern, OCI-aware web GUI for Docker / OCI image registries"
+          readme-filepath: .dockerhub/overview.md
