@@ -25,6 +25,10 @@ permissions:
 env:
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
   DOCKERHUB_IMAGE: ${{ vars.DOCKER_USER }}/layerloupe
+  # Opt JavaScript actions into Node.js 24 ahead of the GitHub-mandated
+  # 2026-06-02 default switch (Node 20 is removed entirely 2026-09-16).
+  # Catches any Node-24 incompatibility now instead of on the day it's forced.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   release:
