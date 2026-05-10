@@ -119,7 +119,7 @@ A complete `.env.example` is checked in.
 Build the image:
 
 ```bash
-docker build -t layerloupe:0.0.1 .
+docker build -t layerloupe:0.1.0 .
 ```
 
 Run it:
@@ -132,7 +132,7 @@ docker run --rm \
   -e REGISTRY_PASSWORD="$(cat /run/secrets/registry_password)" \
   -e SESSION_SECRET="$(openssl rand -base64 32)" \
   -e LOG_JSON=true \
-  layerloupe:0.0.1
+  layerloupe:0.1.0
 ```
 
 The image:
