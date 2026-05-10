@@ -229,4 +229,4 @@ work even if JavaScript fails. htmx is purely an enhancement.
 
 ## License
 
-MIT — see [`LICENSE.md`](LICENSE.md) (TODO).
+MIT — see [`LICENSE.md`](LICENSE.md).
