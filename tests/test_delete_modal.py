@@ -330,9 +330,7 @@ def test_modal_confirm_string_uses_at_for_digest_reference(
     the type-to-confirm prompt must match the displayed format so the
     string the user sees is the string they have to type."""
     with TestClient(app) as client:
-        body = client.get(
-            "/partials/repositories/foo/manifests/sha256:" + "a" * 64
-        ).text
+        body = client.get("/partials/repositories/foo/manifests/sha256:" + "a" * 64).text
     assert "foo@sha256:" + "a" * 64 in body
     assert 'data-delete-confirm-expected="foo@sha256:' in body
 

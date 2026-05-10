@@ -184,9 +184,7 @@ async def test_iter_repositories_max_pages_caps_iteration() -> None:
         # Return distinct items each call so the cursor genuinely advances
         # — otherwise the stagnation guard short-circuits before max_pages.
         i = state["calls"]
-        return httpx.Response(
-            200, json={"repositories": [f"r{i}-a", f"r{i}-b", f"r{i}-c"]}
-        )
+        return httpx.Response(200, json={"repositories": [f"r{i}-a", f"r{i}-b", f"r{i}-c"]})
 
     async with RegistryClient(
         "https://registry.example.com",

@@ -34,9 +34,7 @@ def _step_by_uses(workflow: dict[str, Any], substring: str) -> dict[str, Any]:
 def _all_steps_by_uses(workflow: dict[str, Any], substring: str) -> list[dict[str, Any]]:
     """Find every step whose ``uses:`` contains ``substring``."""
     return [
-        step
-        for step in workflow["jobs"]["release"]["steps"]
-        if substring in step.get("uses", "")
+        step for step in workflow["jobs"]["release"]["steps"] if substring in step.get("uses", "")
     ]
 
 
