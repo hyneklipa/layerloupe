@@ -50,6 +50,17 @@ docker compose down --volumes
 
 ---
 
+## Configuration examples
+
+Beyond the root `docker-compose.yml` (anonymous read-only browsing),
+the [`examples/`](examples/) directory carries one runnable scenario
+per common deployment shape — protected (login required), admin (login
++ delete), admin with Docker secrets, and more as the access-control
+redesign lands. Start at [`examples/README.md`](examples/README.md) for
+a rundown of which to pick.
+
+---
+
 ## Configuration
 
 LayerLoupe reads its config from environment variables. All variables are
