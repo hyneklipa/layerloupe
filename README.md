@@ -4,10 +4,11 @@ Modern, OCI-aware web GUI for Docker / OCI image registries.
 Python, OCI manifests, multi-arch awareness, and built for
 self-hosted registries.
 
-> Status: **early development.** The app is functional end-to-end (browse
-> repositories, inspect manifests across all five variants, delete tags,
-> sign in to private registries) — what's left is polish, deployment
-> templates, and an end-to-end test suite.
+> Status: **early development.** The application is partially
+> functional (browsing repositories, checking manifests for all five
+> variants).
+> It contains known bugs, such as issues with deleting tags,
+> logging into private registries, etc.
 
 ---
 
