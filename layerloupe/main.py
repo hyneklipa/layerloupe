@@ -1,8 +1,9 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from urllib.parse import quote
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
@@ -98,6 +99,18 @@ def _wants_html(request: Request) -> bool:
 
 @app.exception_handler(StarletteHTTPException)
 async def _http_exception_handler(request: Request, exc: StarletteHTTPException) -> Response:
+    # 401 on a browser route → bounce to login with ``next=<path>`` so
+    # the user lands back where they came from after signing in. JSON
+    # routes get a plain 401 + detail (htmx clients render their own
+    # toast or follow ``HX-Redirect`` if a downstream layer sets one).
+    if exc.status_code == 401 and _wants_html(request):
+        target = request.url.path
+        if request.url.query:
+            target = f"{target}?{request.url.query}"
+        return RedirectResponse(
+            url=f"/login?next={quote(target, safe='/')}",
+            status_code=303,
+        )
     if not _wants_html(request) or exc.status_code not in (404, 500, 502, 503):
         return JSONResponse(
             status_code=exc.status_code,

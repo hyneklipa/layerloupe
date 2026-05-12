@@ -239,7 +239,12 @@ def test_browse_access_protected_mode_accepts_non_admin(
 # -- require_admin ------------------------------------------------------
 
 
-def test_admin_guard_rejects_anonymous_with_401() -> None:
+def test_admin_guard_rejects_anonymous_with_401_in_admin_mode(
+    monkeypatch: pytest.MonkeyPatch, admin_hash: str
+) -> None:
+    monkeypatch.setenv("AUTH_MODE", "admin")
+    monkeypatch.setenv("ADMIN_USERNAME", "alice")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
     app = _make_app()
     with TestClient(app) as client:
         r = client.get("/admin")
@@ -247,10 +252,13 @@ def test_admin_guard_rejects_anonymous_with_401() -> None:
     assert r.json() == {"detail": "Authentication required"}
 
 
-def test_admin_guard_rejects_authenticated_non_admin_with_403() -> None:
-    """Stale session against ``AUTH_MODE=protected`` mid-flight, or a
-    non-admin OIDC group — both hit this path. Returns 403 (not 401)
-    to distinguish "needs login" from "logged in, lacks role"."""
+def test_admin_guard_rejects_authenticated_non_admin_with_403_in_admin_mode(
+    monkeypatch: pytest.MonkeyPatch, admin_hash: str
+) -> None:
+    """``admin`` mode + logged-in non-admin → 403 (lacking role)."""
+    monkeypatch.setenv("AUTH_MODE", "admin")
+    monkeypatch.setenv("ADMIN_USERNAME", "alice")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
     app = _make_app()
     with TestClient(app) as client:
         _login_viewer(client)
@@ -259,10 +267,47 @@ def test_admin_guard_rejects_authenticated_non_admin_with_403() -> None:
     assert r.json() == {"detail": "Admin role required"}
 
 
-def test_admin_guard_accepts_admin_role() -> None:
+def test_admin_guard_accepts_admin_role_in_admin_mode(
+    monkeypatch: pytest.MonkeyPatch, admin_hash: str
+) -> None:
+    monkeypatch.setenv("AUTH_MODE", "admin")
+    monkeypatch.setenv("ADMIN_USERNAME", "alice")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
     app = _make_app()
     with TestClient(app) as client:
         _login_admin(client)
         r = client.get("/admin")
     assert r.status_code == 200
     assert r.json()["username"] == "alice"
+
+
+def test_admin_guard_rejects_in_public_mode_with_403(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Public mode: delete is not a concept — 403 even for "admin"
+    session payloads (which can't legitimately exist anyway). 403 (not
+    401) so HTML clients don't bounce to a login page that won't fix
+    anything."""
+    monkeypatch.setenv("AUTH_MODE", "public")
+    app = _make_app()
+    with TestClient(app) as client:
+        _login_admin(client)  # stale session against flipped mode
+        r = client.get("/admin")
+    assert r.status_code == 403
+    assert "AUTH_MODE=admin" in r.json()["detail"]
+
+
+def test_admin_guard_rejects_in_protected_mode_with_403(
+    monkeypatch: pytest.MonkeyPatch, admin_hash: str
+) -> None:
+    """Protected mode: login required for browse, but delete still
+    isn't enabled — even an authenticated user with an ``admin`` role
+    payload (e.g. forged) hits 403."""
+    monkeypatch.setenv("AUTH_MODE", "protected")
+    monkeypatch.setenv("ADMIN_USERNAME", "alice")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
+    app = _make_app()
+    with TestClient(app) as client:
+        _login_admin(client)
+        r = client.get("/admin")
+    assert r.status_code == 403

@@ -35,7 +35,7 @@
      not nested inside it. Filled when there's a manifest to delete,
      cleared otherwise so the icon can't point at stale content. #}
   <div id="manifest-actions" hx-swap-oob="innerHTML">
-    {% if auto_manifest and allow_delete %}
+    {% if auto_manifest and is_admin %}
       {% include "partials/_manifest_delete_icon.html" %}
     {% endif %}
   </div>

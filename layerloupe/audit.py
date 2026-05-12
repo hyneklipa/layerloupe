@@ -30,14 +30,27 @@ _ENV_ACTOR = "env-creds"
 def _session_actor(request: Request) -> str:
     """Resolve a request to a human-recognizable actor.
 
-    Returns the session-stored username if the user has logged in via the
-    UI, else ``"env-creds"`` to indicate the action used the global,
-    env-configured registry credentials.
+    Resolution order (most specific wins):
+
+    1. UI identity (``session["identity"]["username"]``) — set by the UI
+       login flow. This is the person who actually clicked delete in
+       the LayerLoupe UI.
+    2. Registry creds (``session["registry_username"]``) — the
+       upstream-registry login. Falls back here when delete happened
+       via direct API call without a UI login (e.g. CI script that did
+       ``POST /api/auth/login`` only).
+    3. ``"env-creds"`` — neither session source available; the global
+       env-configured creds did the work.
     """
     if hasattr(request, "session"):
-        username = request.session.get("registry_username")
-        if isinstance(username, str) and username:
-            return username
+        identity_payload = request.session.get("identity")
+        if isinstance(identity_payload, dict):
+            ui_username = identity_payload.get("username")
+            if isinstance(ui_username, str) and ui_username:
+                return ui_username
+        registry_username = request.session.get("registry_username")
+        if isinstance(registry_username, str) and registry_username:
+            return registry_username
     return _ENV_ACTOR
 
 

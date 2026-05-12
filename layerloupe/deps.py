@@ -173,15 +173,24 @@ def require_browse_access(
     return identity
 
 
-def require_admin(identity: IdentityDep) -> Identity:
-    """Require an identity with the ``admin`` role.
+def require_admin(identity: IdentityDep, settings: SettingsDep) -> Identity:
+    """Gate destructive operations on the ``admin`` role *and* the right mode.
 
-    * Anonymous → ``401`` (the user might just need to log in).
-    * Authenticated but missing ``admin`` → ``403`` (defense in depth;
-      in the single-admin model this branch can't fire from a normal
-      flow, but a stale session against a flipped ``AUTH_MODE`` could
-      hit it).
+    * ``public`` / ``protected`` mode → always ``403``. Delete isn't a
+      concept in these modes — even a stale admin-role session against
+      a freshly-flipped mode is rejected here. We return ``403``
+      (not ``401``) so the client doesn't bounce to a login form
+      that wouldn't help.
+    * ``admin`` mode, anonymous → ``401`` (the global HTML handler
+      converts this to a login redirect).
+    * ``admin`` mode, authenticated but missing ``admin`` role → ``403``
+      (logged in, lacks capability — distinguishes from "needs to log in").
     """
+    if settings.auth_mode != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Delete operations are not enabled (set AUTH_MODE=admin to enable).",
+        )
     if identity.is_anonymous:
         raise HTTPException(status_code=401, detail="Authentication required")
     if not identity.is_admin:

@@ -9,11 +9,30 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
+from layerloupe.auth.env_provider import hash_password
 from layerloupe.config import get_settings
 from layerloupe.deps import get_registry_client
 from layerloupe.main import app
 from layerloupe.registry import MediaType, RegistryClient
 from tests.conftest import load_fixture_bytes
+
+_ADMIN_PASSWORD = "admin-pw"
+# Module-level hash so we pay the bcrypt cost once for the file.
+_ADMIN_PASSWORD_HASH = hash_password(_ADMIN_PASSWORD, rounds=4)
+
+
+def _login_admin(client: TestClient) -> None:
+    """Log into the test client as the admin user from ``allow_delete``.
+
+    Tests that mutate state (DELETE) or check admin-only UI (trash
+    icon, modal) need a logged-in admin in the new access-control
+    model — the ``ALLOW_DELETE`` flag is gone.
+    """
+    r = client.post(
+        "/api/auth/ui-login",
+        json={"username": "test-admin", "password": _ADMIN_PASSWORD},
+    )
+    assert r.status_code == 200, r.text
 
 
 def _digest_of(data: bytes) -> str:
@@ -76,7 +95,15 @@ def use_handler() -> Iterator[dict[str, Callable[[httpx.Request], httpx.Response
 
 @pytest.fixture
 def allow_delete(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    monkeypatch.setenv("ALLOW_DELETE", "true")
+    """Configure ``AUTH_MODE=admin`` so a logged-in admin can delete.
+
+    Tests still need to log in (via ``_login_admin(client)``) after
+    creating the ``TestClient`` — the env alone doesn't grant a
+    session.
+    """
+    monkeypatch.setenv("AUTH_MODE", "admin")
+    monkeypatch.setenv("ADMIN_USERNAME", "test-admin")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", _ADMIN_PASSWORD_HASH)
     get_settings.cache_clear()
     try:
         yield
@@ -86,7 +113,10 @@ def allow_delete(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 @pytest.fixture
 def disallow_delete(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    monkeypatch.delenv("ALLOW_DELETE", raising=False)
+    """Public mode + no login — no delete capability anywhere."""
+    monkeypatch.delenv("AUTH_MODE", raising=False)
+    monkeypatch.delenv("ADMIN_USERNAME", raising=False)
+    monkeypatch.delenv("ADMIN_PASSWORD_HASH", raising=False)
     get_settings.cache_clear()
     try:
         yield
@@ -114,6 +144,7 @@ def test_delete_button_visible_when_allow_delete_true(
     allow_delete: None,
 ) -> None:
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/partials/repositories/foo/manifests/latest").text
     assert "Delete this manifest" in body
     assert 'data-modal-open="delete-modal"' in body
@@ -128,6 +159,7 @@ def test_modal_includes_garbage_collect_warning(
     allow_delete: None,
 ) -> None:
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/partials/repositories/foo/manifests/latest").text
     assert "garbage-collect" in body
     assert "Cancel" in body
@@ -139,6 +171,7 @@ def test_modal_delete_button_has_hx_delete(
     allow_delete: None,
 ) -> None:
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/partials/repositories/foo/manifests/latest").text
     # The confirm button hits the web-layer DELETE route.
     assert 'hx-delete="/web/repositories/foo/manifests/latest"' in body
@@ -150,6 +183,7 @@ def test_modal_shows_resolved_digest(
 ) -> None:
     """Operators want to see the digest before they confirm a delete."""
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/partials/repositories/foo/manifests/latest").text
     assert "Resolves to digest" in body
     assert "sha256:" in body
@@ -163,6 +197,7 @@ def test_web_delete_returns_204_with_hx_redirect(
     allow_delete: None,
 ) -> None:
     with TestClient(app) as client:
+        _login_admin(client)
         response = client.delete("/web/repositories/foo/manifests/latest")
     assert response.status_code == 204
     assert response.headers["hx-redirect"] == "/repositories/foo/tags"
@@ -172,6 +207,8 @@ def test_web_delete_returns_403_when_disabled(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
     disallow_delete: None,
 ) -> None:
+    """Public mode + no admin configured → DELETE is gated 403 by
+    ``require_admin`` before the route body runs."""
     with TestClient(app) as client:
         response = client.delete("/web/repositories/foo/manifests/latest")
     assert response.status_code == 403
@@ -193,6 +230,7 @@ def test_web_delete_propagates_404_from_registry(
     )
 
     with TestClient(app) as client:
+        _login_admin(client)
         response = client.delete("/web/repositories/foo/manifests/missing")
     assert response.status_code == 404
 
@@ -216,6 +254,7 @@ def test_web_delete_calls_registry_with_resolved_digest(
     use_handler["handler"] = handler
 
     with TestClient(app) as client:
+        _login_admin(client)
         response = client.delete("/web/repositories/foo/manifests/latest")
     assert response.status_code == 204
 
@@ -262,6 +301,7 @@ def test_trash_icon_lives_in_manifest_column_header(
     The button must reach the modal (data-modal-open) and carry an
     accessible label since it has no visible text."""
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/repositories/foo/manifests/latest").text
     assert 'id="manifest-actions"' in body
     assert 'class="icon-btn icon-btn--danger"' in body
@@ -294,6 +334,7 @@ def test_manifest_fragment_oob_swaps_trash_icon(
     column header. Without this, clicking a tag from a no-manifest state
     would never show the trash icon."""
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/partials/repositories/foo/manifests/latest").text
     assert 'id="manifest-actions"' in body
     assert 'hx-swap-oob="innerHTML"' in body
@@ -311,6 +352,7 @@ def test_modal_has_type_to_confirm_input(
     repo:tag (or repo@digest) string — prevents accidental clicks even
     after the icon-only trigger lowers initial attractiveness."""
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/partials/repositories/foo/manifests/latest").text
     # Input + expected-value attribute exist.
     assert "data-delete-confirm-input" in body
@@ -330,6 +372,7 @@ def test_modal_confirm_string_uses_at_for_digest_reference(
     the type-to-confirm prompt must match the displayed format so the
     string the user sees is the string they have to type."""
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/partials/repositories/foo/manifests/sha256:" + "a" * 64).text
     assert "foo@sha256:" + "a" * 64 in body
     assert 'data-delete-confirm-expected="foo@sha256:' in body
@@ -345,6 +388,7 @@ def test_tags_fragment_emits_single_top_level_manifest_actions_oob(
     that, the trash icon must be OOB-swapped at the TOP level of tag_list
     — sibling of #info-column-body, not nested inside it."""
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/partials/repositories/foo/tags").text
     # Exactly one #manifest-actions appears in the response (the top-level
     # OOB swap), and it sits OUTSIDE the #info-column-body OOB wrapper.
@@ -367,6 +411,7 @@ def test_manifest_info_skips_oob_block_when_swap_actions_false(
     icon bug. The manifest_fragment route still uses swap_actions=True,
     where it's the top-level response and the OOB is safe."""
     with TestClient(app) as client:
+        _login_admin(client)
         # tags_fragment includes manifest_info.html with swap_actions=False;
         # the top-level OOB is emitted by tag_list.html itself.
         tags_body = client.get("/partials/repositories/foo/tags").text
@@ -436,6 +481,7 @@ def test_delete_button_present_for_index_manifests(
     use_handler["handler"] = handler
 
     with TestClient(app) as client:
+        _login_admin(client)
         body = client.get("/partials/repositories/foo/manifests/latest").text
     assert "Delete this manifest" in body
     assert 'id="delete-modal"' in body

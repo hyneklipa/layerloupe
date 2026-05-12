@@ -16,11 +16,30 @@ import structlog
 from fastapi.testclient import TestClient
 
 from layerloupe.audit import log_manifest_deleted
+from layerloupe.auth.env_provider import hash_password
 from layerloupe.config import get_settings
 from layerloupe.deps import get_registry_client
 from layerloupe.logging import configure_logging
 from layerloupe.main import app
 from layerloupe.registry import MediaType, RegistryClient
+
+_ADMIN_PASSWORD = "admin-pw"
+_ADMIN_PASSWORD_HASH = hash_password(_ADMIN_PASSWORD, rounds=4)
+
+
+def _login_admin(client: TestClient) -> None:
+    r = client.post(
+        "/api/auth/ui-login",
+        json={"username": "test-admin", "password": _ADMIN_PASSWORD},
+    )
+    assert r.status_code == 200, r.text
+
+
+def _admin_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Helper for tests that need AUTH_MODE=admin with a working login."""
+    monkeypatch.setenv("AUTH_MODE", "admin")
+    monkeypatch.setenv("ADMIN_USERNAME", "test-admin")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", _ADMIN_PASSWORD_HASH)
 
 
 def _digest_of(data: bytes) -> str:
@@ -73,7 +92,8 @@ def use_handler() -> Iterator[dict[str, Callable[[httpx.Request], httpx.Response
 
 @pytest.fixture
 def allow_delete(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    monkeypatch.setenv("ALLOW_DELETE", "true")
+    """Configure ``AUTH_MODE=admin``; tests still need ``_login_admin(client)``."""
+    _admin_env(monkeypatch)
     get_settings.cache_clear()
     try:
         yield
@@ -218,7 +238,7 @@ def test_api_delete_writes_audit_record(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     audit_file = tmp_path / "delete.log"
-    monkeypatch.setenv("ALLOW_DELETE", "true")
+    _admin_env(monkeypatch)
     monkeypatch.setenv("AUDIT_LOG_PATH", str(audit_file))
     get_settings.cache_clear()
 
@@ -227,6 +247,7 @@ def test_api_delete_writes_audit_record(
 
     try:
         with TestClient(app) as client:
+            _login_admin(client)
             response = client.delete("/api/repositories/library/ubuntu/manifests/latest")
         assert response.status_code == 200
     finally:
@@ -239,6 +260,8 @@ def test_api_delete_writes_audit_record(
     assert record["reference"] == "latest"
     # The digest in the audit log is the *resolved* digest, not the requested tag.
     assert record["digest"] == digest
+    # The actor is the UI-identity username, not the env fallback.
+    assert record["actor"] == "test-admin"
 
 
 def test_web_delete_writes_audit_record(
@@ -247,7 +270,7 @@ def test_web_delete_writes_audit_record(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     audit_file = tmp_path / "web-delete.log"
-    monkeypatch.setenv("ALLOW_DELETE", "true")
+    _admin_env(monkeypatch)
     monkeypatch.setenv("AUDIT_LOG_PATH", str(audit_file))
     get_settings.cache_clear()
 
@@ -256,6 +279,7 @@ def test_web_delete_writes_audit_record(
 
     try:
         with TestClient(app) as client:
+            _login_admin(client)
             response = client.delete("/web/repositories/foo/manifests/v1.2.3")
         assert response.status_code == 204
     finally:
@@ -266,6 +290,7 @@ def test_web_delete_writes_audit_record(
     assert record["repository"] == "foo"
     assert record["reference"] == "v1.2.3"
     assert record["digest"] == digest
+    assert record["actor"] == "test-admin"
 
 
 def test_failed_delete_does_not_emit_audit_record(
@@ -275,7 +300,7 @@ def test_failed_delete_does_not_emit_audit_record(
 ) -> None:
     """A 404 from registry must NOT show up in the audit log."""
     audit_file = tmp_path / "audit.log"
-    monkeypatch.setenv("ALLOW_DELETE", "true")
+    _admin_env(monkeypatch)
     monkeypatch.setenv("AUDIT_LOG_PATH", str(audit_file))
     get_settings.cache_clear()
 
@@ -286,6 +311,7 @@ def test_failed_delete_does_not_emit_audit_record(
 
     try:
         with TestClient(app) as client:
+            _login_admin(client)
             response = client.delete("/api/repositories/foo/manifests/missing")
         assert response.status_code == 404
     finally:
@@ -300,9 +326,9 @@ def test_disabled_delete_does_not_emit_audit_record(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """403 from gating doesn't generate an audit entry either."""
+    """403 from the auth-mode gate doesn't generate an audit entry either."""
     audit_file = tmp_path / "audit.log"
-    monkeypatch.delenv("ALLOW_DELETE", raising=False)
+    monkeypatch.delenv("AUTH_MODE", raising=False)
     monkeypatch.setenv("AUDIT_LOG_PATH", str(audit_file))
     get_settings.cache_clear()
 

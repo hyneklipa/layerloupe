@@ -29,7 +29,13 @@ from layerloupe import __version__
 from layerloupe.api.auth import _verify_credentials
 from layerloupe.audit import log_manifest_deleted
 from layerloupe.config import SettingsDep
-from layerloupe.deps import AuthProviderDep, RegistryClientDep
+from layerloupe.deps import (
+    AdminDep,
+    AuthProviderDep,
+    BrowseAccessDep,
+    RegistryClientDep,
+    get_identity,
+)
 from layerloupe.registry import (
     AnnotationRow,
     ImageConfig,
@@ -276,8 +282,16 @@ async def _annotation_rows_with_fallback(
 
 
 def _shell_context(request: Request, settings: object) -> dict[str, Any]:
-    """Topbar / footer context shared by every page render."""
+    """Topbar / footer context shared by every page render.
+
+    The ``identity`` / ``is_admin`` / ``auth_mode`` keys drive the
+    topbar (Sign-in vs. user pill, Sign-out button) and the trash-icon
+    visibility on manifest panels. ``allow_delete`` is kept as a
+    legacy alias of ``is_admin`` so templates that haven't migrated
+    yet keep working — removed in T7.7.
+    """
     s = settings  # narrow typing — avoid importing Settings just for this
+    identity = get_identity(request)
     return {
         "title": getattr(s, "title", "LayerLoupe"),
         "version": __version__,
@@ -285,10 +299,16 @@ def _shell_context(request: Request, settings: object) -> dict[str, Any]:
             getattr(s, "registry_public_url", None) or getattr(s, "registry_url", "")
         ),
         "allow_registry_login": getattr(s, "allow_registry_login", False),
-        "allow_delete": getattr(s, "allow_delete", False),
+        "auth_mode": getattr(s, "auth_mode", "public"),
+        "identity": identity,
+        "is_admin": identity.is_admin,
+        # Legacy alias — templates have already migrated to ``is_admin``.
+        # Kept on the context until T7.7 cleans it out alongside the deprecated config.
+        "allow_delete": identity.is_admin,
         "session_username": request.session.get("registry_username")
         if hasattr(request, "session")
         else None,
+        "ui_username": identity.username if not identity.is_anonymous else None,
     }
 
 
@@ -300,6 +320,7 @@ async def home(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None),
 ) -> HTMLResponse:
     repos, error = await _fetch_repos(client, q)
@@ -325,10 +346,11 @@ async def repositories_page(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    identity: BrowseAccessDep,
     q: str | None = Query(default=None),
 ) -> HTMLResponse:
     """Same as ``/`` — explicit URL exists so links from the topbar work."""
-    return await home(request, settings, client, q)
+    return await home(request, settings, client, identity, q)
 
 
 @router.get("/repositories/{repository:path}/tags", response_class=HTMLResponse)
@@ -337,6 +359,7 @@ async def repository_page(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None, description="Tag filter."),
     repo_q: str | None = Query(default=None, description="Repo column filter."),
 ) -> HTMLResponse:
@@ -374,6 +397,7 @@ async def manifest_page(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     repo_q: str | None = Query(default=None),
     tag_q: str | None = Query(default=None),
     platform: str | None = Query(default=None),
@@ -440,6 +464,7 @@ async def repos_fragment(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None),
     selected_repo: str | None = Query(default=None),
 ) -> HTMLResponse:
@@ -462,6 +487,7 @@ async def tags_fragment(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None),
     selected_tag: str | None = Query(default=None),
 ) -> Response:
@@ -531,7 +557,12 @@ async def tags_fragment(
             "auto_layer_rows": _layer_rows(auto_manifest),
             "auto_display_platforms": _display_platforms(auto_manifest),
             "auto_referrers": auto_referrers,
-            "allow_delete": settings.allow_delete,
+            # Trash-icon visibility for the auto-selected manifest;
+            # ``is_admin`` is derived from the current session identity
+            # via ``get_identity`` (not from the deprecated ``allow_delete``
+            # setting).
+            "is_admin": get_identity(request).is_admin,
+            "allow_delete": get_identity(request).is_admin,
         },
     )
     if auto_select and auto_tag is not None:
@@ -549,6 +580,7 @@ async def manifest_fragment(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     platform: str | None = Query(default=None),
 ) -> HTMLResponse:
     referrers: list[Referrer] = []
@@ -586,7 +618,8 @@ async def manifest_fragment(
             "display_platforms": _display_platforms(manifest),
             "referrers": referrers,
             "parent_reference": parent_reference,
-            "allow_delete": settings.allow_delete,
+            "is_admin": get_identity(request).is_admin,
+            "allow_delete": get_identity(request).is_admin,
             "error": error,
             # Tells the partial to OOB-swap the trash-icon into
             # ``#manifest-actions`` (in the Manifest column header). Only
@@ -607,6 +640,7 @@ async def delete_manifest_via_web(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: AdminDep,
 ) -> Response:
     """Delete a manifest from the htmx UI.
 
@@ -615,15 +649,10 @@ async def delete_manifest_via_web(
     from the freshly-rendered page, no manual fragment juggling needed. An
     audit event ``manifest_deleted`` is emitted alongside (see :mod:`layerloupe.audit`).
 
-    The route is gated by :attr:`Settings.allow_delete` so a registry that
-    doesn't allow deletes (or an operator who hasn't opted in) can't reach
-    the destructive code path even if the modal is forced open client-side.
+    Gated by ``AdminDep`` — anonymous → 401, non-admin → 403. The UI
+    doesn't surface the trash-icon for non-admin sessions either; this
+    guard catches direct-htmx-DELETE attempts.
     """
-    if not settings.allow_delete:
-        raise HTTPException(
-            status_code=403,
-            detail="Manifest deletion is disabled (set ALLOW_DELETE=true).",
-        )
     digest = await client.delete_manifest(repository, reference)
     log_manifest_deleted(
         request,

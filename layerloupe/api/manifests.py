@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from layerloupe.audit import log_manifest_deleted
 from layerloupe.config import SettingsDep
-from layerloupe.deps import RegistryClientDep
+from layerloupe.deps import AdminDep, BrowseAccessDep, RegistryClientDep
 from layerloupe.registry import (
     ImageConfig,
     ManifestKind,
@@ -84,6 +84,7 @@ async def get_manifest(
     reference: str,
     client: RegistryClientDep,
     settings: SettingsDep,
+    _identity: BrowseAccessDep,
 ) -> UnifiedManifest:
     """Fetch a manifest, attach the image config (when applicable), and unify.
 
@@ -125,6 +126,7 @@ async def get_manifest_config(
     repository: str,
     reference: str,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
 ) -> ImageConfig:
     """Fetch just the image config blob — useful for power users / debugging."""
     manifest = await client.get_manifest(repository, reference)
@@ -143,6 +145,7 @@ async def get_manifest_referrers(
     repository: str,
     reference: str,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
 ) -> ReferrersResult:
     """OCI 1.1 referrers API — signatures, SBOMs, attestations attached to a manifest.
 
@@ -173,24 +176,24 @@ async def delete_manifest(
     request: Request,
     client: RegistryClientDep,
     settings: SettingsDep,
+    _identity: AdminDep,
 ) -> DeleteResult:
     """Delete a manifest by digest (resolving from a tag if needed).
 
-    Gated by ``ALLOW_DELETE`` — when off the UI shouldn't even show
-    the button, but the API hard-fails too as a defense in depth.
+    Gated by ``AdminDep`` — the dependency raises ``401`` for anonymous
+    callers and ``403`` for authenticated-but-not-admin ones before this
+    handler runs. The UI doesn't show the button for non-admin sessions
+    either; this guard is defense in depth against direct API hits.
 
-    On success an audit event ``manifest_deleted`` is emitted with actor,
-    repository, reference, and resolved digest. ``AUDIT_LOG_PATH``
-    additionally appends the same record to a JSONL file.
+    On success an audit event ``manifest_deleted`` is emitted with
+    actor, repository, reference, and resolved digest.
+    ``AUDIT_LOG_PATH`` additionally appends the same record to a JSONL
+    file.
 
-    Note: the registry's storage GC must run for layer blobs to actually
-    free disk. The UI surfaces this caveat in the confirm dialog (M3.7).
+    Note: the registry's storage GC must run for layer blobs to
+    actually free disk. The UI surfaces this caveat in the confirm
+    dialog.
     """
-    if not settings.allow_delete:
-        raise HTTPException(
-            status_code=403,
-            detail="Manifest deletion is disabled (set ALLOW_DELETE=true to enable).",
-        )
     digest = await client.delete_manifest(repository, reference)
     log_manifest_deleted(
         request,

@@ -69,7 +69,7 @@
       <header class="col-head">
         <h2 id="col-info-h" class="col-title">Manifest</h2>
         <div id="manifest-actions" class="manifest-actions">
-          {% if selected_tag and allow_delete and manifest %}
+          {% if selected_tag and is_admin and manifest %}
             {% include "partials/_manifest_delete_icon.html" %}
           {% endif %}
         </div>

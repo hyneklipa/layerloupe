@@ -25,7 +25,7 @@
    the element id. #}
 {% if swap_actions %}
   <div id="manifest-actions" hx-swap-oob="innerHTML">
-    {% if allow_delete and manifest %}
+    {% if is_admin and manifest %}
       {% include "partials/_manifest_delete_icon.html" %}
     {% endif %}
   </div>
@@ -406,7 +406,7 @@
        repository/reference fields stay consistent with the displayed
        manifest), but it's opened by the icon button in the column
        header. ``data-modal-open`` finds it by id regardless of nesting. #}
-    {% if allow_delete %}
+    {% if is_admin %}
       {% set delete_target = repository ~ ('@' if reference.startswith('sha256:') else ':') ~ reference %}
       <dialog id="delete-modal" class="modal" aria-labelledby="delete-modal-title">
         <h3 id="delete-modal-title">Delete this manifest?</h3>
