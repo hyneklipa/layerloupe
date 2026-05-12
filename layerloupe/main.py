@@ -11,7 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from layerloupe import __version__
 from layerloupe.api import auth, manifests, repositories, system
 from layerloupe.config import get_settings
-from layerloupe.deps import build_registry_client
+from layerloupe.deps import build_registry_client, get_identity
 from layerloupe.logging import configure_logging, request_logging_middleware
 from layerloupe.registry import (
     RegistryConnectionError,
@@ -128,6 +128,8 @@ async def _http_exception_handler(request: Request, exc: StarletteHTTPException)
             "version": __version__,
             "registry_public_url": str(settings.registry_public_url or settings.registry_url),
             "allow_registry_login": settings.allow_registry_login,
+            "auth_mode": settings.auth_mode,
+            "identity": get_identity(request),
             "session_username": (
                 request.session.get("registry_username") if hasattr(request, "session") else None
             ),
@@ -153,6 +155,8 @@ async def _unhandled_exception_handler(request: Request, exc: Exception) -> Resp
             "version": __version__,
             "registry_public_url": str(settings.registry_public_url or settings.registry_url),
             "allow_registry_login": settings.allow_registry_login,
+            "auth_mode": settings.auth_mode,
+            "identity": get_identity(request),
             "session_username": (
                 request.session.get("registry_username") if hasattr(request, "session") else None
             ),

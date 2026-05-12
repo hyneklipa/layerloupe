@@ -34,17 +34,55 @@
       </a>
       <nav class="topbar-actions">
         {% block topbar_actions %}
-          {% if allow_registry_login %}
-            {% if session_username %}
-              <span class="user-pill" title="Logged in as {{ session_username }}">
-                {{ session_username }}
-              </span>
-              <form method="post" action="/web/logout" class="inline-form">
-                <button type="submit" class="link-btn">Sign out</button>
-              </form>
-            {% else %}
-              <a class="link-btn" href="/login?next={{ request.url.path }}">Sign in</a>
-            {% endif %}
+          {# Two independent sign-in surfaces — UI identity and per-user
+             registry credentials — each may be present or absent on a
+             given request. We show whichever pills apply; the single
+             Sign-out form below clears both at once. #}
+          {% set has_ui_identity = identity and not identity.is_anonymous %}
+          {% set has_registry_creds = session_username %}
+          {% set login_available = (auth_mode and auth_mode != "public") or allow_registry_login %}
+
+          {% if has_ui_identity %}
+            <span class="user-pill user-pill--identity"
+                  title="Signed in to {{ title }} as {{ identity.username }}">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                   stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                   stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+              </svg>
+              <span class="user-pill-name">{{ identity.username }}</span>
+              {% if identity.is_admin %}
+                <span class="role-badge role-badge--admin"
+                      title="Has the admin role — can delete tags">admin</span>
+              {% else %}
+                <span class="role-badge role-badge--viewer"
+                      title="Read-only — no delete capability">viewer</span>
+              {% endif %}
+            </span>
+          {% endif %}
+
+          {% if has_registry_creds %}
+            <span class="user-pill user-pill--registry"
+                  title="Per-user registry credentials: {{ session_username }}">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                   stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                   stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 8l-9-5-9 5 9 5 9-5z"/>
+                <path d="M3 16l9 5 9-5"/>
+                <path d="M3 12l9 5 9-5"/>
+              </svg>
+              <span class="user-pill-name">{{ session_username }}</span>
+            </span>
+          {% endif %}
+
+          {% if has_ui_identity or has_registry_creds %}
+            <form method="post" action="/web/logout" class="inline-form"
+                  title="Clears both UI identity and registry credentials">
+              <button type="submit" class="link-btn">Sign out</button>
+            </form>
+          {% elif login_available %}
+            <a class="link-btn" href="/login?next={{ request.url.path }}">Sign in</a>
           {% endif %}
         {% endblock %}
       </nav>

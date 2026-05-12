@@ -272,13 +272,56 @@ main.container {
 }
 
 .user-pill {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
   padding: .25rem .55rem;
   border-radius: 999px;
   background: var(--surface-alt);
   border: 1px solid var(--border);
   font-size: .85rem;
   color: var(--text-muted);
+}
+/* Subtle differentiation so the operator can tell the two pills apart
+   at a glance — UI identity uses the accent border, registry creds
+   keep the neutral border. The icons disambiguate from up close. */
+.user-pill--identity {
+  border-color: var(--accent, var(--border));
+  color: var(--text);
+}
+.user-pill--registry {
+  /* default styling — listed for symmetry / future tweaks. */
+}
+.user-pill-name {
+  font-weight: 500;
+}
+.user-pill svg {
+  flex: none;
+  opacity: .75;
+}
+
+/* Role badge sits inside the identity pill. ``admin`` carries the
+   destructive-action colour so it visually telegraphs "this user can
+   delete things". ``viewer`` is muted — it's purely informational. */
+.role-badge {
+  display: inline-block;
+  padding: .05rem .4rem;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  line-height: 1.4;
+}
+.role-badge--admin {
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+}
+.role-badge--viewer {
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 
 /* -- Theme + hotkey buttons in the footer ----------------------------- */
