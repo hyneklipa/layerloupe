@@ -22,6 +22,8 @@ services:
     restart: unless-stopped
     environment:
       REGISTRY_STORAGE_DELETE_ENABLED: "true"
+      # Silence registry access log; see ../admin/docker-compose.yml.
+      REGISTRY_LOG_ACCESSLOG_DISABLED: "true"
     ports:
       - "5000:5000"
     volumes:

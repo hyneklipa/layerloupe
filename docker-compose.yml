@@ -18,6 +18,12 @@ services:
     environment:
       # Allow DELETE on manifests so the LayerLoupe delete-modal flow works.
       REGISTRY_STORAGE_DELETE_ENABLED: "true"
+      # Silence the access log — every healthcheck wget would otherwise
+      # produce one line, drowning out anything from LayerLoupe itself.
+      # User traffic is access-logged by LayerLoupe (structured, with
+      # request-id); re-enable this temporarily when you actually need
+      # to debug something registry-side.
+      REGISTRY_LOG_ACCESSLOG_DISABLED: "true"
     ports:
       - "5000:5000"
     volumes:

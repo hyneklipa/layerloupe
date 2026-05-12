@@ -23,6 +23,10 @@ services:
       # registry's own delete capability is independent. Keeping it off
       # here matches the principle of least privilege for this scenario.
       REGISTRY_STORAGE_DELETE_ENABLED: "false"
+      # Silence the registry access log so the healthcheck doesn't
+      # drown out LayerLoupe's own log. User traffic is still logged
+      # by LayerLoupe (structured).
+      REGISTRY_LOG_ACCESSLOG_DISABLED: "true"
     ports:
       - "5000:5000"
     volumes:

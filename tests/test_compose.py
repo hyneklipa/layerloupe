@@ -60,6 +60,14 @@ def test_registry_uses_delete_enabled(compose_data: dict[str, Any]) -> None:
     assert env["REGISTRY_STORAGE_DELETE_ENABLED"] == "true"
 
 
+def test_registry_access_log_is_silenced(compose_data: dict[str, Any]) -> None:
+    """Healthcheck wgets every 5s would otherwise spam the registry log
+    and drown out anything from LayerLoupe. We disable registry's own
+    access log; user traffic is access-logged by LayerLoupe instead."""
+    env = compose_data["services"]["registry"]["environment"]
+    assert env["REGISTRY_LOG_ACCESSLOG_DISABLED"] == "true"
+
+
 def test_registry_has_healthcheck(compose_data: dict[str, Any]) -> None:
     """The other services use ``service_healthy`` to wait on this one."""
     hc = compose_data["services"]["registry"]["healthcheck"]
