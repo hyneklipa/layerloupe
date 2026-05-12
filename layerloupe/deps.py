@@ -22,9 +22,10 @@ from collections.abc import AsyncIterator
 from typing import Annotated
 
 import httpx
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request
 
-from layerloupe.config import Settings, get_settings
+from layerloupe.auth import ANONYMOUS, Identity
+from layerloupe.config import Settings, SettingsDep, get_settings
 from layerloupe.registry import (
     BasicAuth,
     BearerAuth,
@@ -122,3 +123,73 @@ async def get_registry_client(request: Request) -> AsyncIterator[RegistryClient]
 
 RegistryClientDep = Annotated[RegistryClient, Depends(get_registry_client)]
 """Dependency annotation for endpoints needing the registry client."""
+
+
+# -- Identity / access control -------------------------------------------
+#
+# These dependencies decouple route handlers from how an identity comes
+# into being. The handler asks for "current identity" or "an admin
+# identity"; whether that came from an env-configured admin or (later)
+# from OIDC is invisible to the handler.
+
+
+def get_identity(request: Request) -> Identity:
+    """Return the current request's identity. ``ANONYMOUS`` when not logged in.
+
+    Reads the signed session cookie via :meth:`Identity.from_session`.
+    Any malformed payload (cookie tampering, schema drift after an
+    upgrade, rotated ``SESSION_SECRET``) silently falls back to
+    ``ANONYMOUS`` — the route guards then decide whether that's
+    acceptable for the route being hit.
+    """
+    if not hasattr(request, "session"):
+        return ANONYMOUS
+    payload = request.session.get("identity")
+    identity = Identity.from_session(payload)
+    return identity if identity is not None else ANONYMOUS
+
+
+IdentityDep = Annotated[Identity, Depends(get_identity)]
+"""Dependency annotation for endpoints that want to read the identity."""
+
+
+def require_browse_access(
+    identity: IdentityDep,
+    settings: SettingsDep,
+) -> Identity:
+    """Allow the request through when the active ``AUTH_MODE`` permits browse.
+
+    * ``public``: anonymous OK, returns ``identity`` unchanged.
+    * ``protected`` / ``admin``: anonymous → ``401 Unauthorized``. The
+      global HTML exception handler converts that to a login redirect
+      for browser routes (T7.6); JSON API consumers see ``401`` + a
+      JSON ``detail``.
+    """
+    if settings.auth_mode == "public":
+        return identity
+    if identity.is_anonymous:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return identity
+
+
+def require_admin(identity: IdentityDep) -> Identity:
+    """Require an identity with the ``admin`` role.
+
+    * Anonymous → ``401`` (the user might just need to log in).
+    * Authenticated but missing ``admin`` → ``403`` (defense in depth;
+      in the single-admin model this branch can't fire from a normal
+      flow, but a stale session against a flipped ``AUTH_MODE`` could
+      hit it).
+    """
+    if identity.is_anonymous:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not identity.is_admin:
+        raise HTTPException(status_code=403, detail="Admin role required")
+    return identity
+
+
+BrowseAccessDep = Annotated[Identity, Depends(require_browse_access)]
+"""Inject on routes that need browse access (auth-mode-aware)."""
+
+AdminDep = Annotated[Identity, Depends(require_admin)]
+"""Inject on routes that mutate state — currently only manifest delete."""
