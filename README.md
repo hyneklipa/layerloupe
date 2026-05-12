@@ -114,6 +114,35 @@ mount).
 Per-deploy runnable templates live in [`examples/`](examples/) —
 `public/`, `protected/`, `admin/`, `admin-docker-secrets/`.
 
+#### Bootstrapping the admin password
+
+`scripts/hash-password.py` is a tiny helper that emits a bcrypt hash
+you can paste into `ADMIN_PASSWORD_HASH=`. It has two modes:
+
+```bash
+# Interactive — password is read with getpass, never echoes or lands in shell history.
+uv run scripts/hash-password.py
+Password: ********
+Confirm:  ********
+$2b$12$abc...xyz
+```
+
+```bash
+# Piped — for CI / provisioning scripts pulling from a secret manager.
+echo -n "$(vault kv get -field=admin_password secret/layerloupe)" \
+  | uv run scripts/hash-password.py
+$2b$12$abc...xyz
+```
+
+The script reuses `layerloupe.auth.env_provider.hash_password`, so the
+output format is exactly what the running app accepts. Empty input
+fails with an error rather than producing a hash of `""`.
+
+For `ADMIN_PASSWORD_FILE` (Docker / K8s secret mount) you do **not**
+need this script — the file contains the plaintext password, and
+LayerLoupe hashes it at startup. The helper is purely for the env-hash
+path.
+
 > **Note on delete:** deleting a manifest only unlinks it. Layer blobs
 > on the registry's disk persist until `registry garbage-collect`
 > runs. The confirm modal warns about this; the audit log records the
