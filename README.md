@@ -138,10 +138,23 @@ The script reuses `layerloupe.auth.env_provider.hash_password`, so the
 output format is exactly what the running app accepts. Empty input
 fails with an error rather than producing a hash of `""`.
 
+> **Heads-up for Docker Compose users:** bcrypt hashes contain `$`
+> characters. Docker Compose's `.env` parser treats `$NAME` as a
+> variable reference unless the value is **single-quoted**. Paste the
+> hash like this:
+>
+> ```env
+> ADMIN_PASSWORD_HASH='$2b$12$abc...xyz'
+> ```
+>
+> Without the single quotes you'll see `WARN: The "..." variable is
+> not set` lines and the hash arrives in the container truncated.
+> Double quotes don't help — they still allow interpolation.
+
 For `ADMIN_PASSWORD_FILE` (Docker / K8s secret mount) you do **not**
 need this script — the file contains the plaintext password, and
 LayerLoupe hashes it at startup. The helper is purely for the env-hash
-path.
+path, and the `$`-interpolation gotcha doesn't apply there either.
 
 > **Note on delete:** deleting a manifest only unlinks it. Layer blobs
 > on the registry's disk persist until `registry garbage-collect`

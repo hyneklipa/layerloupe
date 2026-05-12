@@ -66,7 +66,21 @@ def _read_password() -> str:
 
 def main() -> int:
     password = _read_password()
-    print(hash_password(password))
+    hashed = hash_password(password)
+    print(hashed)
+    if sys.stdin.isatty():
+        # Interactive flow: the operator is about to paste this into a
+        # ``.env`` file. Compose's parser interprets ``$NAME`` segments
+        # as variable references, which truncates a bcrypt hash silently.
+        # Surface the wrapping recipe here so they don't have to find
+        # the README for it.
+        print(
+            "\nFor Docker Compose .env files, paste with single quotes:\n"
+            f"  ADMIN_PASSWORD_HASH='{hashed}'\n"
+            "(Single quotes disable Compose's variable interpolation;"
+            " double quotes don't.)",
+            file=sys.stderr,
+        )
     return 0
 
 
