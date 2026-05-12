@@ -48,7 +48,10 @@ services:
       # What the user sees in copy-able ``docker pull`` strings:
       REGISTRY_PUBLIC_URL: "http://localhost:5000"
       SSL_VERIFY: "true"
-      ALLOW_DELETE: "true"
+      # Default deploy is anonymous read-only browse. See
+      # examples/protected/ for login-required browse and
+      # examples/admin/ for the delete-enabled scenario.
+      AUTH_MODE: "public"
       ALLOW_REGISTRY_LOGIN: "false"
       # Dev-only fixed secret so sessions survive container restarts during
       # development. **Generate a real one in production.**

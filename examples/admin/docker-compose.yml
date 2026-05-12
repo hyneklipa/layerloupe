@@ -1,0 +1,86 @@
+# LayerLoupe `admin` scenario: login required, admin can delete tags.
+#
+# Bring up:
+#
+#     cp .env.example .env
+#     # Regenerate ADMIN_PASSWORD_HASH and SESSION_SECRET — the
+#     # placeholders in .env.example are deliberately weak.
+#     docker compose up
+#
+# Open http://localhost:8080 → bounced to /login → sign in → trash-icon
+# appears on every manifest detail panel.
+
+services:
+
+  # -- Registry under test ----------------------------------------------
+  registry:
+    image: registry:2.8
+    container_name: layerloupe-registry-admin
+    restart: unless-stopped
+    environment:
+      # Required for the LayerLoupe delete flow to actually unlink the
+      # manifest. Without this the API call succeeds but the registry
+      # rejects the upstream DELETE.
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/v2/"]
+      interval: 5s
+      timeout: 2s
+      retries: 6
+      start_period: 5s
+
+  # -- LayerLoupe itself --------------------------------------------------
+  layerloupe:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: layerloupe-app-admin
+    restart: unless-stopped
+    depends_on:
+      registry:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      REGISTRY_URL: "http://registry:5000"
+      REGISTRY_PUBLIC_URL: "http://localhost:5000"
+      # Scenario knobs.
+      AUTH_MODE: "${AUTH_MODE:-admin}"
+      ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
+      ADMIN_PASSWORD_HASH: "${ADMIN_PASSWORD_HASH}"
+      SESSION_SECRET: "${SESSION_SECRET}"
+      AUDIT_LOG_PATH: "${AUDIT_LOG_PATH:-/var/log/layerloupe/audit.log}"
+      LOG_JSON: "${LOG_JSON:-false}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    volumes:
+      - audit-log:/var/log/layerloupe
+
+  # -- One-shot seeder: mirror a few public images into the registry ---
+  seed:
+    image: gcr.io/go-containerregistry/crane:debug
+    container_name: layerloupe-seed-admin
+    depends_on:
+      registry:
+        condition: service_healthy
+    restart: "no"
+    entrypoint:
+      - /busybox/sh
+      - -c
+      - |
+        set -eu
+        echo "▶ Seeding registry:5000 with public test images..."
+        for image in alpine:3.20 alpine:latest hello-world:latest busybox:1.36; do
+          echo "  • $$image  →  registry:5000/$$image"
+          if ! /ko-app/crane copy --insecure "$$image" "registry:5000/$$image"; then
+            echo "  ⚠ Failed to mirror $$image (offline? rate-limited?). Continuing." >&2
+          fi
+        done
+        echo "✓ Seed complete. Open http://localhost:8080 — you'll be asked to sign in."
+
+volumes:
+  registry-data:
+  audit-log:

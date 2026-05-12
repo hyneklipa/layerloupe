@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     """LayerLoupe runtime configuration.
 
     Values are loaded from environment variables (no prefix — just
-    ``REGISTRY_URL``, ``ALLOW_DELETE``, …) and optionally from a ``.env``
+    ``REGISTRY_URL``, ``AUTH_MODE``, …) and optionally from a ``.env``
     file in CWD.
     """
 
@@ -68,13 +68,6 @@ class Settings(BaseSettings):
     )
     allow_registry_login: bool = Field(
         default=False, description="Expose UI login form for per-user registry credentials."
-    )
-    allow_delete: bool = Field(
-        default=False,
-        description=(
-            "DEPRECATED — replaced by ``AUTH_MODE=admin``. Still honored as a "
-            "synonym during the deprecation window; emits a startup warning when set."
-        ),
     )
 
     # -- UI access control ------------------------------------------------
@@ -113,18 +106,6 @@ class Settings(BaseSettings):
             "is always a hash. Use this for Docker / K8s secrets where the "
             "file mount is the trust boundary."
         ),
-    )
-
-    # -- UI auth (DEPRECATED — replaced by AUTH_MODE) ---------------------
-    # Removed in T7.7. Kept for one release so operators get a clear
-    # migration warning instead of a silent ``extra="ignore"`` drop.
-    ui_username: str | None = Field(
-        default=None,
-        description="DEPRECATED — has no effect. Use AUTH_MODE instead.",
-    )
-    ui_password: SecretStr | None = Field(
-        default=None,
-        description="DEPRECATED — has no effect. Use AUTH_MODE instead.",
     )
 
     # -- Branding & sessions ----------------------------------------------
@@ -208,12 +189,6 @@ class Settings(BaseSettings):
             # Mirror the registry URL as a plain string — the public field
             # is no longer scheme-validated, so just stringify the AnyHttpUrl.
             self.registry_public_url = str(self.registry_url)
-        return self
-
-    @model_validator(mode="after")
-    def _validate_ui_auth_pair(self) -> Settings:
-        if self.ui_username and not self.ui_password:
-            raise ValueError("UI_PASSWORD must be set when UI_USERNAME is set.")
         return self
 
     @model_validator(mode="after")
@@ -305,19 +280,6 @@ def get_settings() -> Settings:
             "SESSION_SECRET not set — generated a random one. "
             "Sessions will not survive a restart. Set SESSION_SECRET or "
             "SESSION_SECRET_FILE explicitly in production."
-        )
-    if settings.ui_username or settings.ui_password:
-        logger.warning(
-            "UI_USERNAME / UI_PASSWORD are deprecated and have no effect. "
-            "Use AUTH_MODE=protected (or admin) with ADMIN_USERNAME / "
-            "ADMIN_PASSWORD_HASH instead. These knobs will be removed in a "
-            "future release."
-        )
-    if settings.allow_delete:
-        logger.warning(
-            "ALLOW_DELETE is deprecated. Set AUTH_MODE=admin and configure "
-            "ADMIN_USERNAME / ADMIN_PASSWORD_HASH instead. This knob will be "
-            "removed in a future release."
         )
     return settings
 

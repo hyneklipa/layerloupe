@@ -75,31 +75,49 @@ optional — sensible defaults are tuned for "local registry on
 | `REGISTRY_PUBLIC_URL` | = `REGISTRY_URL` | URL shown in copy-able `docker pull` strings. Set this when LayerLoupe talks to the registry over an internal hostname but users pull from a public one. |
 | `SSL_VERIFY` | `true` | Verify TLS certs. Set to `false` for self-signed dev registries. |
 
-### Authenticating
+### Talking to the registry
 
 | Variable | Default | What it does |
 |---|---|---|
 | `REGISTRY_USERNAME` | — | Global username (Basic auth + token-flow upstream). |
 | `REGISTRY_PASSWORD` | — | Global password. |
-| `ALLOW_REGISTRY_LOGIN` | `false` | Show the UI sign-in form so each user supplies their own credentials. Their password is encrypted with Fernet before going into the session cookie. |
-| `UI_USERNAME` / `UI_PASSWORD` | — | Optional HTTP Basic auth in front of the LayerLoupe UI itself. |
+| `ALLOW_REGISTRY_LOGIN` | `false` | Show a UI sign-in form so each user supplies their own upstream registry credentials. Their password is encrypted with Fernet before going into the session cookie. |
 
 Bearer token auth (the one Docker Hub, GHCR, and Harbor use) works
 out-of-the-box: LayerLoupe detects the `Www-Authenticate: Bearer …`
 challenge, fetches a token (using your Basic creds upstream), caches it
 by `(service, scope)`, and pre-attaches it on subsequent requests.
 
-### Destructive operations
+### UI access control
+
+LayerLoupe has three access modes, set via `AUTH_MODE`:
+
+| Mode | Anonymous browse | Login required | Delete |
+|---|---|---|---|
+| `public` (default) | yes | no | no |
+| `protected` | no | yes | no |
+| `admin` | no | yes | yes (admin role) |
 
 | Variable | Default | What it does |
 |---|---|---|
-| `ALLOW_DELETE` | `false` | Show the "Delete this manifest" button. The registry must also have `REGISTRY_STORAGE_DELETE_ENABLED=true`. |
-| `AUDIT_LOG_PATH` | — | Optional JSONL audit file path. Each successful delete appends one line with actor, repo, reference, and resolved digest. The same event always goes to stdout regardless. |
+| `AUTH_MODE` | `public` | Selects the access mode (see table above). |
+| `ADMIN_USERNAME` | — | Admin login name. Required when `AUTH_MODE != public`. |
+| `ADMIN_PASSWORD_HASH` | — | Bcrypt hash of the admin password. Generate with `uv run scripts/hash-password.py`. |
+| `ADMIN_USERNAME_FILE` / `ADMIN_PASSWORD_FILE` | — | `*_FILE` variants for Docker / K8s secrets — the file is read as plaintext (the file mount is the trust boundary). When both `_HASH` and `_FILE` are set the file value wins. |
+| `AUDIT_LOG_PATH` | — | Optional JSONL audit file path. Each successful delete appends one line with actor, repo, reference, resolved digest, and timestamp. The same event always goes to stdout regardless. |
 
-> **Note:** deleting a manifest only unlinks it. Layer blobs on the
-> registry's disk persist until `registry garbage-collect` runs. The
-> confirm modal warns about this; the audit log records the digest so
-> the operator running GC can reconcile.
+Plaintext `ADMIN_PASSWORD` in env is rejected at startup — env values
+are visible via `docker inspect` / `ps auxe`. Use `ADMIN_PASSWORD_HASH`
+(env, hashed) or `ADMIN_PASSWORD_FILE` (file, plaintext, sealed by the
+mount).
+
+Per-deploy runnable templates live in [`examples/`](examples/) —
+`public/`, `protected/`, `admin/`, `admin-docker-secrets/`.
+
+> **Note on delete:** deleting a manifest only unlinks it. Layer blobs
+> on the registry's disk persist until `registry garbage-collect`
+> runs. The confirm modal warns about this; the audit log records the
+> digest so the operator running GC can reconcile.
 
 ### Branding & sessions
 

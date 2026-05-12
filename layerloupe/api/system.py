@@ -47,13 +47,21 @@ async def readyz(client: RegistryClientDep) -> JSONResponse:
 
 @router.get("/info")
 def info(settings: SettingsDep) -> dict[str, object]:
-    """Public registry metadata for the UI (no secrets)."""
+    """Public registry metadata for the UI (no secrets).
+
+    ``auth_mode`` and ``allow_delete`` are surfaced here because the
+    JS layer toggles a few client-side affordances (e.g. keyboard
+    shortcuts to the delete modal) based on whether delete is even
+    possible at this site. The auth guard remains the source of
+    truth — this field is just a UX hint.
+    """
     return {
         "title": settings.title,
         "version": __version__,
         "registry_url": str(settings.registry_url),
         "registry_public_url": str(settings.registry_public_url),
         "ssl_verify": settings.ssl_verify,
-        "allow_delete": settings.allow_delete,
+        "auth_mode": settings.auth_mode,
+        "allow_delete": settings.auth_mode == "admin",
         "allow_registry_login": settings.allow_registry_login,
     }

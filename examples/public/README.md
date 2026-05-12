@@ -15,7 +15,8 @@ anything. No authentication, no session state worth protecting.
 ## Canonical example
 
 For the `public/` scenario the **root `docker-compose.yml`** of this
-repository *is* the canonical example. Bringing it up:
+repository *is* the canonical example. It runs in `AUTH_MODE=public` —
+anonymous read-only browse, no delete. Bringing it up:
 
 ```bash
 cd ../..             # back to the layerloupe/ project root
@@ -27,12 +28,8 @@ seeder that mirrors a few public images so the UI has something to
 show on first load. See the top-level [`README.md`](../../README.md)
 for the full walkthrough.
 
-> **Note:** today the root compose enables `ALLOW_DELETE=true` for
-> developer convenience. That's a legacy of the pre-redesign config
-> model and will be removed once T7.7 lands — at which point the root
-> compose becomes a pure `AUTH_MODE=public` deployment. If you want
-> delete capability *now*, use the `admin/` example once it's
-> published.
+If you need delete capability, use the [`admin/`](../admin/) example
+instead.
 
 ## Why no compose file here
 

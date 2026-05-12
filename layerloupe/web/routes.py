@@ -284,11 +284,12 @@ async def _annotation_rows_with_fallback(
 def _shell_context(request: Request, settings: object) -> dict[str, Any]:
     """Topbar / footer context shared by every page render.
 
-    The ``identity`` / ``is_admin`` / ``auth_mode`` keys drive the
-    topbar (Sign-in vs. user pill, Sign-out button) and the trash-icon
-    visibility on manifest panels. ``allow_delete`` is kept as a
-    legacy alias of ``is_admin`` so templates that haven't migrated
-    yet keep working — removed in T7.7.
+    Drives the topbar (Sign-in vs. user pill, Sign-out button) and the
+    trash-icon visibility on manifest panels. ``is_admin`` is derived
+    from the current session ``Identity``, not from settings — so a
+    logged-in admin sees the trash icon in ``admin`` mode but not in
+    ``protected`` mode (where the provider hands back an empty role
+    set even for the admin credential).
     """
     s = settings  # narrow typing — avoid importing Settings just for this
     identity = get_identity(request)
@@ -302,9 +303,6 @@ def _shell_context(request: Request, settings: object) -> dict[str, Any]:
         "auth_mode": getattr(s, "auth_mode", "public"),
         "identity": identity,
         "is_admin": identity.is_admin,
-        # Legacy alias — templates have already migrated to ``is_admin``.
-        # Kept on the context until T7.7 cleans it out alongside the deprecated config.
-        "allow_delete": identity.is_admin,
         "session_username": request.session.get("registry_username")
         if hasattr(request, "session")
         else None,
@@ -557,12 +555,8 @@ async def tags_fragment(
             "auto_layer_rows": _layer_rows(auto_manifest),
             "auto_display_platforms": _display_platforms(auto_manifest),
             "auto_referrers": auto_referrers,
-            # Trash-icon visibility for the auto-selected manifest;
-            # ``is_admin`` is derived from the current session identity
-            # via ``get_identity`` (not from the deprecated ``allow_delete``
-            # setting).
+            # Trash-icon visibility for the auto-selected manifest.
             "is_admin": get_identity(request).is_admin,
-            "allow_delete": get_identity(request).is_admin,
         },
     )
     if auto_select and auto_tag is not None:
@@ -619,7 +613,6 @@ async def manifest_fragment(
             "referrers": referrers,
             "parent_reference": parent_reference,
             "is_admin": get_identity(request).is_admin,
-            "allow_delete": get_identity(request).is_admin,
             "error": error,
             # Tells the partial to OOB-swap the trash-icon into
             # ``#manifest-actions`` (in the Manifest column header). Only

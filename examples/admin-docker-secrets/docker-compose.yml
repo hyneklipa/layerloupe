@@ -1,0 +1,99 @@
+# LayerLoupe `admin` scenario with secrets sourced from sealed files.
+#
+# Same access model as ``../admin/``, but the admin password and the
+# session secret are read from files instead of env values. Use this
+# pattern when your deployment platform (Docker Swarm, K8s, Vault agent
+# injector, …) mounts secrets as files rather than env.
+#
+# Bring up:
+#
+#     # Put real values into the secret files (or generate them).
+#     echo -n "$(uv run scripts/hash-password.py 2>/dev/null || true)" > secrets/admin_password  # plaintext, NOT a hash
+#     python3 -c "import secrets; print(secrets.token_urlsafe(32))" > secrets/session_secret
+#     # ADMIN_USERNAME is not a secret — set it inline in environment.
+#     docker compose up
+
+services:
+
+  # -- Registry under test ----------------------------------------------
+  registry:
+    image: registry:2.8
+    container_name: layerloupe-registry-secrets
+    restart: unless-stopped
+    environment:
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/v2/"]
+      interval: 5s
+      timeout: 2s
+      retries: 6
+      start_period: 5s
+
+  # -- LayerLoupe itself --------------------------------------------------
+  #
+  # Note: this example uses Compose's bind-mounted ``./secrets/`` for
+  # portability. In real deployments prefer:
+  #
+  # * Docker Swarm secrets (``secrets:`` top-level + ``secrets:`` per service),
+  # * Kubernetes ``Secret`` volume mounts, or
+  # * Vault Agent Injector populating ``/vault/secrets/...``.
+  #
+  # All three produce the same shape LayerLoupe expects: a path holding
+  # the plaintext value, owned by the service's UID.
+  layerloupe:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: layerloupe-app-secrets
+    restart: unless-stopped
+    depends_on:
+      registry:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      REGISTRY_URL: "http://registry:5000"
+      REGISTRY_PUBLIC_URL: "http://localhost:5000"
+      AUTH_MODE: "admin"
+      ADMIN_USERNAME: "admin"
+      # The two _FILE knobs each point at a path inside the container
+      # where the value lives as plaintext. The file is the trust
+      # boundary — env stays free of secrets.
+      ADMIN_PASSWORD_FILE: "/run/secrets/admin_password"
+      SESSION_SECRET_FILE: "/run/secrets/session_secret"
+      AUDIT_LOG_PATH: "/var/log/layerloupe/audit.log"
+      LOG_JSON: "false"
+      LOG_LEVEL: "info"
+    volumes:
+      - ./secrets:/run/secrets:ro
+      - audit-log:/var/log/layerloupe
+
+  # -- One-shot seeder ---------------------------------------------------
+  seed:
+    image: gcr.io/go-containerregistry/crane:debug
+    container_name: layerloupe-seed-secrets
+    depends_on:
+      registry:
+        condition: service_healthy
+    restart: "no"
+    entrypoint:
+      - /busybox/sh
+      - -c
+      - |
+        set -eu
+        echo "▶ Seeding registry:5000 with public test images..."
+        for image in alpine:3.20 alpine:latest hello-world:latest busybox:1.36; do
+          echo "  • $$image  →  registry:5000/$$image"
+          if ! /ko-app/crane copy --insecure "$$image" "registry:5000/$$image"; then
+            echo "  ⚠ Failed to mirror $$image (offline? rate-limited?). Continuing." >&2
+          fi
+        done
+        echo "✓ Seed complete. Open http://localhost:8080 and sign in."
+
+volumes:
+  registry-data:
+  audit-log:

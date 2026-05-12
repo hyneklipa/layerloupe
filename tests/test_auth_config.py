@@ -210,26 +210,29 @@ def test_admin_password_env_doesnt_block_hash_or_file(
     assert s.admin_password_hash is not None
 
 
-# -- Deprecation warnings -----------------------------------------------
+# -- Retired-knob silence (post-T7.7) -----------------------------------
 
 
-def test_ui_username_emits_deprecation_warning_via_get_settings(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+def test_retired_ui_username_is_silently_ignored(
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """``UI_USERNAME`` was retired in T7.7 — ``extra="ignore"`` drops it
+    silently so old ``.env`` files don't crash startup. (Operators
+    relying on it never had a working feature anyway — it was unused.)"""
     monkeypatch.setenv("UI_USERNAME", "legacy")
     monkeypatch.setenv("UI_PASSWORD", "legacy-pw")
-    with caplog.at_level(logging.WARNING, logger="layerloupe.config"):
-        get_settings()
-    assert any("UI_USERNAME" in rec.message for rec in caplog.records)
+    # No exception; the values aren't on the model.
+    s = Settings()
+    assert not hasattr(s, "ui_username")
 
 
-def test_allow_delete_emits_deprecation_warning_via_get_settings(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+def test_retired_allow_delete_is_silently_ignored(
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """``ALLOW_DELETE`` was replaced by ``AUTH_MODE=admin`` in T7.7."""
     monkeypatch.setenv("ALLOW_DELETE", "true")
-    with caplog.at_level(logging.WARNING, logger="layerloupe.config"):
-        get_settings()
-    assert any("ALLOW_DELETE" in rec.message for rec in caplog.records)
+    s = Settings()
+    assert not hasattr(s, "allow_delete")
 
 
 def test_no_deprecation_warning_when_only_new_knobs_set(

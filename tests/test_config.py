@@ -29,7 +29,7 @@ def test_defaults_load_without_env() -> None:
     assert str(s.registry_url) == "https://localhost:5000/"
     assert str(s.registry_public_url) == str(s.registry_url)
     assert s.ssl_verify is True
-    assert s.allow_delete is False
+    assert s.auth_mode == "public"
     assert s.allow_registry_login is False
     assert s.title == "LayerLoupe"
     assert s.cache_ttl == 30
@@ -115,12 +115,6 @@ def test_public_url_accepts_bare_host(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s.registry_public_url == "registry.example.com:5000"
 
 
-def test_ui_username_without_password_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("UI_USERNAME", "admin")
-    with pytest.raises(ValidationError):
-        Settings()
-
-
 def test_secret_str_does_not_leak_in_repr(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("REGISTRY_PASSWORD", "supersecret")
     s = Settings()
@@ -152,9 +146,13 @@ def test_get_settings_is_cached() -> None:
 
 
 def test_info_endpoint_uses_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    from layerloupe.auth.env_provider import hash_password
+
     monkeypatch.setenv("REGISTRY_URL", "https://registry.example.com:443")
     monkeypatch.setenv("TITLE", "Test Registry")
-    monkeypatch.setenv("ALLOW_DELETE", "true")
+    monkeypatch.setenv("AUTH_MODE", "admin")
+    monkeypatch.setenv("ADMIN_USERNAME", "admin")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", hash_password("x", rounds=4))
     get_settings.cache_clear()
 
     with TestClient(app) as client:
@@ -162,6 +160,9 @@ def test_info_endpoint_uses_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r.status_code == 200
     body = r.json()
     assert body["title"] == "Test Registry"
+    assert body["auth_mode"] == "admin"
+    # ``allow_delete`` mirrors ``auth_mode == "admin"`` — kept as a UX
+    # hint for the JS layer (see ``api.system.info``).
     assert body["allow_delete"] is True
     assert "registry.example.com" in body["registry_url"]
     assert "password" not in body
