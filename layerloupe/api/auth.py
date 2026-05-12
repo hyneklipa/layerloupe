@@ -19,7 +19,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from layerloupe.config import Settings, SettingsDep
-from layerloupe.deps import build_registry_client
+from layerloupe.deps import AuthProviderDep, build_registry_client
 from layerloupe.sessions import encrypt_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -90,4 +90,40 @@ async def login(
 async def logout(request: Request) -> LogoutResponse:
     """Clear all session-stored credentials, falling back to env auth."""
     request.session.clear()
+    return LogoutResponse(status="ok")
+
+
+# -- UI identity login (orthogonal to registry creds above) ---------------
+
+
+@router.post("/ui-login", response_model=LoginResponse)
+async def ui_login(
+    payload: LoginRequest,
+    request: Request,
+    settings: SettingsDep,
+    provider: AuthProviderDep,
+) -> LoginResponse:
+    """JSON sibling of ``POST /web/auth/login``.
+
+    Same login flow as the HTML form route but for machine consumers
+    (CI scripts, smoke tests). Writes ``session["identity"]`` on success
+    and leaves any registry creds untouched.
+    """
+    if settings.auth_mode == "public" or provider is None:
+        raise HTTPException(
+            status_code=403,
+            detail="UI login is not enabled (set AUTH_MODE=protected or admin to enable).",
+        )
+    identity = await provider.authenticate(payload.username, payload.password)
+    if identity is None:
+        request.session.pop("identity", None)
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    request.session["identity"] = identity.to_session()
+    return LoginResponse(status="ok", username=identity.username)
+
+
+@router.post("/ui-logout", response_model=LogoutResponse)
+async def ui_logout(request: Request) -> LogoutResponse:
+    """Drop the UI identity, keep registry creds in place."""
+    request.session.pop("identity", None)
     return LogoutResponse(status="ok")

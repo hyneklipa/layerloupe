@@ -29,7 +29,7 @@ from layerloupe import __version__
 from layerloupe.api.auth import _verify_credentials
 from layerloupe.audit import log_manifest_deleted
 from layerloupe.config import SettingsDep
-from layerloupe.deps import RegistryClientDep
+from layerloupe.deps import AuthProviderDep, RegistryClientDep
 from layerloupe.registry import (
     AnnotationRow,
     ImageConfig,
@@ -648,16 +648,37 @@ def _safe_redirect(target: str | None) -> str:
     return target
 
 
+def _login_options(settings: SettingsDep) -> tuple[bool, bool]:
+    """Return ``(ui_login_enabled, registry_login_enabled)``.
+
+    The login page picks its template branch from these two booleans:
+    show the UI-identity form, the registry-creds form, both as tabs,
+    or refuse with 403 when neither is on.
+    """
+    return settings.auth_mode != "public", settings.allow_registry_login
+
+
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(
     request: Request,
     settings: SettingsDep,
     next: str | None = Query(default=None),
 ) -> HTMLResponse:
-    if not settings.allow_registry_login:
+    """Render the login page, with whichever forms apply.
+
+    With ``AUTH_MODE != public`` the UI identity form is available.
+    With ``ALLOW_REGISTRY_LOGIN=true`` the registry credentials form is
+    available. Either or both can be on at once; when both are off
+    there's nothing to log in to, so the route 403s.
+    """
+    ui_enabled, registry_enabled = _login_options(settings)
+    if not (ui_enabled or registry_enabled):
         raise HTTPException(
             status_code=403,
-            detail="Per-user registry login is disabled (set ALLOW_REGISTRY_LOGIN=true to enable).",
+            detail=(
+                "Login is not enabled (set AUTH_MODE=protected/admin or "
+                "ALLOW_REGISTRY_LOGIN=true to enable a login form)."
+            ),
         )
     return templates.TemplateResponse(
         request=request,
@@ -666,7 +687,11 @@ async def login_page(
             **_shell_context(request, settings),
             "next": _safe_redirect(next),
             "username": "",
+            "ui_username": "",
             "error": None,
+            "ui_error": None,
+            "ui_login_enabled": ui_enabled,
+            "registry_login_enabled": registry_enabled,
         },
     )
 
@@ -679,6 +704,12 @@ async def login_submit(
     password: str = Form(min_length=1),
     next: str = Form(default="/"),
 ) -> Response:
+    """Submit the **registry credentials** form (per-user upstream login).
+
+    This is the legacy ``/login`` POST kept for the orthogonal per-user
+    registry-credential feature. UI identity login lives at
+    ``/web/auth/login`` and writes a different session key.
+    """
     if not settings.allow_registry_login:
         raise HTTPException(
             status_code=403,
@@ -686,6 +717,7 @@ async def login_submit(
         )
 
     ok = await _verify_credentials(settings, username, password)
+    ui_enabled, registry_enabled = _login_options(settings)
     if not ok:
         # Re-render the form so the user can fix their credentials without
         # losing the ``next`` target. Username preserved (password not, by
@@ -698,7 +730,11 @@ async def login_submit(
                 **_shell_context(request, settings),
                 "next": _safe_redirect(next),
                 "username": username,
+                "ui_username": "",
                 "error": "Invalid registry credentials.",
+                "ui_error": None,
+                "ui_login_enabled": ui_enabled,
+                "registry_login_enabled": registry_enabled,
             },
         )
 
@@ -711,8 +747,64 @@ async def login_submit(
     return RedirectResponse(url=_safe_redirect(next), status_code=303)
 
 
+@router.post("/web/auth/login")
+async def ui_login_submit(
+    request: Request,
+    settings: SettingsDep,
+    provider: AuthProviderDep,
+    username: str = Form(min_length=1),
+    password: str = Form(min_length=1),
+    next: str = Form(default="/"),
+) -> Response:
+    """Submit the **UI identity** form (logs the operator in to LayerLoupe).
+
+    Writes the resulting ``Identity`` to ``session["identity"]``; the
+    orthogonal ``session["registry_username"]`` / ``..._password_enc``
+    keys are untouched so users with per-user registry creds keep
+    them across UI login / logout.
+    """
+    if settings.auth_mode == "public" or provider is None:
+        raise HTTPException(
+            status_code=403,
+            detail="UI login is not enabled (set AUTH_MODE=protected or admin to enable).",
+        )
+
+    identity = await provider.authenticate(username, password)
+    ui_enabled, registry_enabled = _login_options(settings)
+    if identity is None:
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            status_code=401,
+            context={
+                **_shell_context(request, settings),
+                "next": _safe_redirect(next),
+                "username": "",
+                "ui_username": username,
+                "error": None,
+                "ui_error": "Invalid credentials.",
+                "ui_login_enabled": ui_enabled,
+                "registry_login_enabled": registry_enabled,
+            },
+        )
+
+    request.session["identity"] = identity.to_session()
+    return RedirectResponse(url=_safe_redirect(next), status_code=303)
+
+
+@router.post("/web/auth/logout")
+async def ui_logout(request: Request) -> Response:
+    """Drop the UI identity, keep any registry creds in place."""
+    request.session.pop("identity", None)
+    return RedirectResponse(url="/", status_code=303)
+
+
 @router.post("/web/logout")
 async def web_logout(request: Request) -> Response:
-    """Clear session creds and bounce back to ``/`` for the browser flow."""
+    """Clear *all* session state — both UI identity and registry creds.
+
+    Kept as the topbar's single "Sign out" target so users don't have
+    to think about which of the two logins they're in.
+    """
     request.session.clear()
     return RedirectResponse(url="/", status_code=303)

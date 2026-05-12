@@ -24,7 +24,8 @@ from typing import Annotated
 import httpx
 from fastapi import Depends, HTTPException, Request
 
-from layerloupe.auth import ANONYMOUS, Identity
+from layerloupe.auth import ADMIN_ROLE, ANONYMOUS, Identity
+from layerloupe.auth.env_provider import EnvAdminProvider
 from layerloupe.config import Settings, SettingsDep, get_settings
 from layerloupe.registry import (
     BasicAuth,
@@ -193,3 +194,34 @@ BrowseAccessDep = Annotated[Identity, Depends(require_browse_access)]
 
 AdminDep = Annotated[Identity, Depends(require_admin)]
 """Inject on routes that mutate state — currently only manifest delete."""
+
+
+def get_auth_provider(settings: SettingsDep) -> EnvAdminProvider | None:
+    """Build (or skip) the active ``AuthProvider`` for this request.
+
+    Returns ``None`` when no admin is configured — i.e. ``AUTH_MODE=public``
+    with no ``ADMIN_*`` env. Login routes treat ``None`` as "UI login is
+    not enabled" and respond ``403``.
+
+    Per-request construction is intentional: ``EnvAdminProvider`` is a
+    tiny wrapper around a (username, hash) pair, and we'd rather not
+    introduce another cache that needs invalidating when ``Settings``
+    re-load during tests.
+    """
+    if settings.admin_username is None or settings.admin_password_hash is None:
+        return None
+    # ``admin`` mode grants destructive capability via the ``admin``
+    # role; ``protected`` mode authenticates without granting any extra
+    # capability. The role-set carried by the resulting ``Identity``
+    # comes from this branch — route guards downstream just read
+    # ``identity.roles`` and don't re-check the mode.
+    granted_roles = frozenset({ADMIN_ROLE}) if settings.auth_mode == "admin" else frozenset()
+    return EnvAdminProvider(
+        username=settings.admin_username,
+        password_hash=settings.admin_password_hash.get_secret_value(),
+        granted_roles=granted_roles,
+    )
+
+
+AuthProviderDep = Annotated[EnvAdminProvider | None, Depends(get_auth_provider)]
+"""Inject on login routes that need to verify UI credentials."""

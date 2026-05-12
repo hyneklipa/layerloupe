@@ -19,6 +19,8 @@ import bcrypt
 
 from layerloupe.auth import ADMIN_ROLE, Identity
 
+_DEFAULT_GRANTED_ROLES = frozenset({ADMIN_ROLE})
+
 # Precomputed bcrypt hash of a long random byte string — used as the
 # decoy for timing-safe verification when the supplied username
 # doesn't match. Generated once at import time so the (expensive) salt
@@ -37,7 +39,13 @@ class EnvAdminProvider:
 
     name = "env"
 
-    def __init__(self, *, username: str, password_hash: str) -> None:
+    def __init__(
+        self,
+        *,
+        username: str,
+        password_hash: str,
+        granted_roles: frozenset[str] = _DEFAULT_GRANTED_ROLES,
+    ) -> None:
         if not username:
             raise ValueError("EnvAdminProvider requires a non-empty username")
         if not password_hash:
@@ -47,6 +55,12 @@ class EnvAdminProvider:
         # any other shape simply won't match in ``bcrypt.checkpw`` and
         # the user gets a generic "invalid credentials" response.
         self._password_hash = password_hash.encode("utf-8")
+        # The successful-login Identity carries these roles. Caller
+        # decides what's granted: ``admin`` mode → ``{"admin"}``,
+        # ``protected`` mode → empty (logged in but no destructive
+        # capability). Defaulting to ``{"admin"}`` keeps the
+        # standalone-provider use case (CLI / scripts) ergonomic.
+        self._granted_roles = granted_roles
 
     async def authenticate(self, username: str, password: str) -> Identity | None:
         # ``hmac.compare_digest`` is the standard constant-time compare
@@ -72,7 +86,7 @@ class EnvAdminProvider:
         if username_matches and password_matches:
             return Identity(
                 username=self._username,
-                roles=frozenset({ADMIN_ROLE}),
+                roles=self._granted_roles,
                 provider=self.name,
             )
         return None
