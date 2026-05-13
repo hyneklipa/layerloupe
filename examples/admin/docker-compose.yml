@@ -18,10 +18,15 @@ services:
     container_name: layerloupe-registry-admin
     restart: unless-stopped
     environment:
-      # Required for the LayerLoupe delete flow to actually unlink the
-      # manifest. Without this the API call succeeds but the registry
-      # rejects the upstream DELETE.
-      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+      # Both halves of the delete capability:
+      #   - LayerLoupe (AUTH_MODE=admin in the layerloupe service) gates
+      #     the UI surface + API.
+      #   - REGISTRY_STORAGE_DELETE_ENABLED tells the registry itself to
+      #     actually perform the unlink when the DELETE arrives. Without
+      #     this the registry returns MANIFEST_DELETE_DISABLED.
+      # Surface this knob via .env so the operator sees it next to
+      # AUTH_MODE — they're a pair.
+      REGISTRY_STORAGE_DELETE_ENABLED: "${REGISTRY_STORAGE_DELETE_ENABLED:-true}"
       # Silence registry's access log so the healthcheck doesn't
       # drown out the audit + LayerLoupe logs. Re-enable temporarily
       # if you need to debug registry-side push/pull behavior.

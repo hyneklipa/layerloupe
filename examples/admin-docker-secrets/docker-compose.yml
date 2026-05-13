@@ -21,6 +21,8 @@ services:
     container_name: layerloupe-registry-secrets
     restart: unless-stopped
     environment:
+      # Mirrors ../admin/ — see that file for why this is a pair with
+      # AUTH_MODE on the layerloupe service.
       REGISTRY_STORAGE_DELETE_ENABLED: "true"
       # Silence registry access log; see ../admin/docker-compose.yml.
       REGISTRY_LOG_ACCESSLOG_DISABLED: "true"

@@ -31,14 +31,27 @@ def _scenarios() -> list[Path]:
     return sorted(p for p in EXAMPLES_DIR.iterdir() if p.is_dir())
 
 
+# Env vars that ``.env.example`` files legitimately set but that don't
+# belong to LayerLoupe's own ``Settings`` — typically registry-side
+# toggles surfaced alongside LayerLoupe's knobs because the operator
+# tunes them together (delete capability is the canonical case: needs
+# both ``AUTH_MODE=admin`` in LayerLoupe and ``REGISTRY_STORAGE_DELETE_ENABLED``
+# in the registry container).
+_EXTERNAL_ENV_NAMES = {
+    "REGISTRY_STORAGE_DELETE_ENABLED",  # consumed by ``registry:2.x``
+}
+
+
 def _settings_env_names() -> set[str]:
     """Env names every ``Settings`` field accepts (no prefix, uppercased).
 
     Includes both the field itself and any ``_FILE`` companions that the
     redesign adds (e.g. ``SESSION_SECRET_FILE``) — they're modeled as
-    distinct fields, so ``model_fields`` already covers both.
+    distinct fields, so ``model_fields`` already covers both. Augments
+    with ``_EXTERNAL_ENV_NAMES`` so an example can surface a registry-
+    side toggle without the structural test treating it as a typo.
     """
-    return {name.upper() for name in Settings.model_fields}
+    return {name.upper() for name in Settings.model_fields} | _EXTERNAL_ENV_NAMES
 
 
 # -- Top-level inventory --------------------------------------------------

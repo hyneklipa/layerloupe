@@ -57,7 +57,8 @@ docker compose exec layerloupe tail -f /var/log/layerloupe/audit.log
 
 | Variable | Purpose |
 |---|---|
-| `AUTH_MODE=admin` | Activates login + delete capability. |
+| `AUTH_MODE=admin` | Activates the UI surface for delete — admin login, trash icon, auth guard. |
+| `REGISTRY_STORAGE_DELETE_ENABLED=true` | Tells the registry itself to actually perform the unlink. The two flags are a pair: with only one of them on, the delete either never reaches the registry (no UI to trigger it) or the registry refuses it (`MANIFEST_DELETE_DISABLED`). |
 | `ADMIN_USERNAME` | Admin login name. |
 | `ADMIN_PASSWORD_HASH` | Bcrypt hash of the admin password. |
 | `SESSION_SECRET` | Signs session cookies. |
