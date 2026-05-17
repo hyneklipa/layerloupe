@@ -20,7 +20,7 @@ from layerloupe.registry import (
 )
 from tests.conftest import load_fixture_bytes
 
-# -- parse_referrers — pure unit -----------------------------------------
+# -- parse_referrers - pure unit -----------------------------------------
 
 
 def test_parse_empty_body() -> None:
@@ -220,7 +220,7 @@ async def test_get_referrers_returns_typed_list() -> None:
 
 @pytest.mark.parametrize("status", [404, 405, 501])
 async def test_get_referrers_soft_fails_on_unsupported(status: int) -> None:
-    """Registries without the OCI 1.1 endpoint return one of these — we want []."""
+    """Registries without the OCI 1.1 endpoint return one of these - we want []."""
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(status)
@@ -235,7 +235,7 @@ async def test_get_referrers_soft_fails_on_unsupported(status: int) -> None:
 
 
 async def test_get_referrers_propagates_other_errors() -> None:
-    """A 500 from the registry is not a "not implemented" signal — surface it."""
+    """A 500 from the registry is not a "not implemented" signal - surface it."""
     from layerloupe.registry import RegistryHTTPError
 
     def handler(request: httpx.Request) -> httpx.Response:

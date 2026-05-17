@@ -167,7 +167,7 @@ def test_build_layer_rows_history_without_layers() -> None:
 
 
 def test_build_layer_rows_extra_layers_appended() -> None:
-    """Registry returned more layers than history narrates — keep them."""
+    """Registry returned more layers than history narrates - keep them."""
     rows = build_layer_rows(
         [_layer(10), _layer(20), _layer(30)],
         [_hist(created_by="RUN a"), _hist(created_by="RUN b")],
@@ -258,7 +258,7 @@ def test_layer_rows_render_dockerfile_body(
         body = client.get("/partials/repositories/foo/manifests/latest").text
     assert 'class="dockerfile-body"' in body
     # The image_config fixture has a "RUN apt-get install -y curl" entry
-    # — verify the body text comes through.
+    # - verify the body text comes through.
     assert "apt-get" in body or "/bin/bash" in body
 
 

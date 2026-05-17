@@ -31,7 +31,7 @@ def test_verify_false_propagates_to_ssl_context() -> None:
     """`verify=False` must reach the underlying SSL context.
 
     httpx still creates a context, but with verify_mode=CERT_NONE and
-    check_hostname=False — the only states a self-signed registry will accept.
+    check_hostname=False - the only states a self-signed registry will accept.
     """
     import ssl
 

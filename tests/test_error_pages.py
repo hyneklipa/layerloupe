@@ -64,7 +64,7 @@ def test_404_for_api_path_returns_json() -> None:
 
 
 def test_404_for_web_path_returns_json() -> None:
-    """``/web/`` is for htmx-mutating routes — htmx handles JSON details."""
+    """``/web/`` is for htmx-mutating routes - htmx handles JSON details."""
     with TestClient(app) as client:
         response = client.delete("/web/repositories/foo/manifests/bogus-no-such")
     # Without allow_delete it's 403, but still JSON. Either way:
@@ -127,7 +127,7 @@ def test_500_for_api_path_returns_json() -> None:
         ]
 
 
-# -- Empty repository list — first-run vs filtered -----------------------
+# -- Empty repository list - first-run vs filtered -----------------------
 
 
 def test_empty_repos_no_filter_renders_first_run_hint(
@@ -157,7 +157,7 @@ def test_empty_repos_with_filter_renders_no_match_message(
     assert "no repositories yet" not in body
 
 
-# -- Empty tag list — repo-empty vs filter-no-match ----------------------
+# -- Empty tag list - repo-empty vs filter-no-match ----------------------
 
 
 def test_empty_tags_no_filter(
@@ -196,7 +196,7 @@ def test_empty_tags_with_filter(
     assert "<code>no-such</code>" in body
 
 
-# -- Registry unreachable — error banner remains polite ------------------
+# -- Registry unreachable - error banner remains polite ------------------
 
 
 def test_registry_unreachable_renders_friendly_error(

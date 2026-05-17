@@ -205,7 +205,7 @@ def test_layerloupe_js_rebinds_after_htmx_swap() -> None:
     """Copy buttons in newly-fetched fragments must work too."""
     with TestClient(app) as client:
         js = client.get("/static/layerloupe.js").text
-    # Already covered indirectly by the info-panel tests — make explicit here.
+    # Already covered indirectly by the info-panel tests - make explicit here.
     assert "htmx:afterSwap" in js
     assert "bindCopyButtons" in js
 

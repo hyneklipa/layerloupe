@@ -1,7 +1,7 @@
 """Session credential encryption.
 
 The signed session cookie keeps a tampered client from forging credentials,
-but it does **not** keep them secret — anyone who reads the cookie reads
+but it does **not** keep them secret - anyone who reads the cookie reads
 the password. We layer Fernet on top so the password ciphertext sits in
 the cookie instead of the plaintext.
 
@@ -12,7 +12,7 @@ URL-safe base64, which is what Fernet expects (32 bytes).
 If the operator rotates ``SESSION_SECRET``, every existing
 encrypted password becomes garbage; ``decrypt_password`` returns ``None``,
 and the session-credential layer falls back to env-configured creds. That's
-the desired behavior — invalidating in-flight sessions on secret rotation.
+the desired behavior - invalidating in-flight sessions on secret rotation.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ def decrypt_password(secret: str, ciphertext: str) -> str | None:
     """Decrypt a previously-encrypted password.
 
     Returns ``None`` if the ciphertext was forged, the secret rotated, or
-    the input isn't valid base64 — in any of those cases the calling code
+    the input isn't valid base64 - in any of those cases the calling code
     should treat it as "no session creds" and fall back to env auth.
     """
     fernet = Fernet(_derive_fernet_key(secret))

@@ -276,7 +276,7 @@ def test_image_with_only_labels_still_renders_annotations(
 def test_no_annotations_renders_empty_state(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """Image with truly no annotations or labels — show a hint, not an empty table."""
+    """Image with truly no annotations or labels - show a hint, not an empty table."""
 
     def handler(request: httpx.Request) -> httpx.Response:
         path = request.url.path
@@ -314,7 +314,7 @@ def test_no_annotations_renders_empty_state(
 def test_labels_no_longer_in_configuration_tab(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """Labels were moved to Annotations — Config tab shouldn't double-render them."""
+    """Labels were moved to Annotations - Config tab shouldn't double-render them."""
     use_handler["handler"] = _make_handler("manifest_oci", MediaType.OCI_IMAGE_MANIFEST.value)
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text

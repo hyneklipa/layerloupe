@@ -2,9 +2,9 @@ name: E2E
 
 # End-to-end test: spin up a real ``registry:2``, seed it with a handful
 # of real public images, then run the tests in ``tests/e2e/`` against it.
-# This is the level of fidelity ``httpx.MockTransport`` can't reach —
+# This is the level of fidelity ``httpx.MockTransport`` can't reach -
 # header casing, redirect behavior, what the registry actually does on
-# DELETE — and the place where compatibility regressions land first.
+# DELETE - and the place where compatibility regressions land first.
 
 on:
   push:
@@ -66,7 +66,7 @@ jobs:
             echo "▶ Mirroring $image..."
             crane copy --insecure "$image" "localhost:5000/$image"
           done
-          # Dedicated throwaway for the destructive delete test — keep this
+          # Dedicated throwaway for the destructive delete test - keep this
           # in its own repo so a rerun doesn't fight other tests.
           echo "▶ Mirroring delete-target..."
           crane copy --insecure busybox:1.36 localhost:5000/scratch/delete-me:1.0

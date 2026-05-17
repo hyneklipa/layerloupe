@@ -1,4 +1,4 @@
-"""Tests for :func:`to_unified` — every fixture round-trips into a UnifiedManifest."""
+"""Tests for :func:`to_unified` - every fixture round-trips into a UnifiedManifest."""
 
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ def test_to_unified_oci_image_with_config(oci_image_config: ImageConfig) -> None
 
 
 def test_to_unified_oci_image_without_config_yields_no_platforms() -> None:
-    """Without a fetched image_config we don't know architecture/os — empty platforms."""
+    """Without a fetched image_config we don't know architecture/os - empty platforms."""
     mr = _mr("manifest_oci", ManifestKind.OCI_IMAGE, MediaType.OCI_IMAGE_MANIFEST.value)
     unified = to_unified(mr)
 
@@ -219,7 +219,7 @@ def test_to_unified_schema_1_synthesizes_config_from_v1compatibility() -> None:
     assert unified.config.data.architecture == "amd64"
     assert unified.config.data.os == "linux"
 
-    # History was decoded — both entries surface with created_by from container_config.Cmd.
+    # History was decoded - both entries surface with created_by from container_config.Cmd.
     assert len(unified.config.data.history) == 2
     assert unified.config.data.history[0].created_by is not None
     assert "CMD" in unified.config.data.history[0].created_by

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from layerloupe.config import SettingsDep
-from layerloupe.deps import RegistryClientDep
+from layerloupe.deps import BrowseAccessDep, RegistryClientDep
 from layerloupe.utils import sort_tags
 
 router = APIRouter(prefix="/api/repositories", tags=["repositories"])
@@ -27,6 +27,7 @@ class TagList(BaseModel):
 async def list_repositories(
     client: RegistryClientDep,
     settings: SettingsDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None, description="Case-insensitive substring filter."),
     limit: int = Query(default=500, ge=1, le=10_000),
 ) -> RepositoryList:
@@ -49,6 +50,7 @@ async def list_tags(
     repository: str,
     client: RegistryClientDep,
     settings: SettingsDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None, description="Case-insensitive substring filter."),
     limit: int = Query(default=2_000, ge=1, le=10_000),
 ) -> TagList:

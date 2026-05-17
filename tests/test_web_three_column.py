@@ -21,7 +21,7 @@ def _digest_of(data: bytes) -> str:
 
 @pytest.fixture
 def web_handler() -> Iterator[dict[str, Callable[[httpx.Request], httpx.Response]]]:
-    """Slot test fills with a registry handler — wired into the dependency.
+    """Slot test fills with a registry handler - wired into the dependency.
 
     Default handler serves a small fixture: 4 repos, the manifest_oci fixture
     for tag listings + manifest fetches. Tests can swap the handler or
@@ -143,7 +143,7 @@ def test_repos_fragment_returns_just_the_list(
         response = client.get("/partials/repositories")
     assert response.status_code == 200
     body = response.text
-    # Fragment, not full page — no <!DOCTYPE>.
+    # Fragment, not full page - no <!DOCTYPE>.
     assert "<!DOCTYPE" not in body
     assert 'id="repo-list"' in body
     assert "alpine" in body
@@ -234,7 +234,7 @@ def test_empty_state_has_filter_slot_for_oob_swap(
         body = client.get("/").text
     assert 'id="tag-filter-slot"' in body
     assert 'id="tag-count"' in body
-    # No filter input yet — the slot is empty until a repo is picked.
+    # No filter input yet - the slot is empty until a repo is picked.
     assert 'id="tag-filter-input"' not in body
 
 
@@ -276,7 +276,7 @@ def test_tags_fragment_skips_oob_swaps_on_filter_trigger(
 def test_image_manifest_renders_overview_and_layers_tabs(
     web_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """Layers can dwarf the rest of the panel — image manifests split into
+    """Layers can dwarf the rest of the panel - image manifests split into
     Overview (default, with config + annotations + signatures) and Layers."""
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text
@@ -297,7 +297,7 @@ def test_image_manifest_renders_overview_and_layers_tabs(
 def test_index_manifest_renders_without_tabs(
     web_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """Multi-arch index manifests have no layers — wrapping just
+    """Multi-arch index manifests have no layers - wrapping just
     Annotations in tabs would be visual noise."""
     import hashlib
 
@@ -394,7 +394,7 @@ def test_deep_link_to_manifest_shows_info_panel(
     assert "alpine" in body  # repos column
     assert ">latest<" in body  # tags column
     assert "docker pull" in body  # info column
-    # And no JS was needed to get here — htmx hadn't run yet.
+    # And no JS was needed to get here - htmx hadn't run yet.
 
 
 def test_deep_link_with_404_repo_renders_error(

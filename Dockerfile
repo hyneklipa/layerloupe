@@ -3,17 +3,12 @@
 # LayerLoupe container image.
 #
 # Two stages:
-#   1. ``deps``    — installs runtime deps into ``/app/.venv`` using uv,
+#   1. ``deps``    - installs runtime deps into ``/app/.venv`` using uv,
 #                    leveraging the official uv binary image so we don't
 #                    pay for a curl install dance.
-#   2. ``runtime`` — slim Python image with the venv copied in and the
+#   2. ``runtime`` - slim Python image with the venv copied in and the
 #                    application code on top. Runs as a non-root user.
 #
-# Note: this project uses hand-written CSS instead of Tailwind, so there's
-# no Tailwind build stage here — ``layerloupe/web/static/layerloupe.css`` is
-# shipped as-is. If we ever switch to Tailwind, drop a ``tailwind-build``
-# stage in front of ``runtime`` and ``COPY --from=tailwind-build`` the
-# minified output into ``/app/layerloupe/web/static/``.
 
 # -- Stage 1: build the project venv via uv -----------------------------
 FROM python:3.14-slim AS deps
@@ -53,12 +48,12 @@ LABEL org.opencontainers.image.title="LayerLoupe" \
 
 # Run as a known non-root UID so volume permissions and Kubernetes
 # ``runAsNonRoot: true`` policies don't bite at deploy time.
-RUN groupadd --system --gid 1001 layerloupe \
- && useradd --system --uid 1001 --gid layerloupe --home /app --shell /usr/sbin/nologin layerloupe
+RUN groupadd --system --gid 1001 layerloupe && \
+    useradd --system --uid 1001 --gid layerloupe --home /app --shell /usr/sbin/nologin layerloupe
 
 WORKDIR /app
 
-# Bring in the prebuilt venv (and only the venv — no source from the
+# Bring in the prebuilt venv (and only the venv - no source from the
 # deps stage). Code is copied separately so an app-only change doesn't
 # bust the deps layer cache.
 COPY --from=deps --chown=layerloupe:layerloupe /app/.venv /app/.venv
@@ -73,7 +68,7 @@ USER layerloupe
 
 EXPOSE 8080
 
-# Container-level liveness check — runs the same probe the readiness
+# Container-level liveness check - runs the same probe the readiness
 # endpoint exposes, just over the loopback.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD python -c "import sys, urllib.request; \

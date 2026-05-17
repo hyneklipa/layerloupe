@@ -47,7 +47,7 @@ def test_classify_media_type(content_type: str | None, expected: ManifestKind) -
 
 
 def test_manifest_accept_header_includes_all_six_types() -> None:
-    """The header must list every modern manifest type — order = preference."""
+    """The header must list every modern manifest type - order = preference."""
     assert len(MANIFEST_ACCEPT_TYPES) == 6
     for media_type in MediaType:
         assert media_type.value in MANIFEST_ACCEPT_HEADER

@@ -2,7 +2,7 @@
 # Seed a freshly-started ``registry:2`` with a handful of small public
 # images so the LayerLoupe UI has something interesting to show on first run.
 #
-# Run inside the ``gcr.io/go-containerregistry/crane:debug`` image — the
+# Run inside the ``gcr.io/go-containerregistry/crane:debug`` image - the
 # ``:debug`` tag bundles a busybox shell, while the binary lives at
 # /ko-app/crane. We pull each image from Docker Hub and copy it into the
 # in-stack registry on plain HTTP.
@@ -15,7 +15,7 @@ set -eu
 
 REGISTRY="${REGISTRY:-registry:5000}"
 
-# Mix of single-arch + multi-arch + tiny — covers the manifest variants
+# Mix of single-arch + multi-arch + tiny - covers the manifest variants
 # the UI was designed around.
 IMAGES="
 alpine:3.20

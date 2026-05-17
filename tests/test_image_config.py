@@ -50,7 +50,7 @@ def test_image_config_parses_full_fixture(image_config: dict[str, Any]) -> None:
 
 
 def test_image_config_minimal() -> None:
-    """A minimum-viable image config — just architecture and os."""
+    """A minimum-viable image config - just architecture and os."""
     config = ImageConfig.model_validate({"architecture": "arm64", "os": "linux"})
     assert config.architecture == "arm64"
     assert config.os == "linux"
@@ -60,7 +60,7 @@ def test_image_config_minimal() -> None:
 
 
 def test_image_config_ignores_unknown_fields() -> None:
-    """Real-world configs include vendor-specific fields — must not raise."""
+    """Real-world configs include vendor-specific fields - must not raise."""
     raw = {
         "architecture": "amd64",
         "os": "linux",

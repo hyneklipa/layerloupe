@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from layerloupe.audit import log_manifest_deleted
 from layerloupe.config import SettingsDep
-from layerloupe.deps import RegistryClientDep
+from layerloupe.deps import AdminDep, BrowseAccessDep, RegistryClientDep
 from layerloupe.registry import (
     ImageConfig,
     ManifestKind,
@@ -84,10 +84,11 @@ async def get_manifest(
     reference: str,
     client: RegistryClientDep,
     settings: SettingsDep,
+    _identity: BrowseAccessDep,
 ) -> UnifiedManifest:
     """Fetch a manifest, attach the image config (when applicable), and unify.
 
-    For multi-arch indexes we don't follow into a child manifest here — the
+    For multi-arch indexes we don't follow into a child manifest here - the
     UI presents a platform picker and the next request includes the chosen
     digest as ``reference``.
     """
@@ -99,7 +100,7 @@ async def get_manifest(
         try:
             image_config = await client.get_image_config(repository, manifest)
         except (RegistryError, RegistryHTTPError):
-            # Config fetch is best-effort — UI can still render manifest-level data.
+            # Config fetch is best-effort - UI can still render manifest-level data.
             image_config = None
 
     public_url = str(settings.registry_public_url or settings.registry_url)
@@ -125,13 +126,14 @@ async def get_manifest_config(
     repository: str,
     reference: str,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
 ) -> ImageConfig:
-    """Fetch just the image config blob — useful for power users / debugging."""
+    """Fetch just the image config blob - useful for power users / debugging."""
     manifest = await client.get_manifest(repository, reference)
     try:
         return await client.get_image_config(repository, manifest)
     except RegistryError as e:
-        # Index / schema 1 manifests have no separate config blob — caller error.
+        # Index / schema 1 manifests have no separate config blob - caller error.
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
@@ -143,8 +145,9 @@ async def get_manifest_referrers(
     repository: str,
     reference: str,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
 ) -> ReferrersResult:
-    """OCI 1.1 referrers API — signatures, SBOMs, attestations attached to a manifest.
+    """OCI 1.1 referrers API - signatures, SBOMs, attestations attached to a manifest.
 
     Resolves a tag reference to a digest (referrers API requires a digest).
     Returns an empty list when the registry doesn't implement the endpoint
@@ -173,24 +176,24 @@ async def delete_manifest(
     request: Request,
     client: RegistryClientDep,
     settings: SettingsDep,
+    _identity: AdminDep,
 ) -> DeleteResult:
     """Delete a manifest by digest (resolving from a tag if needed).
 
-    Gated by ``ALLOW_DELETE`` — when off the UI shouldn't even show
-    the button, but the API hard-fails too as a defense in depth.
+    Gated by ``AdminDep`` - the dependency raises ``401`` for anonymous
+    callers and ``403`` for authenticated-but-not-admin ones before this
+    handler runs. The UI doesn't show the button for non-admin sessions
+    either; this guard is defense in depth against direct API hits.
 
-    On success an audit event ``manifest_deleted`` is emitted with actor,
-    repository, reference, and resolved digest. ``AUDIT_LOG_PATH``
-    additionally appends the same record to a JSONL file.
+    On success an audit event ``manifest_deleted`` is emitted with
+    actor, repository, reference, and resolved digest.
+    ``AUDIT_LOG_PATH`` additionally appends the same record to a JSONL
+    file.
 
-    Note: the registry's storage GC must run for layer blobs to actually
-    free disk. The UI surfaces this caveat in the confirm dialog (M3.7).
+    Note: the registry's storage GC must run for layer blobs to
+    actually free disk. The UI surfaces this caveat in the confirm
+    dialog.
     """
-    if not settings.allow_delete:
-        raise HTTPException(
-            status_code=403,
-            detail="Manifest deletion is disabled (set ALLOW_DELETE=true to enable).",
-        )
     digest = await client.delete_manifest(repository, reference)
     log_manifest_deleted(
         request,

@@ -59,7 +59,7 @@ def test_runs_on_push_and_pull_request(workflow: dict[str, Any]) -> None:
 
 
 def test_workflow_is_read_only_on_contents(workflow: dict[str, Any]) -> None:
-    """No reason for the e2e job to write anywhere — defense in depth."""
+    """No reason for the e2e job to write anywhere - defense in depth."""
     perms = workflow["permissions"]
     assert perms["contents"] == "read"
     assert set(perms.keys()) == {"contents"}
@@ -104,7 +104,7 @@ def test_registry_service_has_healthcheck(workflow: dict[str, Any]) -> None:
 
 
 def test_install_crane_step_exists(workflow: dict[str, Any]) -> None:
-    """Seeding goes via ``crane copy`` — daemon-free and fast in CI."""
+    """Seeding goes via ``crane copy`` - daemon-free and fast in CI."""
     step = _step_by_name(workflow, "Install crane")
     assert "go-containerregistry" in step["run"]
     assert "crane version" in step["run"]
@@ -161,7 +161,7 @@ def test_e2e_pytest_step_exports_registry_url(workflow: dict[str, Any]) -> None:
 
 
 def test_actions_are_pinned(workflow: dict[str, Any]) -> None:
-    """No unpinned ``@main`` references — the e2e job runs on every PR."""
+    """No unpinned ``@main`` references - the e2e job runs on every PR."""
     for step in _job(workflow)["steps"]:
         uses = step.get("uses")
         if uses is None:

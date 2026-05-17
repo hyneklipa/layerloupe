@@ -240,7 +240,7 @@ def test_topbar_signout_form_targets_web_logout(login_enabled: None) -> None:
     # We can't trivially set the session cookie from outside; instead we
     # assert on the template's static markup by checking the un-authenticated
     # case (Sign in link, no Sign out form) and the authenticated path
-    # via a direct probe of the template — easiest is to log in.
+    # via a direct probe of the template - easiest is to log in.
     pass  # Covered by test_web_logout_clears_session_creds + logout render path.
 
 

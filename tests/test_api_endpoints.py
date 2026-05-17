@@ -17,7 +17,7 @@ from tests.conftest import load_fixture_bytes
 
 @pytest.fixture
 def registry_handler() -> Iterator[dict[str, Callable[[httpx.Request], httpx.Response]]]:
-    """Slot the test fills with a request handler — wired into the registry client."""
+    """Slot the test fills with a request handler - wired into the registry client."""
     box: dict[str, Callable[[httpx.Request], httpx.Response]] = {
         "handler": lambda r: httpx.Response(404)
     }
@@ -274,7 +274,7 @@ def test_get_manifest_config_400_for_index(
 def test_get_referrers_returns_empty_when_endpoint_missing(
     registry_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """Most current registries don't implement OCI 1.1 referrers — soft-fail."""
+    """Most current registries don't implement OCI 1.1 referrers - soft-fail."""
 
     def handler(request: httpx.Request) -> httpx.Response:
         if "/referrers/" in request.url.path:
@@ -325,7 +325,7 @@ def test_get_referrers_with_actual_referrers(
 def test_delete_manifest_disabled_by_default(
     registry_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """`ALLOW_DELETE` is false in tests → 403."""
+    """Public mode + no admin → ``require_admin`` returns 403."""
     with TestClient(app) as client:
         response = client.delete("/api/repositories/foo/manifests/latest")
     assert response.status_code == 403
@@ -335,9 +335,14 @@ def test_delete_manifest_when_enabled(
     registry_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("ALLOW_DELETE", "true")
+    """``AUTH_MODE=admin`` + logged-in admin → DELETE succeeds."""
+    from layerloupe.auth.env_provider import hash_password
     from layerloupe.config import get_settings
 
+    password = "admin-pw"
+    monkeypatch.setenv("AUTH_MODE", "admin")
+    monkeypatch.setenv("ADMIN_USERNAME", "test-admin")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", hash_password(password, rounds=4))
     get_settings.cache_clear()
 
     digest = "sha256:" + "a" * 64
@@ -355,6 +360,11 @@ def test_delete_manifest_when_enabled(
 
     try:
         with TestClient(app) as client:
+            login = client.post(
+                "/api/auth/ui-login",
+                json={"username": "test-admin", "password": password},
+            )
+            assert login.status_code == 200, login.text
             response = client.delete("/api/repositories/foo/manifests/latest")
         assert response.status_code == 200
         assert response.json() == {"digest": digest}

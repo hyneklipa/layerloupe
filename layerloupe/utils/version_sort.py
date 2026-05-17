@@ -2,7 +2,7 @@
 
 Three buckets, top-to-bottom:
 
-1. ``latest`` — always at the top.
+1. ``latest`` - always at the top.
 2. Version-like tags (``1.10``, ``v2.3.4``, ``2.0.0-rc1``), descending by
    numeric components. ``1.10`` sorts before ``1.2``; ``1.0.0`` before
    ``1.0.0-rc1`` (release beats pre-release).
@@ -11,7 +11,7 @@ Three buckets, top-to-bottom:
 
 The version detector is intentionally permissive: any tag that starts with
 an optional ``v`` followed by dot-separated digits qualifies. We don't try
-to be a full PEP 440 / semver parser — Docker tags in the wild are messy
+to be a full PEP 440 / semver parser - Docker tags in the wild are messy
 and we'd rather sort *most* of them right than reject borderline cases.
 """
 
@@ -21,7 +21,7 @@ import re
 
 LATEST_TAG = "latest"
 
-# v?<digits>(.<digits>)*([-+]<suffix>)?  — case-insensitive, optional v prefix.
+# v?<digits>(.<digits>)*([-+]<suffix>)?  - case-insensitive, optional v prefix.
 _VERSION_RE = re.compile(r"^v?(\d+(?:\.\d+)*)(?:[-+]([\w.-]+))?$", re.IGNORECASE)
 
 

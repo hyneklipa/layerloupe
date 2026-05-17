@@ -4,11 +4,11 @@
 Six manifest media types exist in the wild. They split into three
 semantic groups:
 
-* **Index / manifest list** — multi-arch pointer (OCI Image Index, Docker
+* **Index / manifest list** - multi-arch pointer (OCI Image Index, Docker
   Manifest List).
-* **Image manifest v2 / OCI** — single-arch with separate config blob
+* **Image manifest v2 / OCI** - single-arch with separate config blob
   (OCI Image Manifest, Docker Manifest v2).
-* **Schema 1 (legacy)** — single-arch with embedded ``v1Compatibility``
+* **Schema 1 (legacy)** - single-arch with embedded ``v1Compatibility``
   history strings (Docker Manifest v1, with or without prettyjws signatures).
 
 The :class:`ManifestKind` enum collapses to those three plus an "unknown"
@@ -78,7 +78,7 @@ def classify_media_type(content_type: str | None) -> ManifestKind:
 
     Strips parameters (``; charset=utf-8`` etc.) and is case-insensitive.
     Unknown values fall through to :attr:`ManifestKind.UNKNOWN` rather than
-    raising — lets callers decide the policy.
+    raising - lets callers decide the policy.
     """
     if not content_type:
         return ManifestKind.UNKNOWN

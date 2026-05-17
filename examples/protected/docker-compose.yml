@@ -1,0 +1,96 @@
+# LayerLoupe `protected` scenario: login required, no delete.
+#
+# Anyone hitting the URL is bounced to /login until they sign in with
+# the admin credentials below. After login they get the same read-only
+# UI as `public` mode - no delete capability.
+#
+# Bring up:
+#
+#     cp .env.example .env
+#     # regenerate ADMIN_PASSWORD_HASH and SESSION_SECRET before doing
+#     # anything other than local poking
+#     docker compose up
+
+services:
+
+  # -- Registry under test ----------------------------------------------
+  registry:
+    image: registry:2.8
+    container_name: layerloupe-registry-protected
+    restart: unless-stopped
+    environment:
+      # Delete is not granted by the UI in `protected` mode, but the
+      # registry's own delete capability is independent. Keeping it off
+      # here matches the principle of least privilege for this scenario.
+      REGISTRY_STORAGE_DELETE_ENABLED: "false"
+      # Silence the registry access log so the healthcheck doesn't
+      # drown out LayerLoupe's own log. User traffic is still logged
+      # by LayerLoupe (structured).
+      REGISTRY_LOG_ACCESSLOG_DISABLED: "true"
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/v2/"]
+      interval: 5s
+      timeout: 2s
+      retries: 6
+      start_period: 5s
+
+  # -- LayerLoupe itself --------------------------------------------------
+  #
+  # Built from the local Dockerfile so the example tracks the current
+  # source - change to a pinned image (``image: layerloupe:0.1.0``)
+  # once you're deploying for real.
+  layerloupe:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: layerloupe-app-protected
+    restart: unless-stopped
+    depends_on:
+      registry:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      REGISTRY_URL: "http://registry:5000"
+      REGISTRY_PUBLIC_URL: "http://localhost:5000"
+      # Scenario knobs - these are what makes this a `protected` deploy.
+      AUTH_MODE: "${AUTH_MODE:-protected}"
+      ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
+      ADMIN_PASSWORD_HASH: "${ADMIN_PASSWORD_HASH}"
+      SESSION_SECRET: "${SESSION_SECRET}"
+      LOG_JSON: "${LOG_JSON:-false}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+
+  # -- One-shot seeder: mirror a few public images into the registry ---
+  seed:
+    image: gcr.io/go-containerregistry/crane:debug
+    container_name: layerloupe-seed-protected
+    depends_on:
+      registry:
+        condition: service_healthy
+    restart: "no"
+    entrypoint:
+      - /busybox/sh
+      - -c
+      - |
+        set -eu
+        echo "[i] Seeding registry:5000 with public test images..."
+        for image in alpine:3.20 alpine:latest hello-world:latest busybox:1.36; do
+          echo "[i] $$image > registry:5000/$$image"
+          if ! /ko-app/crane copy --insecure "$$image" "registry:5000/$$image"; then
+            echo "[!] Failed to mirror $$image (offline? rate-limited?). Continuing." >&2
+          fi
+        done
+        echo "[i] Seed complete. Open http://localhost:8080 and sign in."
+
+volumes:
+  registry-data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

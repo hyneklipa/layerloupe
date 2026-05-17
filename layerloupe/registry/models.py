@@ -3,11 +3,11 @@
 The **image config blob** (:class:`ImageConfig`) plus the manifest
 variants:
 
-* :class:`OciImageManifest` and :class:`DockerManifestV2` — single-arch
+* :class:`OciImageManifest` and :class:`DockerManifestV2` - single-arch
   images with a separate config blob.
-* :class:`OciImageIndex` and :class:`DockerManifestList` — multi-arch
+* :class:`OciImageIndex` and :class:`DockerManifestList` - multi-arch
   pointers (one descriptor per platform).
-* :class:`DockerSchema1Manifest` — legacy schema 1 with embedded
+* :class:`DockerSchema1Manifest` - legacy schema 1 with embedded
   ``v1Compatibility`` history strings.
 
 Field names in the JSON wire format mix camelCase (``schemaVersion``,
@@ -37,7 +37,7 @@ class ContainerConfig(BaseModel):
     """The runtime configuration block of an image config blob.
 
     Maps to the ``config`` (or, on schema 1, ``container_config``) sub-object
-    of an image config. All fields are optional — minimal images may set very
+    of an image config. All fields are optional - minimal images may set very
     few of them.
     """
 
@@ -85,7 +85,7 @@ class ImageConfig(BaseModel):
 
     Reachable from a manifest via ``manifest.config.digest``. Carries the
     runtime configuration, the rootfs (layer ``diff_ids``), and the build
-    history — i.e. everything the UI needs to render an image's "details"
+    history - i.e. everything the UI needs to render an image's "details"
     panel beyond the manifest itself.
     """
 
@@ -112,7 +112,7 @@ class Descriptor(BaseModel):
 
     * ``manifest.config`` (single-arch images point at their config blob).
     * ``manifest.layers[]`` (filesystem layer blobs).
-    * ``index.manifests[]`` (each entry of an index — see
+    * ``index.manifests[]`` (each entry of an index - see
       :class:`IndexManifestEntry`, which extends this with platform info).
     """
 
@@ -152,7 +152,7 @@ class IndexManifestEntry(Descriptor):
 
 
 class OciImageManifest(BaseModel):
-    """OCI Image Manifest v1 — single-arch image with a config blob and layers.
+    """OCI Image Manifest v1 - single-arch image with a config blob and layers.
 
     ``subject`` lands with OCI 1.1 (referrers API). Older registries omit
     it; we tolerate that.
@@ -169,7 +169,7 @@ class OciImageManifest(BaseModel):
 
 
 class DockerManifestV2(BaseModel):
-    """Docker Image Manifest v2 schema 2 — structurally same as
+    """Docker Image Manifest v2 schema 2 - structurally same as
     :class:`OciImageManifest`, distinct mediaType vocabulary.
 
     Kept as a separate class so consumers can branch on ``isinstance`` /
@@ -188,7 +188,7 @@ class DockerManifestV2(BaseModel):
 
 
 class OciImageIndex(BaseModel):
-    """OCI Image Index v1 — ordered list of per-platform manifest descriptors."""
+    """OCI Image Index v1 - ordered list of per-platform manifest descriptors."""
 
     model_config = _BASE_CONFIG
 
@@ -200,7 +200,7 @@ class OciImageIndex(BaseModel):
 
 
 class DockerManifestList(BaseModel):
-    """Docker Manifest List v2 — Docker's pre-OCI multi-arch format.
+    """Docker Manifest List v2 - Docker's pre-OCI multi-arch format.
 
     Same structure as :class:`OciImageIndex` minus ``subject`` / ``annotations``.
     """
@@ -227,7 +227,7 @@ class V1HistoryEntry(BaseModel):
     """One schema 1 history entry; ``v1_compatibility`` is itself a JSON string.
 
     The string is parsed lazily by :mod:`layerloupe.registry.parser`,
-    not here — this layer just carries the raw JSON over the wire.
+    not here - this layer just carries the raw JSON over the wire.
     """
 
     model_config = _BASE_CONFIG
@@ -248,7 +248,7 @@ class V1Signature(BaseModel):
 class DockerSchema1Manifest(BaseModel):
     """Legacy Docker manifest schema 1 with embedded ``v1Compatibility`` history.
 
-    Read-only territory — modern registries deprecated schema 1 pushes
+    Read-only territory - modern registries deprecated schema 1 pushes
     long ago. We model it just well enough to fall back gracefully when an
     old registry returns it.
     """

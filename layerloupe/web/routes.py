@@ -4,7 +4,7 @@ Two route flavors:
 
 * **Page routes** at ``/``, ``/repositories``, ``/repositories/{repo}``,
   ``/repositories/{repo}/manifests/{ref}``. Render the full ``index.html``
-  shell with as many columns server-rendered as the URL provides info for —
+  shell with as many columns server-rendered as the URL provides info for -
   so a deep link goes straight to the right state on hard reload.
 
 * **Fragment routes** at ``/partials/...``. Return just the inner ``<ul>``
@@ -29,7 +29,13 @@ from layerloupe import __version__
 from layerloupe.api.auth import _verify_credentials
 from layerloupe.audit import log_manifest_deleted
 from layerloupe.config import SettingsDep
-from layerloupe.deps import RegistryClientDep
+from layerloupe.deps import (
+    AdminDep,
+    AuthProviderDep,
+    BrowseAccessDep,
+    RegistryClientDep,
+    get_identity,
+)
 from layerloupe.registry import (
     AnnotationRow,
     ImageConfig,
@@ -81,7 +87,7 @@ async def _fetch_repos(client: RegistryClient, q: str | None) -> tuple[list[str]
     """Return ``(repos, error)``.
 
     HTML routes prefer rendering the shell with an inline error banner over
-    a hard 5xx — operators can still interact with the UI (theme toggle,
+    a hard 5xx - operators can still interact with the UI (theme toggle,
     sign in / out) when the registry is briefly unavailable.
     """
     items: list[str] = []
@@ -119,7 +125,7 @@ async def _fetch_manifest(
     if manifest.digest is not None:
         pull_digest = _build_pull_command(public_url, repository, manifest.digest)
         # When the user navigated to a digest URL, ``pull`` already equals
-        # the digest variant — only show it once.
+        # the digest variant - only show it once.
         if pull_digest == pull:
             pull = None
     return to_unified(
@@ -138,7 +144,7 @@ async def _fetch_referrers(
     repository: str,
     manifest: UnifiedManifest | None,
 ) -> list[Referrer]:
-    """Best-effort referrers fetch — empty on any failure.
+    """Best-effort referrers fetch - empty on any failure.
 
     The web layer never wants to fail a manifest render because the
     referrers API hiccupped, so we swallow connection errors and HTTP
@@ -233,7 +239,7 @@ async def _annotation_rows_with_fallback(
 ) -> tuple[list[AnnotationRow], str | None]:
     """Return ``(rows, fallback_label)``.
 
-    Multi-arch indexes often carry no annotations of their own — useful
+    Multi-arch indexes often carry no annotations of their own - useful
     metadata sits on each per-platform child. When the index is empty we
     try the child matching the host's architecture so the panel doesn't
     look unhelpfully blank. ``fallback_label`` is the human-readable
@@ -250,7 +256,7 @@ async def _annotation_rows_with_fallback(
         None,
     )
     if pick is None:
-        # The host's arch isn't in the index — pick any non-attestation
+        # The host's arch isn't in the index - pick any non-attestation
         # child so the user still sees something.
         pick = next(
             (
@@ -276,8 +282,17 @@ async def _annotation_rows_with_fallback(
 
 
 def _shell_context(request: Request, settings: object) -> dict[str, Any]:
-    """Topbar / footer context shared by every page render."""
-    s = settings  # narrow typing — avoid importing Settings just for this
+    """Topbar / footer context shared by every page render.
+
+    Drives the topbar (Sign-in vs. user pill, Sign-out button) and the
+    trash-icon visibility on manifest panels. ``is_admin`` is derived
+    from the current session ``Identity``, not from settings - so a
+    logged-in admin sees the trash icon in ``admin`` mode but not in
+    ``protected`` mode (where the provider hands back an empty role
+    set even for the admin credential).
+    """
+    s = settings  # narrow typing - avoid importing Settings just for this
+    identity = get_identity(request)
     return {
         "title": getattr(s, "title", "LayerLoupe"),
         "version": __version__,
@@ -285,10 +300,13 @@ def _shell_context(request: Request, settings: object) -> dict[str, Any]:
             getattr(s, "registry_public_url", None) or getattr(s, "registry_url", "")
         ),
         "allow_registry_login": getattr(s, "allow_registry_login", False),
-        "allow_delete": getattr(s, "allow_delete", False),
+        "auth_mode": getattr(s, "auth_mode", "public"),
+        "identity": identity,
+        "is_admin": identity.is_admin,
         "session_username": request.session.get("registry_username")
         if hasattr(request, "session")
         else None,
+        "ui_username": identity.username if not identity.is_anonymous else None,
     }
 
 
@@ -300,6 +318,7 @@ async def home(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None),
 ) -> HTMLResponse:
     repos, error = await _fetch_repos(client, q)
@@ -325,10 +344,11 @@ async def repositories_page(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    identity: BrowseAccessDep,
     q: str | None = Query(default=None),
 ) -> HTMLResponse:
-    """Same as ``/`` — explicit URL exists so links from the topbar work."""
-    return await home(request, settings, client, q)
+    """Same as ``/`` - explicit URL exists so links from the topbar work."""
+    return await home(request, settings, client, identity, q)
 
 
 @router.get("/repositories/{repository:path}/tags", response_class=HTMLResponse)
@@ -337,6 +357,7 @@ async def repository_page(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None, description="Tag filter."),
     repo_q: str | None = Query(default=None, description="Repo column filter."),
 ) -> HTMLResponse:
@@ -374,6 +395,7 @@ async def manifest_page(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     repo_q: str | None = Query(default=None),
     tag_q: str | None = Query(default=None),
     platform: str | None = Query(default=None),
@@ -440,6 +462,7 @@ async def repos_fragment(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None),
     selected_repo: str | None = Query(default=None),
 ) -> HTMLResponse:
@@ -462,6 +485,7 @@ async def tags_fragment(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     q: str | None = Query(default=None),
     selected_tag: str | None = Query(default=None),
 ) -> Response:
@@ -474,7 +498,7 @@ async def tags_fragment(
       swap so the user lands on usable detail without a second click. We
       also push the URL forward to ``/repositories/<repo>/manifests/<tag>``
       for shareability.
-    * The tag-filter input. The user is still inside the same repo —
+    * The tag-filter input. The user is still inside the same repo -
       leave the manifest panel alone and just refresh the list.
     """
     try:
@@ -520,7 +544,7 @@ async def tags_fragment(
             "tag_filter": q or "",
             "selected_tag": auto_tag if auto_select else selected_tag,
             "error": error,
-            # OOB swap controls — when ``not is_tag_filter`` we always emit
+            # OOB swap controls - when ``not is_tag_filter`` we always emit
             # something into ``#info-column-body`` (a manifest, or an empty
             # placeholder if the fetch failed / the repo is empty).
             "clear_info_column": not is_tag_filter,
@@ -531,7 +555,8 @@ async def tags_fragment(
             "auto_layer_rows": _layer_rows(auto_manifest),
             "auto_display_platforms": _display_platforms(auto_manifest),
             "auto_referrers": auto_referrers,
-            "allow_delete": settings.allow_delete,
+            # Trash-icon visibility for the auto-selected manifest.
+            "is_admin": get_identity(request).is_admin,
         },
     )
     if auto_select and auto_tag is not None:
@@ -549,6 +574,7 @@ async def manifest_fragment(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: BrowseAccessDep,
     platform: str | None = Query(default=None),
 ) -> HTMLResponse:
     referrers: list[Referrer] = []
@@ -586,11 +612,11 @@ async def manifest_fragment(
             "display_platforms": _display_platforms(manifest),
             "referrers": referrers,
             "parent_reference": parent_reference,
-            "allow_delete": settings.allow_delete,
+            "is_admin": get_identity(request).is_admin,
             "error": error,
             # Tells the partial to OOB-swap the trash-icon into
             # ``#manifest-actions`` (in the Manifest column header). Only
-            # set on fragment renders — full-page renders include the icon
+            # set on fragment renders - full-page renders include the icon
             # inline via index.html, so an OOB swap there would duplicate.
             "swap_actions": True,
         },
@@ -607,23 +633,19 @@ async def delete_manifest_via_web(
     request: Request,
     settings: SettingsDep,
     client: RegistryClientDep,
+    _identity: AdminDep,
 ) -> Response:
     """Delete a manifest from the htmx UI.
 
     On success returns ``204`` with ``HX-Redirect: /repositories/<repo>/tags``
-    so htmx hard-navigates to the tag list — the deleted tag is already gone
+    so htmx hard-navigates to the tag list - the deleted tag is already gone
     from the freshly-rendered page, no manual fragment juggling needed. An
     audit event ``manifest_deleted`` is emitted alongside (see :mod:`layerloupe.audit`).
 
-    The route is gated by :attr:`Settings.allow_delete` so a registry that
-    doesn't allow deletes (or an operator who hasn't opted in) can't reach
-    the destructive code path even if the modal is forced open client-side.
+    Gated by ``AdminDep`` - anonymous → 401, non-admin → 403. The UI
+    doesn't surface the trash-icon for non-admin sessions either; this
+    guard catches direct-htmx-DELETE attempts.
     """
-    if not settings.allow_delete:
-        raise HTTPException(
-            status_code=403,
-            detail="Manifest deletion is disabled (set ALLOW_DELETE=true).",
-        )
     digest = await client.delete_manifest(repository, reference)
     log_manifest_deleted(
         request,
@@ -642,10 +664,20 @@ async def delete_manifest_via_web(
 
 
 def _safe_redirect(target: str | None) -> str:
-    """Whitelist same-origin paths only — refuse external / protocol-relative URLs."""
+    """Whitelist same-origin paths only - refuse external / protocol-relative URLs."""
     if not target or not target.startswith("/") or target.startswith("//"):
         return "/"
     return target
+
+
+def _login_options(settings: SettingsDep) -> tuple[bool, bool]:
+    """Return ``(ui_login_enabled, registry_login_enabled)``.
+
+    The login page picks its template branch from these two booleans:
+    show the UI-identity form, the registry-creds form, both as tabs,
+    or refuse with 403 when neither is on.
+    """
+    return settings.auth_mode != "public", settings.allow_registry_login
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -654,10 +686,21 @@ async def login_page(
     settings: SettingsDep,
     next: str | None = Query(default=None),
 ) -> HTMLResponse:
-    if not settings.allow_registry_login:
+    """Render the login page, with whichever forms apply.
+
+    With ``AUTH_MODE != public`` the UI identity form is available.
+    With ``ALLOW_REGISTRY_LOGIN=true`` the registry credentials form is
+    available. Either or both can be on at once; when both are off
+    there's nothing to log in to, so the route 403s.
+    """
+    ui_enabled, registry_enabled = _login_options(settings)
+    if not (ui_enabled or registry_enabled):
         raise HTTPException(
             status_code=403,
-            detail="Per-user registry login is disabled (set ALLOW_REGISTRY_LOGIN=true to enable).",
+            detail=(
+                "Login is not enabled (set AUTH_MODE=protected/admin or "
+                "ALLOW_REGISTRY_LOGIN=true to enable a login form)."
+            ),
         )
     return templates.TemplateResponse(
         request=request,
@@ -666,7 +709,11 @@ async def login_page(
             **_shell_context(request, settings),
             "next": _safe_redirect(next),
             "username": "",
+            "ui_username": "",
             "error": None,
+            "ui_error": None,
+            "ui_login_enabled": ui_enabled,
+            "registry_login_enabled": registry_enabled,
         },
     )
 
@@ -679,6 +726,12 @@ async def login_submit(
     password: str = Form(min_length=1),
     next: str = Form(default="/"),
 ) -> Response:
+    """Submit the **registry credentials** form (per-user upstream login).
+
+    This is the legacy ``/login`` POST kept for the orthogonal per-user
+    registry-credential feature. UI identity login lives at
+    ``/web/auth/login`` and writes a different session key.
+    """
     if not settings.allow_registry_login:
         raise HTTPException(
             status_code=403,
@@ -686,10 +739,11 @@ async def login_submit(
         )
 
     ok = await _verify_credentials(settings, username, password)
+    ui_enabled, registry_enabled = _login_options(settings)
     if not ok:
         # Re-render the form so the user can fix their credentials without
         # losing the ``next`` target. Username preserved (password not, by
-        # convention — make the user re-type to avoid stale auto-fill).
+        # convention - make the user re-type to avoid stale auto-fill).
         return templates.TemplateResponse(
             request=request,
             name="login.html",
@@ -698,7 +752,11 @@ async def login_submit(
                 **_shell_context(request, settings),
                 "next": _safe_redirect(next),
                 "username": username,
+                "ui_username": "",
                 "error": "Invalid registry credentials.",
+                "ui_error": None,
+                "ui_login_enabled": ui_enabled,
+                "registry_login_enabled": registry_enabled,
             },
         )
 
@@ -711,8 +769,64 @@ async def login_submit(
     return RedirectResponse(url=_safe_redirect(next), status_code=303)
 
 
+@router.post("/web/auth/login")
+async def ui_login_submit(
+    request: Request,
+    settings: SettingsDep,
+    provider: AuthProviderDep,
+    username: str = Form(min_length=1),
+    password: str = Form(min_length=1),
+    next: str = Form(default="/"),
+) -> Response:
+    """Submit the **UI identity** form (logs the operator in to LayerLoupe).
+
+    Writes the resulting ``Identity`` to ``session["identity"]``; the
+    orthogonal ``session["registry_username"]`` / ``..._password_enc``
+    keys are untouched so users with per-user registry creds keep
+    them across UI login / logout.
+    """
+    if settings.auth_mode == "public" or provider is None:
+        raise HTTPException(
+            status_code=403,
+            detail="UI login is not enabled (set AUTH_MODE=protected or admin to enable).",
+        )
+
+    identity = await provider.authenticate(username, password)
+    ui_enabled, registry_enabled = _login_options(settings)
+    if identity is None:
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            status_code=401,
+            context={
+                **_shell_context(request, settings),
+                "next": _safe_redirect(next),
+                "username": "",
+                "ui_username": username,
+                "error": None,
+                "ui_error": "Invalid credentials.",
+                "ui_login_enabled": ui_enabled,
+                "registry_login_enabled": registry_enabled,
+            },
+        )
+
+    request.session["identity"] = identity.to_session(auth_mode=settings.auth_mode)
+    return RedirectResponse(url=_safe_redirect(next), status_code=303)
+
+
+@router.post("/web/auth/logout")
+async def ui_logout(request: Request) -> Response:
+    """Drop the UI identity, keep any registry creds in place."""
+    request.session.pop("identity", None)
+    return RedirectResponse(url="/", status_code=303)
+
+
 @router.post("/web/logout")
 async def web_logout(request: Request) -> Response:
-    """Clear session creds and bounce back to ``/`` for the browser flow."""
+    """Clear *all* session state - both UI identity and registry creds.
+
+    Kept as the topbar's single "Sign out" target so users don't have
+    to think about which of the two logins they're in.
+    """
     request.session.clear()
     return RedirectResponse(url="/", status_code=303)

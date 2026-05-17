@@ -174,7 +174,7 @@ def test_multi_arch_index_hides_image_sections(
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text
 
-    # Index has no layers / config of its own — those sections aren't shown.
+    # Index has no layers / config of its own - those sections aren't shown.
     assert "config-section" not in body
     assert "layers-section" not in body
     # But the platform count is surfaced in the meta dl.
@@ -197,7 +197,7 @@ def test_multi_arch_index_pills_use_plain_anchor_navigation(
     assert "platform-pill" in body
     assert "?platform=sha256:" in body
     assert 'href="/repositories/foo/manifests/latest?platform=sha256:' in body
-    # No htmx plumbing on pills — full reload is the design.
+    # No htmx plumbing on pills - full reload is the design.
     pill_section = body.split('class="platform-pills"')[1].split("</div>")[0]
     assert "hx-get" not in pill_section
     assert "hx-push-url" not in pill_section
@@ -233,7 +233,7 @@ def test_header_humanizes_created_when_image_config_present(
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text
 
-    # Either "ago" or a future "in" string — depends on the fixture's date
+    # Either "ago" or a future "in" string - depends on the fixture's date
     # vs. test-time wall clock; both are valid.
     assert "ago" in body or " in " in body
 

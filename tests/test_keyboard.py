@@ -80,7 +80,7 @@ def test_keyboard_bindings_are_idempotent() -> None:
 
 
 def test_cheat_sheet_dialog_present_on_every_page() -> None:
-    """The ``<dialog id="hotkey-modal">`` is rendered by base.html — present
+    """The ``<dialog id="hotkey-modal">`` is rendered by base.html - present
     on home, error pages, the login form, etc."""
     with TestClient(app) as client:
         body = client.get("/").text
@@ -134,7 +134,7 @@ def test_cheat_sheet_close_button_present() -> None:
 
 
 def test_filter_inputs_carry_filter_input_class() -> None:
-    """``focusFilter`` looks for ``input.filter-input`` — make sure that's true."""
+    """``focusFilter`` looks for ``input.filter-input`` - make sure that's true."""
     with TestClient(app) as client:
         body = client.get("/").text
     assert 'class="filter-input"' in body

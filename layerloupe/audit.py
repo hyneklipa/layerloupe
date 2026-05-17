@@ -3,7 +3,7 @@
 The only mutation LayerLoupe performs against a registry is ``DELETE`` on a
 manifest, and operators want a clean trail of "who deleted what, when".
 This module emits a structured ``manifest_deleted`` event to the regular
-log stream, and — when ``AUDIT_LOG_PATH`` is configured — also
+log stream, and - when ``AUDIT_LOG_PATH`` is configured - also
 appends a JSON line to a dedicated audit file so the trail survives even
 if the main log gets rotated or filtered downstream.
 
@@ -30,19 +30,32 @@ _ENV_ACTOR = "env-creds"
 def _session_actor(request: Request) -> str:
     """Resolve a request to a human-recognizable actor.
 
-    Returns the session-stored username if the user has logged in via the
-    UI, else ``"env-creds"`` to indicate the action used the global,
-    env-configured registry credentials.
+    Resolution order (most specific wins):
+
+    1. UI identity (``session["identity"]["username"]``) - set by the UI
+       login flow. This is the person who actually clicked delete in
+       the LayerLoupe UI.
+    2. Registry creds (``session["registry_username"]``) - the
+       upstream-registry login. Falls back here when delete happened
+       via direct API call without a UI login (e.g. CI script that did
+       ``POST /api/auth/login`` only).
+    3. ``"env-creds"`` - neither session source available; the global
+       env-configured creds did the work.
     """
     if hasattr(request, "session"):
-        username = request.session.get("registry_username")
-        if isinstance(username, str) and username:
-            return username
+        identity_payload = request.session.get("identity")
+        if isinstance(identity_payload, dict):
+            ui_username = identity_payload.get("username")
+            if isinstance(ui_username, str) and ui_username:
+                return ui_username
+        registry_username = request.session.get("registry_username")
+        if isinstance(registry_username, str) and registry_username:
+            return registry_username
     return _ENV_ACTOR
 
 
 def _client_ip(request: Request) -> str | None:
-    """Extract the client IP — ``None`` if the request didn't carry one."""
+    """Extract the client IP - ``None`` if the request didn't carry one."""
     return request.client.host if request.client is not None else None
 
 

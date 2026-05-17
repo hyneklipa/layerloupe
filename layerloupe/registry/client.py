@@ -2,7 +2,7 @@
 
 Single responsibility: send requests, return parsed responses, normalize
 errors. Does **not** know about authentication strategies (Basic, Bearer
-token) — those live in :mod:`layerloupe.registry.auth` and are plugged in via
+token) - those live in :mod:`layerloupe.registry.auth` and are plugged in via
 ``default_headers`` (static creds) or, in later milestones, an auth hook
 callback.
 """
@@ -82,7 +82,7 @@ def _looks_like_digest(reference: str) -> bool:
 
 @dataclass(frozen=True)
 class RegistryProbe:
-    """Result of :meth:`RegistryClient.probe` — registry liveness + auth state.
+    """Result of :meth:`RegistryClient.probe` - registry liveness + auth state.
 
     ``reachable`` is the binary "did we get any HTTP response" bit, useful
     for distinguishing network failures from auth failures. ``authenticated``
@@ -112,7 +112,7 @@ class RegistryClient:
     """Thin async wrapper around ``httpx.AsyncClient`` for a single registry.
 
     Args:
-        base_url: e.g. ``"https://registry.example.com:5000"`` — the registry
+        base_url: e.g. ``"https://registry.example.com:5000"`` - the registry
             root, without the ``/v2/`` prefix (callers pass paths starting
             with ``/v2/...``).
         verify: TLS certificate verification. Pass ``False`` for self-signed
@@ -252,7 +252,7 @@ class RegistryClient:
             max_pages: Safety cap on iterations. ``None`` means follow until
                 the server stops sending ``Link: rel="next"`` (or empty page).
 
-        The filter runs client-side, after each page is fetched — registries
+        The filter runs client-side, after each page is fetched - registries
         don't support server-side filtering on this endpoint.
         """
         async for item in self._iter_paginated_cached(
@@ -274,7 +274,7 @@ class RegistryClient:
         Same semantics as :meth:`iter_repositories` but hits
         ``/v2/<repo>/tags/list``.
         """
-        # Some registries return `{"tags": null}` for empty repos — handled by
+        # Some registries return `{"tags": null}` for empty repos - handled by
         # _iter_paginated's `data.get(items_key) or []` fallback.
         path = f"/v2/{repository}/tags/list"
         async for tag in self._iter_paginated_cached(
@@ -287,7 +287,7 @@ class RegistryClient:
         """GET a blob by digest at ``/v2/<repo>/blobs/<digest>``.
 
         Returns the raw :class:`httpx.Response` so callers can decide how to
-        consume the body — parse JSON (image config), stream to disk (large
+        consume the body - parse JSON (image config), stream to disk (large
         layer tarballs), etc. The configured auth flow runs as usual.
         """
         return await self.get(f"/v2/{repository}/blobs/{digest}")
@@ -296,14 +296,14 @@ class RegistryClient:
         """Resolve and parse the image config blob referenced by a manifest.
 
         Only meaningful for **single-arch image** manifests (OCI image,
-        Docker v2). Index/list manifests carry no config of their own —
+        Docker v2). Index/list manifests carry no config of their own -
         callers must pick a per-platform child manifest first. Schema 1
         manifests embed the config as ``v1Compatibility`` strings inside
         the manifest body and are handled separately in M2.3.
         """
         if manifest.is_index:
             raise RegistryError(
-                "Cannot fetch image config from an index/manifest list — "
+                "Cannot fetch image config from an index/manifest list - "
                 "select a per-platform child manifest first"
             )
         if manifest.kind is ManifestKind.DOCKER_V1:
@@ -320,7 +320,7 @@ class RegistryClient:
         if not isinstance(digest, str) or not digest:
             raise RegistryError("Manifest's 'config' section is missing a digest")
 
-        # Image config blobs are content-addressed by digest — they are
+        # Image config blobs are content-addressed by digest - they are
         # immutable, so cache them aggressively (``blob_cache_ttl`` ≫ ``cache_ttl``).
         cache_key = ("image_config", repository, digest)
         if self._cache is not None:
@@ -352,7 +352,7 @@ class RegistryClient:
         """Fetch ``/v2/<repo>/referrers/<digest>`` and parse the response.
 
         Returns an **empty list** when the registry doesn't implement the
-        OCI 1.1 referrers API (HTTP ``404`` / ``405`` / ``501``) — those
+        OCI 1.1 referrers API (HTTP ``404`` / ``405`` / ``501``) - those
         statuses are spec-permitted ways to signal "not supported", so we
         treat them as a soft no-op rather than an error. Other HTTP errors
         propagate as :class:`RegistryHTTPError`.
@@ -383,7 +383,7 @@ class RegistryClient:
 
         Note: deleting only unlinks the manifest. Layer blobs persist until
         the registry's garbage collector runs (``registry garbage-collect``)
-        — UI should warn the operator about this.
+        - UI should warn the operator about this.
         """
         digest = (
             reference
@@ -402,7 +402,7 @@ class RegistryClient:
         if not digest:
             raise RegistryError(
                 f"Registry did not return Docker-Content-Digest for "
-                f"{repository}:{tag} — cannot delete safely without a digest"
+                f"{repository}:{tag} - cannot delete safely without a digest"
             )
         return digest
 
@@ -412,7 +412,7 @@ class RegistryClient:
         ``reference`` is a tag (``"latest"``, ``"22.04"``) or a digest
         (``"sha256:abc..."``). The full set of manifest media types is sent
         in ``Accept`` so the registry returns whatever native format the
-        manifest was pushed in — schema 1, schema 2, OCI image, or OCI
+        manifest was pushed in - schema 1, schema 2, OCI image, or OCI
         index. The response's ``Content-Type`` is what tells us which.
 
         Raises :class:`RegistryHTTPError` on non-2xx (including 404 for
@@ -468,7 +468,7 @@ class RegistryClient:
         """Hit ``GET /v2/`` and report registry liveness + auth state.
 
         Goes through the configured auth flow, so a successful probe means
-        "registry reachable and we can authenticate against it" — exactly
+        "registry reachable and we can authenticate against it" - exactly
         what the readiness endpoint wants. Bypasses :meth:`_request`'s
         4xx-raising so we can introspect the ``Www-Authenticate`` challenge.
         """
@@ -551,7 +551,7 @@ class RegistryClient:
         3. If the page was short or empty, stop.
 
         ``max_pages`` is a guard against pathological registries that don't
-        send ``Link`` and always return full pages — without it the loop
+        send ``Link`` and always return full pages - without it the loop
         could run forever.
         """
         path: str | None = initial_path
@@ -594,7 +594,7 @@ class RegistryClient:
 
             # Stagnation guard, evaluated *before* yielding: if we sent
             # ?last=X and the registry replayed a page that still ends with
-            # X, the cursor isn't advancing — skip this page entirely so
+            # X, the cursor isn't advancing - skip this page entirely so
             # callers don't see duplicates, and stop instead of looping.
             sent_cursor = params.get("last") if params is not None else None
             if (
@@ -622,7 +622,7 @@ class RegistryClient:
                 continue
             if len(items) < page_size:
                 return  # short page → done
-            # Server didn't send Link but page was full — fall back to
+            # Server didn't send Link but page was full - fall back to
             # explicit cursor with the last item we got.
             last_item = items[-1]
             if not isinstance(last_item, str):

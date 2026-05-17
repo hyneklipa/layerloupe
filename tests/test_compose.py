@@ -5,8 +5,10 @@ against a live registry). Here we verify the file is YAML-valid and stays
 in sync with the deployment guide's promises:
 
 * Three services: registry, layerloupe, seed.
-* Registry has delete enabled and a healthcheck.
-* LayerLoupe's environment matches the documented defaults.
+* Registry has a healthcheck.
+* LayerLoupe's environment matches the documented defaults - and the
+  root compose is the canonical ``public`` (anonymous read-only) example;
+  delete-enabled deploy lives under ``examples/admin/``.
 * Seed depends on a healthy registry and uses crane in insecure mode so
   the plain-HTTP registry actually accepts the push.
 """
@@ -51,9 +53,19 @@ def test_compose_declares_three_services(compose_data: dict[str, Any]) -> None:
 
 
 def test_registry_uses_delete_enabled(compose_data: dict[str, Any]) -> None:
-    """Without this setting LayerLoupe's delete flow can't actually delete."""
+    """Registry-side delete capability is kept on so the ``examples/admin/``
+    scenario works against this same registry - even though the root
+    compose itself runs LayerLoupe in ``public`` (no-delete) mode."""
     env = compose_data["services"]["registry"]["environment"]
     assert env["REGISTRY_STORAGE_DELETE_ENABLED"] == "true"
+
+
+def test_registry_access_log_is_silenced(compose_data: dict[str, Any]) -> None:
+    """Healthcheck wgets every 5s would otherwise spam the registry log
+    and drown out anything from LayerLoupe. We disable registry's own
+    access log; user traffic is access-logged by LayerLoupe instead."""
+    env = compose_data["services"]["registry"]["environment"]
+    assert env["REGISTRY_LOG_ACCESSLOG_DISABLED"] == "true"
 
 
 def test_registry_has_healthcheck(compose_data: dict[str, Any]) -> None:
@@ -81,7 +93,7 @@ def test_registry_persists_data_via_volume(compose_data: dict[str, Any]) -> None
 
 def test_layerloupe_builds_from_dockerfile(compose_data: dict[str, Any]) -> None:
     build = compose_data["services"]["layerloupe"]["build"]
-    # Either ``build: .`` shorthand or expanded form — handle both.
+    # Either ``build: .`` shorthand or expanded form - handle both.
     if isinstance(build, dict):
         assert build.get("context") == "."
     else:
@@ -100,9 +112,14 @@ def test_layerloupe_env_points_at_registry(compose_data: dict[str, Any]) -> None
     assert "localhost:5000" in env["REGISTRY_PUBLIC_URL"]
 
 
-def test_layerloupe_enables_delete_for_dev_demo(compose_data: dict[str, Any]) -> None:
+def test_layerloupe_runs_in_public_mode(compose_data: dict[str, Any]) -> None:
+    """The root compose is the canonical ``public`` example. Anyone who
+    needs delete should follow ``examples/admin/`` instead - keeping
+    the quickstart anonymous-only avoids shipping a fake admin password
+    or making operators read up before they can browse."""
     env = compose_data["services"]["layerloupe"]["environment"]
-    assert env["ALLOW_DELETE"] == "true"
+    assert env["AUTH_MODE"] == "public"
+    assert "ALLOW_DELETE" not in env  # retired by the access-control redesign
 
 
 def test_layerloupe_publishes_8080(compose_data: dict[str, Any]) -> None:

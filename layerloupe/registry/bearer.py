@@ -1,4 +1,4 @@
-"""Docker Token Authentication Specification — bearer flow.
+"""Docker Token Authentication Specification - bearer flow.
 
 Implements the auth dance described at
 https://distribution.github.io/distribution/spec/auth/token/:
@@ -56,7 +56,7 @@ def parse_bearer_challenge(www_authenticate: str | None) -> BearerChallenge | No
     """Parse a ``Www-Authenticate: Bearer ...`` header.
 
     Returns ``None`` if the scheme is not Bearer or if ``realm`` / ``service``
-    are missing — in either case the caller should propagate the original 401.
+    are missing - in either case the caller should propagate the original 401.
     """
     if not www_authenticate:
         return None
@@ -87,12 +87,12 @@ def infer_scope(method: str, path: str) -> str | None:
 
     Used for pre-attaching cached tokens to a request before the registry
     has a chance to challenge with 401. If our guess is wrong, the 401 path
-    refetches with the correct scope from the challenge — so a wrong
+    refetches with the correct scope from the challenge - so a wrong
     inference is at most one wasted round-trip.
     """
     path = path.split("?", 1)[0]
     if path in ("/v2", "/v2/"):
-        return None  # probe — registry tells us the service, no scope yet
+        return None  # probe - registry tells us the service, no scope yet
     if path == "/v2/_catalog":
         return "registry:catalog:*"
     match = _REPO_SCOPED_RE.match(path)
@@ -155,7 +155,7 @@ class BearerAuth(httpx.Auth):
     """``httpx.Auth`` that drives the Docker bearer-token flow.
 
     Composes with :class:`layerloupe.registry.auth.BasicAuth` as the *upstream*
-    credential — the user/password pair the auth server expects when minting
+    credential - the user/password pair the auth server expects when minting
     a token. Without an upstream, the auth server is asked for an anonymous
     token (works for public scopes on Docker Hub-style registries).
     """
@@ -207,7 +207,7 @@ class BearerAuth(httpx.Auth):
         challenge = parse_bearer_challenge(response.headers.get("www-authenticate"))
         if challenge is None:
             # Either missing header or non-Bearer scheme (e.g. Basic-only
-            # registry) — pass the 401 through to the caller.
+            # registry) - pass the 401 through to the caller.
             return
 
         token, ttl = await self._fetch_token(challenge)

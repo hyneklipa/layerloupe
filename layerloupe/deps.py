@@ -1,4 +1,4 @@
-"""FastAPI dependencies — registry client wiring + per-user session creds.
+"""FastAPI dependencies - registry client wiring + per-user session creds.
 
 Two clients live side-by-side at runtime:
 
@@ -12,7 +12,7 @@ Two clients live side-by-side at runtime:
   the response is returned.
 
 The session client wins over the global one for the duration of any single
-authenticated request — so once the user logs in via ``/api/auth/login``,
+authenticated request - so once the user logs in via ``/api/auth/login``,
 every subsequent registry call goes through their personal credentials.
 """
 
@@ -22,9 +22,11 @@ from collections.abc import AsyncIterator
 from typing import Annotated
 
 import httpx
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request
 
-from layerloupe.config import Settings, get_settings
+from layerloupe.auth import ADMIN_ROLE, ANONYMOUS, Identity
+from layerloupe.auth.env_provider import EnvAdminProvider
+from layerloupe.config import Settings, SettingsDep, get_settings
 from layerloupe.registry import (
     BasicAuth,
     BearerAuth,
@@ -44,7 +46,7 @@ def build_registry_client(
     """Construct a :class:`RegistryClient` matching the current settings.
 
     When ``override_username`` is provided, those credentials replace any
-    env-configured ones — used for the per-user session client and for
+    env-configured ones - used for the per-user session client and for
     :func:`layerloupe.api.auth._verify_credentials` during login probes.
     These per-user clients live for the duration of one request, so they
     skip caching (``cache_ttl=0``); only the long-lived global client
@@ -55,7 +57,7 @@ def build_registry_client(
     """
     if override_username is not None:
         basic: BasicAuth | None = BasicAuth(override_username, override_password)
-        cache_ttl = 0.0  # per-request session client — caching is pointless
+        cache_ttl = 0.0  # per-request session client - caching is pointless
     else:
         basic = basic_auth_from_settings(settings)
         cache_ttl = float(settings.cache_ttl)
@@ -96,7 +98,7 @@ async def get_registry_client(request: Request) -> AsyncIterator[RegistryClient]
 
     Session creds (if any) take precedence; their client is freshly built
     and closed when the request finishes. Otherwise the global client from
-    :data:`app.state.registry_client` is yielded — that one's lifetime is
+    :data:`app.state.registry_client` is yielded - that one's lifetime is
     managed by the lifespan and we don't close it here.
     """
     settings = get_settings()
@@ -122,3 +124,121 @@ async def get_registry_client(request: Request) -> AsyncIterator[RegistryClient]
 
 RegistryClientDep = Annotated[RegistryClient, Depends(get_registry_client)]
 """Dependency annotation for endpoints needing the registry client."""
+
+
+# -- Identity / access control -------------------------------------------
+#
+# These dependencies decouple route handlers from how an identity comes
+# into being. The handler asks for "current identity" or "an admin
+# identity"; whether that came from an env-configured admin or (later)
+# from OIDC is invisible to the handler.
+
+
+def get_identity(request: Request) -> Identity:
+    """Return the current request's identity. ``ANONYMOUS`` when not logged in.
+
+    Reads the signed session cookie via :meth:`Identity.from_session`.
+    Any malformed payload (cookie tampering, schema drift after an
+    upgrade, rotated ``SESSION_SECRET``) silently falls back to
+    ``ANONYMOUS`` - the route guards then decide whether that's
+    acceptable for the route being hit.
+
+    ``expected_auth_mode`` is also fed in so a stale cookie minted
+    under a different ``AUTH_MODE`` gets invalidated rather than
+    quietly carrying its old role-set into the new mode (T7.10).
+    Settings are pulled via :func:`get_settings` here - matches the
+    pattern in :func:`get_registry_client` and avoids forcing every
+    route reading identity to also declare ``SettingsDep``.
+    """
+    if not hasattr(request, "session"):
+        return ANONYMOUS
+    payload = request.session.get("identity")
+    settings = get_settings()
+    identity = Identity.from_session(payload, expected_auth_mode=settings.auth_mode)
+    return identity if identity is not None else ANONYMOUS
+
+
+IdentityDep = Annotated[Identity, Depends(get_identity)]
+"""Dependency annotation for endpoints that want to read the identity."""
+
+
+def require_browse_access(
+    identity: IdentityDep,
+    settings: SettingsDep,
+) -> Identity:
+    """Allow the request through when the active ``AUTH_MODE`` permits browse.
+
+    * ``public``: anonymous OK, returns ``identity`` unchanged.
+    * ``protected`` / ``admin``: anonymous → ``401 Unauthorized``. The
+      global HTML exception handler converts that to a login redirect
+      for browser routes (T7.6); JSON API consumers see ``401`` + a
+      JSON ``detail``.
+    """
+    if settings.auth_mode == "public":
+        return identity
+    if identity.is_anonymous:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return identity
+
+
+def require_admin(identity: IdentityDep, settings: SettingsDep) -> Identity:
+    """Gate destructive operations on the ``admin`` role *and* the right mode.
+
+    * ``public`` / ``protected`` mode → always ``403``. Delete isn't a
+      concept in these modes - even a stale admin-role session against
+      a freshly-flipped mode is rejected here. We return ``403``
+      (not ``401``) so the client doesn't bounce to a login form
+      that wouldn't help.
+    * ``admin`` mode, anonymous → ``401`` (the global HTML handler
+      converts this to a login redirect).
+    * ``admin`` mode, authenticated but missing ``admin`` role → ``403``
+      (logged in, lacks capability - distinguishes from "needs to log in").
+    """
+    if settings.auth_mode != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Delete operations are not enabled (set AUTH_MODE=admin to enable).",
+        )
+    if identity.is_anonymous:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not identity.is_admin:
+        raise HTTPException(status_code=403, detail="Admin role required")
+    return identity
+
+
+BrowseAccessDep = Annotated[Identity, Depends(require_browse_access)]
+"""Inject on routes that need browse access (auth-mode-aware)."""
+
+AdminDep = Annotated[Identity, Depends(require_admin)]
+"""Inject on routes that mutate state - currently only manifest delete."""
+
+
+def get_auth_provider(settings: SettingsDep) -> EnvAdminProvider | None:
+    """Build (or skip) the active ``AuthProvider`` for this request.
+
+    Returns ``None`` when no admin is configured - i.e. ``AUTH_MODE=public``
+    with no ``ADMIN_*`` env. Login routes treat ``None`` as "UI login is
+    not enabled" and respond ``403``.
+
+    Per-request construction is intentional: ``EnvAdminProvider`` is a
+    tiny wrapper around a (username, hash) pair, and we'd rather not
+    introduce another cache that needs invalidating when ``Settings``
+    re-load during tests.
+    """
+    if settings.admin_username is None or settings.admin_password_hash is None:
+        return None
+    # ``admin`` mode grants destructive capability via the ``admin``
+    # role; ``protected`` mode authenticates without granting any extra
+    # capability. The role-set carried by the resulting ``Identity``
+    # comes from this branch - route guards downstream just read
+    # ``identity.roles`` and don't re-check the mode.
+    granted_roles = frozenset({ADMIN_ROLE}) if settings.auth_mode == "admin" else frozenset()
+    return EnvAdminProvider(
+        username=settings.admin_username,
+        password_hash=settings.admin_password_hash.get_secret_value(),
+        granted_roles=granted_roles,
+    )
+
+
+AuthProviderDep = Annotated[EnvAdminProvider | None, Depends(get_auth_provider)]
+"""Inject on login routes that need to verify UI credentials."""
