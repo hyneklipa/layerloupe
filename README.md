@@ -4,11 +4,9 @@ Modern, OCI-aware web GUI for Docker / OCI image registries.
 Python, OCI manifests, multi-arch awareness, and built for
 self-hosted registries.
 
-> Status: **early development.** The application is partially
-> functional (browsing repositories, checking manifests for all five
-> variants).
-> It contains known bugs, such as issues with deleting tags,
-> logging into private registries, etc.
+> Status: **in active development.** Behavior, configuration, and APIs
+> may change between minor releases. Known limitations and bug reports
+> live on [GitHub issues](https://github.com/hyneklipa/layerloupe/issues).
 
 ---
 

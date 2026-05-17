@@ -7,11 +7,9 @@ or anything that speaks the OCI Distribution spec.
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Multi-arch](https://img.shields.io/badge/arch-amd64%20%7C%20arm64-green)
 
-> Status: **early development.** The application is partially
-> functional (browsing repositories, checking manifests for all five
-> variants).
-> It contains known bugs, such as issues with deleting tags,
-> logging into private registries, etc.
+> Status: **in active development.** Behavior, configuration, and APIs
+> may change between minor releases. Known limitations and bug reports
+> live on [GitHub issues](https://github.com/hyneklipa/layerloupe/issues).
 
 ## Quick start
 
