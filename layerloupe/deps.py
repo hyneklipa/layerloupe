@@ -142,11 +142,19 @@ def get_identity(request: Request) -> Identity:
     upgrade, rotated ``SESSION_SECRET``) silently falls back to
     ``ANONYMOUS`` - the route guards then decide whether that's
     acceptable for the route being hit.
+
+    ``expected_auth_mode`` is also fed in so a stale cookie minted
+    under a different ``AUTH_MODE`` gets invalidated rather than
+    quietly carrying its old role-set into the new mode (T7.10).
+    Settings are pulled via :func:`get_settings` here - matches the
+    pattern in :func:`get_registry_client` and avoids forcing every
+    route reading identity to also declare ``SettingsDep``.
     """
     if not hasattr(request, "session"):
         return ANONYMOUS
     payload = request.session.get("identity")
-    identity = Identity.from_session(payload)
+    settings = get_settings()
+    identity = Identity.from_session(payload, expected_auth_mode=settings.auth_mode)
     return identity if identity is not None else ANONYMOUS
 
 

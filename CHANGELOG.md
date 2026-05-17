@@ -48,3 +48,22 @@ Per-deploy templates ship under [`examples/`](examples/) - `public/`,
 
 See [`_docs/06-ui-access-control-redesign.md`](../_docs/06-ui-access-control-redesign.md)
 for the design rationale.
+
+### Sessions invalidate when `AUTH_MODE` changes
+
+UI sessions now carry the `AUTH_MODE` they were minted under. Flipping
+the mode in env (e.g. `protected` → `admin` after onboarding a
+maintainer) invalidates all existing UI sessions on the next request -
+users land on `/login` and re-authenticate, picking up the role-set
+the new mode grants. Without this, a session minted under `protected`
+would keep its empty role-set forever and the trash icon would stay
+hidden even after the operator enabled `admin` mode.
+
+The invalidation is one-shot per deploy: existing sessions from before
+this release are missing the `auth_mode` field and will also be
+rejected, forcing a single re-login. Equivalent to (a much lower-cost
+than) a `SESSION_SECRET` rotation.
+
+Registry-credential sessions (`session["registry_username"]` /
+`..._password_enc`) are unaffected - they live under different keys
+and have their own lifecycle.

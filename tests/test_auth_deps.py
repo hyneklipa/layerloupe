@@ -96,7 +96,15 @@ def _make_app() -> FastAPI:
     return app
 
 
-def _login_admin(client: TestClient) -> None:
+def _login_admin(client: TestClient, *, auth_mode: str = "admin") -> None:
+    """Stamp an admin identity into the session.
+
+    ``auth_mode`` controls the value that :meth:`Identity.to_session`
+    embedded in the cookie. Tests pass the mode they configured in env
+    so :meth:`Identity.from_session` accepts the cookie. The few tests
+    that deliberately simulate a *stale* cookie (cookie minted under
+    one mode, env now flipped to another) pass a different value here.
+    """
     client.post(
         "/_login_as",
         json={
@@ -104,12 +112,13 @@ def _login_admin(client: TestClient) -> None:
                 "username": "alice",
                 "roles": [ADMIN_ROLE],
                 "provider": "env",
+                "auth_mode": auth_mode,
             }
         },
     )
 
 
-def _login_viewer(client: TestClient) -> None:
+def _login_viewer(client: TestClient, *, auth_mode: str = "protected") -> None:
     client.post(
         "/_login_as",
         json={
@@ -117,6 +126,7 @@ def _login_viewer(client: TestClient) -> None:
                 "username": "bob",
                 "roles": ["viewer"],
                 "provider": "oidc",
+                "auth_mode": auth_mode,
             }
         },
     )
@@ -137,7 +147,10 @@ def test_get_identity_without_session_payload_is_anonymous() -> None:
 def test_get_identity_reads_valid_session_payload() -> None:
     app = _make_app()
     with TestClient(app) as client:
-        _login_admin(client)
+        # No ``AUTH_MODE`` env → ``settings.auth_mode`` defaults to
+        # ``public``; the stamped cookie must match so the T7.10
+        # mode-check accepts it.
+        _login_admin(client, auth_mode="public")
         r = client.get("/whoami")
     body = r.json()
     assert body["username"] == "alice"
@@ -175,7 +188,7 @@ def test_browse_access_public_mode_allows_authenticated(
     monkeypatch.setenv("AUTH_MODE", "public")
     app = _make_app()
     with TestClient(app) as client:
-        _login_admin(client)
+        _login_admin(client, auth_mode="public")
         r = client.get("/browse")
     assert r.status_code == 200
     assert r.json()["username"] == "alice"
@@ -202,7 +215,7 @@ def test_browse_access_protected_mode_allows_authenticated(
     monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
     app = _make_app()
     with TestClient(app) as client:
-        _login_admin(client)
+        _login_admin(client, auth_mode="protected")
         r = client.get("/browse")
     assert r.status_code == 200
 
@@ -230,7 +243,7 @@ def test_browse_access_protected_mode_accepts_non_admin(
     monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
     app = _make_app()
     with TestClient(app) as client:
-        _login_viewer(client)
+        _login_viewer(client, auth_mode="protected")
         r = client.get("/browse")
     assert r.status_code == 200
     assert r.json()["username"] == "bob"
@@ -261,7 +274,7 @@ def test_admin_guard_rejects_authenticated_non_admin_with_403_in_admin_mode(
     monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
     app = _make_app()
     with TestClient(app) as client:
-        _login_viewer(client)
+        _login_viewer(client, auth_mode="admin")
         r = client.get("/admin")
     assert r.status_code == 403
     assert r.json() == {"detail": "Admin role required"}
@@ -284,14 +297,21 @@ def test_admin_guard_accepts_admin_role_in_admin_mode(
 def test_admin_guard_rejects_in_public_mode_with_403(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Public mode: delete is not a concept - 403 even for "admin"
-    session payloads (which can't legitimately exist anyway). 403 (not
-    401) so HTML clients don't bounce to a login page that won't fix
-    anything."""
+    """Public mode: delete is not a concept - 403 even for an
+    admin-shaped session payload from a previous mode. 403 (not 401)
+    so HTML clients don't bounce to a login page that won't fix
+    anything.
+
+    Post-T7.10, the stale-mode cookie gets invalidated upstream by
+    :meth:`Identity.from_session` (mismatch with current ``public``
+    mode), so the guard sees ``ANONYMOUS`` here - but the same 403
+    fires because ``require_admin`` blocks non-admin modes before
+    checking identity.
+    """
     monkeypatch.setenv("AUTH_MODE", "public")
     app = _make_app()
     with TestClient(app) as client:
-        _login_admin(client)  # stale session against flipped mode
+        _login_admin(client, auth_mode="admin")  # stale session against flipped mode
         r = client.get("/admin")
     assert r.status_code == 403
     assert "AUTH_MODE=admin" in r.json()["detail"]
@@ -308,6 +328,63 @@ def test_admin_guard_rejects_in_protected_mode_with_403(
     monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
     app = _make_app()
     with TestClient(app) as client:
-        _login_admin(client)
+        # Cookie matches current mode so it's not invalidated by T7.10;
+        # the guard then rejects on mode, not on cookie validity.
+        _login_admin(client, auth_mode="protected")
         r = client.get("/admin")
     assert r.status_code == 403
+
+
+# -- T7.10: stale-mode cookie invalidation through get_identity ---------
+
+
+def test_get_identity_invalidates_cookie_minted_under_different_mode(
+    monkeypatch: pytest.MonkeyPatch, admin_hash: str
+) -> None:
+    """The original UX trap: user logs in under ``protected``, operator
+    flips env to ``admin``. Without T7.10 the user'd keep their old
+    (empty) role-set forever, leaving the trash icon hidden. With
+    T7.10 the cookie is invalidated → user falls back to ANONYMOUS →
+    browse guard issues 401 → login redirect re-mints with current
+    role-set.
+    """
+    monkeypatch.setenv("AUTH_MODE", "admin")
+    monkeypatch.setenv("ADMIN_USERNAME", "alice")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
+    app = _make_app()
+    with TestClient(app) as client:
+        # Cookie minted under the previous ``protected`` mode (no admin
+        # role granted at the time of login).
+        client.post(
+            "/_login_as",
+            json={
+                "identity": {
+                    "username": "alice",
+                    "roles": [],
+                    "provider": "env",
+                    "auth_mode": "protected",
+                }
+            },
+        )
+        r = client.get("/whoami")
+    body = r.json()
+    assert body["is_anonymous"] is True
+    assert body["username"] == ""
+
+
+def test_get_identity_accepts_cookie_matching_current_mode(
+    monkeypatch: pytest.MonkeyPatch, admin_hash: str
+) -> None:
+    """Sanity check the inverse: a cookie whose ``auth_mode`` matches
+    the active config survives unchanged."""
+    monkeypatch.setenv("AUTH_MODE", "admin")
+    monkeypatch.setenv("ADMIN_USERNAME", "alice")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
+    app = _make_app()
+    with TestClient(app) as client:
+        _login_admin(client, auth_mode="admin")
+        r = client.get("/whoami")
+    body = r.json()
+    assert body["is_anonymous"] is False
+    assert body["username"] == "alice"
+    assert body["is_admin"] is True

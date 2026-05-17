@@ -118,7 +118,7 @@ async def ui_login(
     if identity is None:
         request.session.pop("identity", None)
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    request.session["identity"] = identity.to_session()
+    request.session["identity"] = identity.to_session(auth_mode=settings.auth_mode)
     return LoginResponse(status="ok", username=identity.username)
 
 

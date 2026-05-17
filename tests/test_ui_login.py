@@ -299,6 +299,9 @@ def test_admin_mode_login_grants_admin_role(admin_env: None) -> None:
         payload_b64 += "=" * (-len(payload_b64) % 4)
         payload = json.loads(base64.urlsafe_b64decode(payload_b64))
         assert "admin" in payload["identity"]["roles"]
+        # T7.10: cookie carries the mode under which it was minted so a
+        # later ``AUTH_MODE`` flip invalidates this session.
+        assert payload["identity"]["auth_mode"] == "admin"
 
 
 def test_protected_mode_login_grants_no_roles(protected_env: None) -> None:
@@ -319,3 +322,4 @@ def test_protected_mode_login_grants_no_roles(protected_env: None) -> None:
         payload_b64 += "=" * (-len(payload_b64) % 4)
         payload = json.loads(base64.urlsafe_b64decode(payload_b64))
         assert payload["identity"]["roles"] == []
+        assert payload["identity"]["auth_mode"] == "protected"

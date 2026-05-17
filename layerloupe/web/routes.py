@@ -810,7 +810,7 @@ async def ui_login_submit(
             },
         )
 
-    request.session["identity"] = identity.to_session()
+    request.session["identity"] = identity.to_session(auth_mode=settings.auth_mode)
     return RedirectResponse(url=_safe_redirect(next), status_code=303)
 
 

@@ -17,7 +17,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+import structlog
+
 ADMIN_ROLE = "admin"
+
+_logger = structlog.get_logger("layerloupe.auth")
 
 
 @dataclass(frozen=True)
@@ -40,36 +44,65 @@ class Identity:
     def is_admin(self) -> bool:
         return ADMIN_ROLE in self.roles
 
-    def to_session(self) -> dict[str, Any]:
+    def to_session(self, *, auth_mode: str) -> dict[str, Any]:
         """Serialize for inclusion in the signed session cookie.
 
         ``frozenset`` is not JSON-serializable, so roles become a sorted
         list - sorted (not just listed) for stable cookie bytes across
         equivalent identities.
+
+        ``auth_mode`` is the value of ``settings.auth_mode`` at the
+        moment the session was minted. It travels with the cookie so
+        :meth:`from_session` can invalidate stale identities once the
+        operator flips the mode in env (see T7.10 in
+        ``_docs/06-ui-access-control-redesign.md``).
         """
         return {
             "username": self.username,
             "roles": sorted(self.roles),
             "provider": self.provider,
+            "auth_mode": auth_mode,
         }
 
     @classmethod
-    def from_session(cls, payload: object) -> Identity | None:
+    def from_session(cls, payload: object, *, expected_auth_mode: str) -> Identity | None:
         """Reconstruct from a cookie payload, ``None`` for invalid shapes.
 
         Refuses anything that doesn't match the expected schema rather
         than coercing - a malformed identity is more useful upstream as
         "no identity at all" than as a half-broken value that smuggles
         e.g. ``None`` into ``username``.
+
+        Also invalidates when ``payload["auth_mode"]`` doesn't match
+        ``expected_auth_mode`` - the operator flipped ``AUTH_MODE`` in
+        env between cookie issuance and this request, and the cached
+        ``roles`` no longer reflect what the active provider would
+        grant. We log a WARNING for that case (operators want to see
+        when sessions get invalidated by config change), but stay
+        silent for plain malformed payloads - those are routine after
+        a ``SESSION_SECRET`` rotation or schema upgrade and would
+        otherwise drown the log.
         """
         if not isinstance(payload, dict):
             return None
         username = payload.get("username")
         roles = payload.get("roles")
         provider = payload.get("provider")
+        payload_auth_mode = payload.get("auth_mode")
         if not isinstance(username, str) or not isinstance(provider, str):
             return None
         if not isinstance(roles, list) or not all(isinstance(r, str) for r in roles):
+            return None
+        if not isinstance(payload_auth_mode, str):
+            return None
+        if payload_auth_mode != expected_auth_mode:
+            _logger.warning(
+                "session_auth_mode_mismatch",
+                username=username,
+                provider=provider,
+                payload_auth_mode=payload_auth_mode,
+                expected_auth_mode=expected_auth_mode,
+            )
             return None
         return cls(
             username=username,
