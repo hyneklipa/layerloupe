@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 - 2026-05-17
+
 ### Breaking - UI access-control redesign
 
 LayerLoupe's access model moved from a pair of orthogonal toggles
