@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title }}{% block title_suffix %}{% endblock %}</title>
-  {# Static asset paths stay site-relative — Starlette's ``url_for`` builds
+  {# Static asset paths stay site-relative - Starlette's ``url_for`` builds
      absolute URLs based on the upstream scheme (``http`` from a TLS-
      terminating proxy like Traefik), which trips mixed-content blocking
      in the browser. ``/static/...`` works regardless of how the app is
@@ -34,8 +34,8 @@
       </a>
       <nav class="topbar-actions">
         {% block topbar_actions %}
-          {# Two independent sign-in surfaces — UI identity and per-user
-             registry credentials — each may be present or absent on a
+          {# Two independent sign-in surfaces - UI identity and per-user
+             registry credentials - each may be present or absent on a
              given request. We show whichever pills apply; the single
              Sign-out form below clears both at once. #}
           {% set has_ui_identity = identity and not identity.is_anonymous %}
@@ -54,10 +54,10 @@
               <span class="user-pill-name">{{ identity.username }}</span>
               {% if identity.is_admin %}
                 <span class="role-badge role-badge--admin"
-                      title="Has the admin role — can delete tags">admin</span>
+                      title="Has the admin role - can delete tags">admin</span>
               {% else %}
                 <span class="role-badge role-badge--viewer"
-                      title="Read-only — no delete capability">viewer</span>
+                      title="Read-only - no delete capability">viewer</span>
               {% endif %}
             </span>
           {% endif %}
@@ -99,7 +99,7 @@
       <div class="bottombar-actions">
         <button type="button" class="footer-icon-btn" data-modal-open="hotkey-modal"
                 aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
-          {# Keyboard outline glyph — small, neutral. #}
+          {# Keyboard outline glyph - small, neutral. #}
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
                stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
                stroke-linejoin="round" aria-hidden="true">
@@ -109,7 +109,7 @@
         </button>
         <button type="button" class="footer-icon-btn" id="theme-toggle"
                 aria-label="Toggle theme" title="Toggle theme">
-          {# Two SVGs — sun is shown when current theme is dark (click → light),
+          {# Two SVGs - sun is shown when current theme is dark (click → light),
              moon is shown when current theme is light (click → dark). The CSS
              toggles visibility based on ``[data-theme]`` so we never hit the
              ``currentColor`` mask quirk that left the icon invisible before. #}
@@ -129,7 +129,7 @@
     </div>
   </footer>
 
-  {# Always-rendered cheat sheet — opened by the topbar button or the ? hotkey. #}
+  {# Always-rendered cheat sheet - opened by the topbar button or the ? hotkey. #}
   <dialog id="hotkey-modal" class="modal hotkey-modal" aria-labelledby="hotkey-modal-title">
     <h3 id="hotkey-modal-title">Keyboard shortcuts</h3>
     <table class="hotkey-table">
@@ -143,7 +143,7 @@
       </tbody>
     </table>
     <p class="muted small">
-      Shortcuts are disabled while you're typing in a filter input —
+      Shortcuts are disabled while you're typing in a filter input -
       press <kbd>Esc</kbd> first to step back out.
     </p>
     <div class="modal-actions">

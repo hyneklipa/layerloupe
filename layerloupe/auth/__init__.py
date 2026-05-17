@@ -44,7 +44,7 @@ class Identity:
         """Serialize for inclusion in the signed session cookie.
 
         ``frozenset`` is not JSON-serializable, so roles become a sorted
-        list — sorted (not just listed) for stable cookie bytes across
+        list - sorted (not just listed) for stable cookie bytes across
         equivalent identities.
         """
         return {
@@ -58,7 +58,7 @@ class Identity:
         """Reconstruct from a cookie payload, ``None`` for invalid shapes.
 
         Refuses anything that doesn't match the expected schema rather
-        than coercing — a malformed identity is more useful upstream as
+        than coercing - a malformed identity is more useful upstream as
         "no identity at all" than as a half-broken value that smuggles
         e.g. ``None`` into ``username``.
         """
@@ -79,7 +79,7 @@ class Identity:
 
 
 ANONYMOUS = Identity(username="", roles=frozenset(), provider="anonymous")
-"""Singleton for "no logged-in user" — used as the fallback in route guards."""
+"""Singleton for "no logged-in user" - used as the fallback in route guards."""
 
 
 class AuthProvider(Protocol):
@@ -100,8 +100,8 @@ class AuthProvider(Protocol):
         """Verify the credential pair. ``None`` means "creds don't match".
 
         Must run in (effectively) constant time with respect to the
-        username — e.g. bcrypt verification against a dummy hash when
-        the username doesn't exist — so an attacker can't probe valid
+        username - e.g. bcrypt verification against a dummy hash when
+        the username doesn't exist - so an attacker can't probe valid
         usernames via response timing.
         """
         ...

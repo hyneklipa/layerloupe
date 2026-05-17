@@ -25,10 +25,10 @@ docker compose up
 
 That's it. Three services start:
 
-* **`registry`** on `:5000` — a plain `registry:2` instance with deletes
+* **`registry`** on `:5000` - a plain `registry:2` instance with deletes
   enabled.
-* **`layerloupe`** on `:8080` — built from the local `Dockerfile`.
-* **`seed`** — a one-shot job that mirrors `alpine`, `busybox`, and
+* **`layerloupe`** on `:8080` - built from the local `Dockerfile`.
+* **`seed`** - a one-shot job that mirrors `alpine`, `busybox`, and
   `hello-world` into the registry so the UI has something to show.
 
 Then open <http://localhost:8080>.
@@ -41,20 +41,11 @@ docker compose down --volumes
 
 ---
 
-## Screenshots
-
-> Screenshots and a demo GIF are coming once the UI polish settles. For
-> now: a three-column layout (repositories / tags / manifest detail)
-> with a multi-arch picker, OCI annotations, copy-able pull commands,
-> and a dark mode that doesn't make your retinas sting.
-
----
-
 ## Configuration examples
 
 Beyond the root `docker-compose.yml` (anonymous read-only browsing),
 the [`examples/`](examples/) directory carries one runnable scenario
-per common deployment shape — protected (login required), admin (login
+per common deployment shape - protected (login required), admin (login
 + delete), admin with Docker secrets, and more as the access-control
 redesign lands. Start at [`examples/README.md`](examples/README.md) for
 a rundown of which to pick.
@@ -64,7 +55,7 @@ a rundown of which to pick.
 ## Configuration
 
 LayerLoupe reads its config from environment variables. All variables are
-optional — sensible defaults are tuned for "local registry on
+optional - sensible defaults are tuned for "local registry on
 `https://localhost:5000`".
 
 ### Connecting to your registry
@@ -79,8 +70,8 @@ optional — sensible defaults are tuned for "local registry on
 
 | Variable | Default | What it does |
 |---|---|---|
-| `REGISTRY_USERNAME` | — | Global username (Basic auth + token-flow upstream). |
-| `REGISTRY_PASSWORD` | — | Global password. |
+| `REGISTRY_USERNAME` | - | Global username (Basic auth + token-flow upstream). |
+| `REGISTRY_PASSWORD` | - | Global password. |
 | `ALLOW_REGISTRY_LOGIN` | `false` | Show a UI sign-in form so each user supplies their own upstream registry credentials. Their password is encrypted with Fernet before going into the session cookie. |
 
 Bearer token auth (the one Docker Hub, GHCR, and Harbor use) works
@@ -101,17 +92,17 @@ LayerLoupe has three access modes, set via `AUTH_MODE`:
 | Variable | Default | What it does |
 |---|---|---|
 | `AUTH_MODE` | `public` | Selects the access mode (see table above). |
-| `ADMIN_USERNAME` | — | Admin login name. Required when `AUTH_MODE != public`. |
-| `ADMIN_PASSWORD_HASH` | — | Bcrypt hash of the admin password. Generate with `uv run scripts/hash-password.py`. |
-| `ADMIN_USERNAME_FILE` / `ADMIN_PASSWORD_FILE` | — | `*_FILE` variants for Docker / K8s secrets — the file is read as plaintext (the file mount is the trust boundary). When both `_HASH` and `_FILE` are set the file value wins. |
-| `AUDIT_LOG_PATH` | — | Optional JSONL audit file path. Each successful delete appends one line with actor, repo, reference, resolved digest, and timestamp. The same event always goes to stdout regardless. |
+| `ADMIN_USERNAME` | - | Admin login name. Required when `AUTH_MODE != public`. |
+| `ADMIN_PASSWORD_HASH` | - | Bcrypt hash of the admin password. Generate with `uv run scripts/hash-password.py`. |
+| `ADMIN_USERNAME_FILE` / `ADMIN_PASSWORD_FILE` | - | `*_FILE` variants for Docker / K8s secrets - the file is read as plaintext (the file mount is the trust boundary). When both `_HASH` and `_FILE` are set the file value wins. |
+| `AUDIT_LOG_PATH` | - | Optional JSONL audit file path. Each successful delete appends one line with actor, repo, reference, resolved digest, and timestamp. The same event always goes to stdout regardless. |
 
-Plaintext `ADMIN_PASSWORD` in env is rejected at startup — env values
+Plaintext `ADMIN_PASSWORD` in env is rejected at startup - env values
 are visible via `docker inspect` / `ps auxe`. Use `ADMIN_PASSWORD_HASH`
 (env, hashed) or `ADMIN_PASSWORD_FILE` (file, plaintext, sealed by the
 mount).
 
-Per-deploy runnable templates live in [`examples/`](examples/) —
+Per-deploy runnable templates live in [`examples/`](examples/) -
 `public/`, `protected/`, `admin/`, `admin-docker-secrets/`.
 
 #### Bootstrapping the admin password
@@ -120,7 +111,7 @@ Per-deploy runnable templates live in [`examples/`](examples/) —
 you can paste into `ADMIN_PASSWORD_HASH=`. It has two modes:
 
 ```bash
-# Interactive — password is read with getpass, never echoes or lands in shell history.
+# Interactive - password is read with getpass, never echoes or lands in shell history.
 uv run scripts/hash-password.py
 Password: ********
 Confirm:  ********
@@ -128,7 +119,7 @@ $2b$12$abc...xyz
 ```
 
 ```bash
-# Piped — for CI / provisioning scripts pulling from a secret manager.
+# Piped - for CI / provisioning scripts pulling from a secret manager.
 echo -n "$(vault kv get -field=admin_password secret/layerloupe)" \
   | uv run scripts/hash-password.py
 $2b$12$abc...xyz
@@ -149,10 +140,10 @@ fails with an error rather than producing a hash of `""`.
 >
 > Without the single quotes you'll see `WARN: The "..." variable is
 > not set` lines and the hash arrives in the container truncated.
-> Double quotes don't help — they still allow interpolation.
+> Double quotes don't help - they still allow interpolation.
 
 For `ADMIN_PASSWORD_FILE` (Docker / K8s secret mount) you do **not**
-need this script — the file contains the plaintext password, and
+need this script - the file contains the plaintext password, and
 LayerLoupe hashes it at startup. The helper is purely for the env-hash
 path, and the `$`-interpolation gotcha doesn't apply there either.
 
@@ -280,20 +271,20 @@ layerloupe/
 
 Three layers, end to end:
 
-1. **`layerloupe.registry`** — async HTTP client to a Docker / OCI
+1. **`layerloupe.registry`** - async HTTP client to a Docker / OCI
    registry. Handles Basic + Bearer auth, paginates `_catalog` /
    `tags/list`, parses every modern manifest variant (Docker schema 1 +
    v2, OCI image, OCI image index, Docker manifest list), and exposes a
    single `UnifiedManifest` view-model the rest of the app consumes.
-2. **`layerloupe.api`** — FastAPI router mounted at `/api/*`. Strict OpenAPI
+2. **`layerloupe.api`** - FastAPI router mounted at `/api/*`. Strict OpenAPI
    contract. Maps `RegistryHTTPError` → identical HTTP status,
    `RegistryConnectionError` → `503`, `RegistryError` → `502`.
-3. **`layerloupe.web`** — Jinja2 + htmx server-rendered UI mounted at `/`.
+3. **`layerloupe.web`** - Jinja2 + htmx server-rendered UI mounted at `/`.
    Three-column layout (repos / tags / manifest), multi-arch dropdown,
    tabbed manifest detail, copy-to-clipboard pull commands, confirm
    modal for deletes, keyboard shortcuts (`/`, `↑↓`, `?`).
 
-The HTML routes degrade gracefully — every page renders via plain HTTP
+The HTML routes degrade gracefully - every page renders via plain HTTP
 GET on a hard reload, so deep links (`/repositories/foo/manifests/v1.2.3`)
 work even if JavaScript fails. htmx is purely an enhancement.
 
@@ -301,4 +292,4 @@ work even if JavaScript fails. htmx is purely an enhancement.
 
 ## License
 
-MIT — see [`LICENSE.md`](LICENSE.md).
+MIT - see [`LICENSE.md`](LICENSE.md).

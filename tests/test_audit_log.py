@@ -179,13 +179,13 @@ def test_audit_file_appends_one_line_per_delete(tmp_path: Path) -> None:
 
 def test_audit_file_failure_does_not_raise(tmp_path: Path) -> None:
     """An unwritable audit path must not break the delete response path."""
-    # Create a file at the path of the parent — opening for append will fail
+    # Create a file at the path of the parent - opening for append will fail
     # because the "parent" can't be made into a directory.
     blocker = tmp_path / "audit.log"
     blocker.write_text("placeholder")
     nested = blocker / "child.log"  # parent is a file, not a dir
 
-    # Should not raise — failure is logged and swallowed.
+    # Should not raise - failure is logged and swallowed.
     log_manifest_deleted(
         _fake_request(),
         repository="foo",
@@ -226,7 +226,7 @@ def test_audit_handles_request_without_client() -> None:
         reference="latest",
         digest="sha256:y",
     )
-    # No raise — only stdout. Smoke test.
+    # No raise - only stdout. Smoke test.
 
 
 # -- End-to-end via API DELETE ------------------------------------------
@@ -317,7 +317,7 @@ def test_failed_delete_does_not_emit_audit_record(
     finally:
         get_settings.cache_clear()
 
-    # No file was created — audit only fires on successful delete.
+    # No file was created - audit only fires on successful delete.
     assert not audit_file.exists()
 
 

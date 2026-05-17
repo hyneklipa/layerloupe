@@ -32,7 +32,7 @@ def _scenarios() -> list[Path]:
 
 
 # Env vars that ``.env.example`` files legitimately set but that don't
-# belong to LayerLoupe's own ``Settings`` — typically registry-side
+# belong to LayerLoupe's own ``Settings`` - typically registry-side
 # toggles surfaced alongside LayerLoupe's knobs because the operator
 # tunes them together (delete capability is the canonical case: needs
 # both ``AUTH_MODE=admin`` in LayerLoupe and ``REGISTRY_STORAGE_DELETE_ENABLED``
@@ -46,7 +46,7 @@ def _settings_env_names() -> set[str]:
     """Env names every ``Settings`` field accepts (no prefix, uppercased).
 
     Includes both the field itself and any ``_FILE`` companions that the
-    redesign adds (e.g. ``SESSION_SECRET_FILE``) — they're modeled as
+    redesign adds (e.g. ``SESSION_SECRET_FILE``) - they're modeled as
     distinct fields, so ``model_fields`` already covers both. Augments
     with ``_EXTERNAL_ENV_NAMES`` so an example can surface a registry-
     side toggle without the structural test treating it as a typo.
@@ -63,7 +63,7 @@ def test_examples_dir_has_overview_readme() -> None:
 
 
 def test_public_scenario_exists() -> None:
-    """``public/`` is the canonical baseline — always present."""
+    """``public/`` is the canonical baseline - always present."""
     assert (EXAMPLES_DIR / "public" / "README.md").exists()
 
 

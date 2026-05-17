@@ -40,7 +40,7 @@ def test_only_latest() -> None:
 
 
 def test_numeric_components_compared_numerically_not_lexically() -> None:
-    """``1.10`` must come before ``1.2`` — the whole point of semver-aware sorting."""
+    """``1.10`` must come before ``1.2`` - the whole point of semver-aware sorting."""
     assert sort_tags(["1.2", "1.10", "1.9"]) == ["1.10", "1.9", "1.2"]
 
 
@@ -49,7 +49,7 @@ def test_v_prefix_is_optional() -> None:
 
 
 def test_v_prefix_and_bare_versions_mix() -> None:
-    """Mixed ``v1.0`` and ``2.0`` — both parse, descending order wins."""
+    """Mixed ``v1.0`` and ``2.0`` - both parse, descending order wins."""
     out = sort_tags(["v1.0", "2.0", "v3.0"])
     assert out == ["v3.0", "2.0", "v1.0"]
 

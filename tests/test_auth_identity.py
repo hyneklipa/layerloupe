@@ -27,7 +27,7 @@ def test_identity_without_admin_role() -> None:
 
 
 def test_identity_is_immutable() -> None:
-    """Frozen dataclass — accidental mutation should raise."""
+    """Frozen dataclass - accidental mutation should raise."""
     import dataclasses
 
     user = Identity(username="alice", roles=frozenset({"admin"}), provider="env")
@@ -58,7 +58,7 @@ def test_to_session_returns_jsonable_dict() -> None:
 
 def test_to_session_sorts_roles_for_stable_bytes() -> None:
     """Two equivalent identities must serialize identically, regardless
-    of frozenset iteration order — otherwise cookie bytes diverge."""
+    of frozenset iteration order - otherwise cookie bytes diverge."""
     a = Identity(username="x", roles=frozenset({"b", "a", "c"}), provider="env")
     b = Identity(username="x", roles=frozenset({"c", "a", "b"}), provider="env")
     assert a.to_session() == b.to_session()

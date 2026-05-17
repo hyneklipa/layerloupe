@@ -1,7 +1,7 @@
 # LayerLoupe
 
 Modern, OCI-aware web GUI for Docker / OCI image registries.
-Built for self-hosted registries — `registry:2`, Harbor, GitLab, Nexus,
+Built for self-hosted registries - `registry:2`, Harbor, GitLab, Nexus,
 or anything that speaks the OCI Distribution spec.
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -30,7 +30,7 @@ Open http://localhost:8080 and sign in with your registry credentials.
 - Browse repositories and tags with semver-aware sort.
 - Inspect manifests across all five variants (OCI image / index, Docker
   v2 / list, schema 1).
-- Drill into multi-arch indexes — pick a child manifest, walk into the
+- Drill into multi-arch indexes - pick a child manifest, walk into the
   config blob, see history and labels.
 - Delete tags via the safe HEAD → DELETE flow with a digest fallback.
 - Sign in to private registries (Basic + Bearer token).

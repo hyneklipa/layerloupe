@@ -1,4 +1,4 @@
-# `public/` — Anonymous read-only browsing
+# `public/` - Anonymous read-only browsing
 
 The default LayerLoupe deployment: anyone who can reach the URL can
 browse repositories, tags, and manifests, but no one can delete
@@ -9,13 +9,13 @@ anything. No authentication, no session state worth protecting.
 - Internal mirror or registry explorer that's only reachable from a
   trusted network anyway.
 - Public showcase of an OSS image registry.
-- "I just want to see what's in this registry from a browser" — the
+- "I just want to see what's in this registry from a browser" - the
   quickstart.
 
 ## Canonical example
 
 For the `public/` scenario the **root `docker-compose.yml`** of this
-repository *is* the canonical example. It runs in `AUTH_MODE=public` —
+repository *is* the canonical example. It runs in `AUTH_MODE=public` -
 anonymous read-only browse, no delete. Bringing it up:
 
 ```bash

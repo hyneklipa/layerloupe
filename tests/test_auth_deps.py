@@ -10,7 +10,7 @@ mode matrix from the redesign:
   route.
 
 The tests build tiny standalone FastAPI apps so they're independent of
-the real route layout — the real wiring lands in T7.6, where the same
+the real route layout - the real wiring lands in T7.6, where the same
 guards get attached to actual ``/repositories/...`` endpoints.
 """
 
@@ -73,7 +73,7 @@ def _make_app() -> FastAPI:
 
     @app.post("/_login_as")
     def login_as(request: Request, body: dict[str, Any]) -> dict[str, bool]:
-        """Test helper — drop a payload straight into ``session["identity"]``.
+        """Test helper - drop a payload straight into ``session["identity"]``.
 
         Lets tests construct exactly the cookie shape they want, including
         malformed payloads, without going through the real login flow."""
@@ -223,7 +223,7 @@ def test_browse_access_admin_mode_rejects_anonymous(
 def test_browse_access_protected_mode_accepts_non_admin(
     monkeypatch: pytest.MonkeyPatch, admin_hash: str
 ) -> None:
-    """Browse only needs *authenticated*, not admin — a viewer-role
+    """Browse only needs *authenticated*, not admin - a viewer-role
     identity (relevant once OIDC lands) gets through."""
     monkeypatch.setenv("AUTH_MODE", "protected")
     monkeypatch.setenv("ADMIN_USERNAME", "alice")
@@ -284,7 +284,7 @@ def test_admin_guard_accepts_admin_role_in_admin_mode(
 def test_admin_guard_rejects_in_public_mode_with_403(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Public mode: delete is not a concept — 403 even for "admin"
+    """Public mode: delete is not a concept - 403 even for "admin"
     session payloads (which can't legitimately exist anyway). 403 (not
     401) so HTML clients don't bounce to a login page that won't fix
     anything."""
@@ -301,7 +301,7 @@ def test_admin_guard_rejects_in_protected_mode_with_403(
     monkeypatch: pytest.MonkeyPatch, admin_hash: str
 ) -> None:
     """Protected mode: login required for browse, but delete still
-    isn't enabled — even an authenticated user with an ``admin`` role
+    isn't enabled - even an authenticated user with an ``admin`` role
     payload (e.g. forged) hits 403."""
     monkeypatch.setenv("AUTH_MODE", "protected")
     monkeypatch.setenv("ADMIN_USERNAME", "alice")

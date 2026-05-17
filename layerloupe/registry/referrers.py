@@ -1,7 +1,7 @@
 """Parse the OCI 1.1 ``/v2/<name>/referrers/<digest>`` endpoint.
 
 The Referrers API lets clients ask "which manifests point at this one as
-their ``subject``?" — that's how cosign signatures, SBOMs, and in-toto
+their ``subject``?" - that's how cosign signatures, SBOMs, and in-toto
 attestations attach themselves to an image. Older registries don't
 implement it (Docker Distribution gained it in v2.8 / spec 1.1); the API
 gracefully degrades to an empty list when the registry returns 404/405/501.
@@ -28,7 +28,7 @@ class KnownArtifactType:
 # Media types recognized in the wild. Keys match the ``artifactType`` field
 # (preferred) or the inner manifest's ``mediaType`` as a fallback.
 KNOWN_ARTIFACT_TYPES: dict[str, KnownArtifactType] = {
-    # Cosign — the most common signature flavor on registries today.
+    # Cosign - the most common signature flavor on registries today.
     "application/vnd.dev.cosign.simplesigning.v1+json": KnownArtifactType(
         "signature", "Cosign signature"
     ),
@@ -42,7 +42,7 @@ KNOWN_ARTIFACT_TYPES: dict[str, KnownArtifactType] = {
     "application/vnd.dev.sigstore.bundle+json;version=0.3": KnownArtifactType(
         "signature", "Sigstore bundle"
     ),
-    # Notary v2 — older signing scheme that's still around.
+    # Notary v2 - older signing scheme that's still around.
     "application/vnd.cncf.notary.signature": KnownArtifactType("signature", "Notary signature"),
     # SBOMs.
     "application/vnd.cyclonedx+json": KnownArtifactType("sbom", "CycloneDX SBOM"),

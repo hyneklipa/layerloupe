@@ -1,8 +1,8 @@
-# `protected/` — Login required, read-only
+# `protected/` - Login required, read-only
 
 Same UI as `public/`, but every request first bounces the visitor to
 `/login`. After signing in they browse repositories / tags / manifests
-exactly as in public mode — **no delete capability**. Use this when
+exactly as in public mode - **no delete capability**. Use this when
 you need to publish LayerLoupe but don't want unauthenticated eyes on
 the contents.
 
@@ -11,7 +11,7 @@ the contents.
 - Internal mirror that's accessible from a less-trusted network.
 - Public registry explorer that you want crawlers and casual visitors
   to bounce off of.
-- "Auditable read access" — every browse session is tied to a logged-in
+- "Auditable read access" - every browse session is tied to a logged-in
   identity (visible in logs via the audit pipeline when destructive
   actions, if any, occur upstream).
 
@@ -50,7 +50,7 @@ whose hash you put in `ADMIN_PASSWORD_HASH`.
 ## Using Docker / Kubernetes secrets instead
 
 If you'd rather keep the password (or its hash) out of `.env`, use the
-`*_FILE` variants — see [`../admin-docker-secrets/`](../admin-docker-secrets/)
+`*_FILE` variants - see [`../admin-docker-secrets/`](../admin-docker-secrets/)
 for that pattern. The same `ADMIN_PASSWORD_FILE` knob works in
 `protected` mode; only the role of the resulting identity differs
 between `protected` and `admin`.
@@ -58,7 +58,7 @@ between `protected` and `admin`.
 ## Note: this scenario doesn't allow delete
 
 In `protected` mode the auth provider grants the logged-in user an
-empty role set — they're authenticated, but the `admin` role required
+empty role set - they're authenticated, but the `admin` role required
 by `DELETE /api/.../manifests/...` isn't on their identity. The route
 guards return 403 even for the admin account. If you also need
 destructive operations, use the `admin/` example.

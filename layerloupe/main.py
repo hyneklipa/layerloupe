@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="LayerLoupe", version=__version__, lifespan=lifespan)
 
 # Session cookie is signed (itsdangerous). Per-user registry credentials
-# add Fernet encryption on top — see ``layerloupe.sessions``.
+# add Fernet encryption on top - see ``layerloupe.sessions``.
 app.add_middleware(
     SessionMiddleware,
     secret_key=get_settings().session_secret.get_secret_value(),
@@ -51,7 +51,7 @@ app.include_router(auth.router)
 app.include_router(web_routes.router)
 
 # Serve hand-rolled CSS / JS / favicon. The path is also referenced by
-# templates via ``url_for('static', path=...)`` — keep the name in sync.
+# templates via ``url_for('static', path=...)`` - keep the name in sync.
 app.mount(
     "/static",
     StaticFiles(directory=str(web_routes.STATIC_DIR)),
@@ -88,7 +88,7 @@ async def _registry_error_handler(_request: Request, exc: RegistryError) -> JSON
 #
 # Two audiences: the htmx UI wants a styled error page, the JSON API wants
 # a machine-readable detail. The path prefix is the cheapest discriminator
-# we have — anything under ``/api/`` or ``/web/`` (the htmx-mutating routes)
+# we have - anything under ``/api/`` or ``/web/`` (the htmx-mutating routes)
 # stays JSON, everything else renders an HTML error template.
 
 

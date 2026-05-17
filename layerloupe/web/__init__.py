@@ -1,4 +1,4 @@
-"""HTML routes — Jinja2-rendered server-side UI.
+"""HTML routes - Jinja2-rendered server-side UI.
 
 Mirrors :mod:`layerloupe.api` (REST) but renders templates instead of JSON.
 The page-level routes hand-render the static shell; htmx fragment routes

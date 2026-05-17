@@ -21,7 +21,7 @@ class BasicAuth:
 
     Accepts a plain ``str`` or :class:`pydantic.SecretStr` for the password,
     so it composes naturally with :class:`layerloupe.config.Settings` fields.
-    A ``None`` password is treated as the empty string — matching the
+    A ``None`` password is treated as the empty string - matching the
     behavior of the Docker CLI when the user only supplies a username
     (e.g. token-style auth where the password slot is unused).
 

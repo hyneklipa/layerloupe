@@ -2,18 +2,18 @@
 
 These run **only** when ``E2E_REGISTRY`` points at a reachable
 registry (``http://localhost:5000`` in our GitHub Actions e2e job). They
-exercise the full ``RegistryClient`` against real protocol traffic —
+exercise the full ``RegistryClient`` against real protocol traffic -
 catching the kinds of regressions that mock transports can't see, like
 header casing, redirect chains, and how the registry actually behaves on
 DELETE.
 
 The CI seed (``.github/workflows/e2e.yml``) populates the registry with:
 
-* ``alpine:3.20``      — multi-arch index (Docker manifest list).
-* ``alpine:latest``    — multi-arch index (Docker manifest list).
-* ``alpine:3.19``      — multi-arch index (also).
-* ``hello-world:latest`` — multi-arch index, very small.
-* ``scratch/delete-me:1.0`` — a single-tag throwaway for the delete test.
+* ``alpine:3.20``      - multi-arch index (Docker manifest list).
+* ``alpine:latest``    - multi-arch index (Docker manifest list).
+* ``alpine:3.19``      - multi-arch index (also).
+* ``hello-world:latest`` - multi-arch index, very small.
+* ``scratch/delete-me:1.0`` - a single-tag throwaway for the delete test.
 
 Tests assume those fixtures exist and are read-only **except** for the
 ``scratch/delete-me`` repo, which the delete test consumes.
@@ -144,7 +144,7 @@ async def test_referrers_soft_fail_when_unsupported(client: RegistryClient) -> N
     assert referrers == []
 
 
-# -- Delete (destructive — uses the dedicated scratch repo) -------------
+# -- Delete (destructive - uses the dedicated scratch repo) -------------
 
 
 async def test_delete_actually_removes_manifest(client: RegistryClient) -> None:
@@ -165,7 +165,7 @@ async def test_delete_actually_removes_manifest(client: RegistryClient) -> None:
     assert exc_info.value.status_code == 404
 
 
-# -- Pagination plumbing (quick sanity — most pages will be tiny in CI) -
+# -- Pagination plumbing (quick sanity - most pages will be tiny in CI) -
 
 
 async def test_pagination_yields_every_repo(client: RegistryClient) -> None:

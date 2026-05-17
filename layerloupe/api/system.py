@@ -1,4 +1,4 @@
-"""System endpoints — health, readiness, registry metadata.
+"""System endpoints - health, readiness, registry metadata.
 
 The probe endpoints (``/healthz``, ``/readyz``) carry ``Cache-Control:
 no-store`` so a misconfigured intermediate proxy can't return last-known-
@@ -23,7 +23,7 @@ _PROBE_HEADERS = {"Cache-Control": "no-store"}
 
 @router.get("/healthz")
 def healthz() -> JSONResponse:
-    """Liveness probe — always 200 once the process is running."""
+    """Liveness probe - always 200 once the process is running."""
     return JSONResponse(
         {"status": "ok", "version": __version__},
         headers=_PROBE_HEADERS,
@@ -32,7 +32,7 @@ def healthz() -> JSONResponse:
 
 @router.get("/readyz")
 async def readyz(client: RegistryClientDep) -> JSONResponse:
-    """Readiness probe — 200 if the registry is reachable + authenticated, 503 otherwise."""
+    """Readiness probe - 200 if the registry is reachable + authenticated, 503 otherwise."""
     probe = await client.probe()
     payload = {
         "status": "ready" if probe.authenticated else "not_ready",
@@ -53,7 +53,7 @@ def info(settings: SettingsDep) -> dict[str, object]:
     JS layer toggles a few client-side affordances (e.g. keyboard
     shortcuts to the delete modal) based on whether delete is even
     possible at this site. The auth guard remains the source of
-    truth — this field is just a UX hint.
+    truth - this field is just a UX hint.
     """
     return {
         "title": settings.title,

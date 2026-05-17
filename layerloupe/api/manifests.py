@@ -88,7 +88,7 @@ async def get_manifest(
 ) -> UnifiedManifest:
     """Fetch a manifest, attach the image config (when applicable), and unify.
 
-    For multi-arch indexes we don't follow into a child manifest here — the
+    For multi-arch indexes we don't follow into a child manifest here - the
     UI presents a platform picker and the next request includes the chosen
     digest as ``reference``.
     """
@@ -100,7 +100,7 @@ async def get_manifest(
         try:
             image_config = await client.get_image_config(repository, manifest)
         except (RegistryError, RegistryHTTPError):
-            # Config fetch is best-effort — UI can still render manifest-level data.
+            # Config fetch is best-effort - UI can still render manifest-level data.
             image_config = None
 
     public_url = str(settings.registry_public_url or settings.registry_url)
@@ -128,12 +128,12 @@ async def get_manifest_config(
     client: RegistryClientDep,
     _identity: BrowseAccessDep,
 ) -> ImageConfig:
-    """Fetch just the image config blob — useful for power users / debugging."""
+    """Fetch just the image config blob - useful for power users / debugging."""
     manifest = await client.get_manifest(repository, reference)
     try:
         return await client.get_image_config(repository, manifest)
     except RegistryError as e:
-        # Index / schema 1 manifests have no separate config blob — caller error.
+        # Index / schema 1 manifests have no separate config blob - caller error.
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
@@ -147,7 +147,7 @@ async def get_manifest_referrers(
     client: RegistryClientDep,
     _identity: BrowseAccessDep,
 ) -> ReferrersResult:
-    """OCI 1.1 referrers API — signatures, SBOMs, attestations attached to a manifest.
+    """OCI 1.1 referrers API - signatures, SBOMs, attestations attached to a manifest.
 
     Resolves a tag reference to a digest (referrers API requires a digest).
     Returns an empty list when the registry doesn't implement the endpoint
@@ -180,7 +180,7 @@ async def delete_manifest(
 ) -> DeleteResult:
     """Delete a manifest by digest (resolving from a tag if needed).
 
-    Gated by ``AdminDep`` — the dependency raises ``401`` for anonymous
+    Gated by ``AdminDep`` - the dependency raises ``401`` for anonymous
     callers and ``403`` for authenticated-but-not-admin ones before this
     handler runs. The UI doesn't show the button for non-admin sessions
     either; this guard is defense in depth against direct API hits.

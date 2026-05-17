@@ -10,9 +10,9 @@
   <section class="auth-card" aria-labelledby="auth-h">
     {# Two orthogonal sign-in surfaces share this page:
 
-       * **UI identity** (``AUTH_MODE != public``) — logs the operator
+       * **UI identity** (``AUTH_MODE != public``) - logs the operator
          into LayerLoupe itself. Writes ``session["identity"]``.
-       * **Registry credentials** (``ALLOW_REGISTRY_LOGIN=true``) —
+       * **Registry credentials** (``ALLOW_REGISTRY_LOGIN=true``) -
          supplies per-user creds for the upstream registry. Writes
          ``session["registry_username"]`` + encrypted password.
 
@@ -23,7 +23,7 @@
     {% if ui_login_enabled and registry_login_enabled %}
       <h1 id="auth-h">Sign in to {{ title }}</h1>
       <p class="muted">
-        Two separate logins live on this page — pick the one you need.
+        Two separate logins live on this page - pick the one you need.
         Each writes its own session key, so signing in to one doesn't
         log you out of the other.
       </p>
@@ -85,7 +85,7 @@
       {% if ui_login_enabled %}
         <h2 class="auth-section">Registry credentials</h2>
         <p class="muted">
-          Provide per-user credentials for the upstream registry —
+          Provide per-user credentials for the upstream registry -
           optional, used in addition to LayerLoupe sign-in above.
         </p>
       {% endif %}

@@ -33,7 +33,7 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 @pytest.fixture(scope="module")
 def admin_hash() -> str:
-    """Bcrypt hash for ``"hunter2"`` at low rounds — module-scoped so we
+    """Bcrypt hash for ``"hunter2"`` at low rounds - module-scoped so we
     pay the bcrypt cost once for the whole file."""
     return hash_password("hunter2", rounds=4)
 
@@ -146,7 +146,7 @@ def test_ui_login_wrong_password_renders_form_with_error(protected_env: None) ->
 
 
 def test_ui_login_wrong_username_renders_form_with_error(protected_env: None) -> None:
-    """Wrong username takes the dummy-hash path — same 401 surface."""
+    """Wrong username takes the dummy-hash path - same 401 surface."""
     with TestClient(app) as client:
         r = client.post(
             "/web/auth/login",
@@ -187,7 +187,7 @@ def test_ui_logout_clears_identity_but_keeps_registry_creds(
     protected_env: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Logging out of the UI shouldn't kick the user out of any active
-    registry-login session — they're independent surfaces."""
+    registry-login session - they're independent surfaces."""
     monkeypatch.setenv("ALLOW_REGISTRY_LOGIN", "true")
     get_settings.cache_clear()
 
@@ -213,7 +213,7 @@ def test_ui_logout_clears_identity_but_keeps_registry_creds(
         # Drop only the UI identity.
         client.post("/web/auth/logout")
 
-        # Registry login should still work — the registry pill should
+        # Registry login should still work - the registry pill should
         # appear on a subsequent page render. We hit /login to inspect
         # the page rendered for an authenticated registry session: it
         # should still surface the registry username.
@@ -302,7 +302,7 @@ def test_admin_mode_login_grants_admin_role(admin_env: None) -> None:
 
 
 def test_protected_mode_login_grants_no_roles(protected_env: None) -> None:
-    """``protected`` authenticates the user but doesn't grant ``admin`` —
+    """``protected`` authenticates the user but doesn't grant ``admin`` -
     delete-gated routes must reject these identities."""
     with TestClient(app) as client:
         r = client.post(

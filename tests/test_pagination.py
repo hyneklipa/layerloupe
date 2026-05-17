@@ -108,7 +108,7 @@ async def test_iter_repositories_three_pages_via_link_header() -> None:
 
 
 async def test_iter_repositories_three_pages_via_cursor_fallback() -> None:
-    """Registry doesn't send Link — client falls back to ?last=<last item>."""
+    """Registry doesn't send Link - client falls back to ?last=<last item>."""
     state = {"calls": 0}
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -120,7 +120,7 @@ async def test_iter_repositories_three_pages_via_cursor_fallback() -> None:
         if last == "c":
             return httpx.Response(200, json={"repositories": ["d", "e", "f"]})
         if last == "f":
-            # Short page — signals the end without Link header.
+            # Short page - signals the end without Link header.
             return httpx.Response(200, json={"repositories": ["g"]})
         return httpx.Response(200, json={"repositories": []})
 
@@ -182,7 +182,7 @@ async def test_iter_repositories_max_pages_caps_iteration() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         state["calls"] += 1
         # Return distinct items each call so the cursor genuinely advances
-        # — otherwise the stagnation guard short-circuits before max_pages.
+        # - otherwise the stagnation guard short-circuits before max_pages.
         i = state["calls"]
         return httpx.Response(200, json={"repositories": [f"r{i}-a", f"r{i}-b", f"r{i}-c"]})
 
@@ -198,7 +198,7 @@ async def test_iter_repositories_max_pages_caps_iteration() -> None:
 
 
 async def test_iter_repositories_stops_when_cursor_stagnates() -> None:
-    """Registry ignores ?last= and replays the same page — must stop, not loop."""
+    """Registry ignores ?last= and replays the same page - must stop, not loop."""
     state = {"calls": 0}
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -214,7 +214,7 @@ async def test_iter_repositories_stops_when_cursor_stagnates() -> None:
         results = [r async for r in client.iter_repositories(page_size=3)]
 
     # Page 1 (no cursor) yields a/b/c. Page 2 sent ?last=c, registry replayed
-    # the same page, so the guard fires *before* yielding — no duplicates.
+    # the same page, so the guard fires *before* yielding - no duplicates.
     assert state["calls"] == 2
     assert results == ["a", "b", "c"]
 
@@ -321,7 +321,7 @@ async def test_iter_repositories_rejects_repositories_not_a_list() -> None:
 
 
 async def test_iter_repositories_skips_non_string_items() -> None:
-    """Defensive: weird registry returns mixed types — yield only strings."""
+    """Defensive: weird registry returns mixed types - yield only strings."""
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"repositories": ["good", 42, None, "also-good"]})

@@ -4,13 +4,13 @@ Validates credentials against the registry by running a probe with them,
 then stores ``(username, encrypted_password)`` in the signed session
 cookie. On every subsequent request, :func:`layerloupe.deps.get_registry_client`
 sees the session creds and constructs a fresh, per-request registry client
-that uses them — so the user's personal credentials transparently replace
+that uses them - so the user's personal credentials transparently replace
 any env-configured ones for the duration of the session.
 
 The password is **encrypted** with Fernet (key derived from
 ``settings.session_secret``) before going into the cookie. The
 SessionMiddleware's signature alone protects against forgery but not
-against eavesdropping on the cookie itself — Fernet closes that gap.
+against eavesdropping on the cookie itself - Fernet closes that gap.
 """
 
 from __future__ import annotations

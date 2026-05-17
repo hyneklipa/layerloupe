@@ -16,7 +16,7 @@ Or pipe a single line in:
 The interactive path uses ``getpass`` so the password never echoes to
 the terminal and never lands in shell history. The piped path is for
 scripted bootstrapping (CI provisioning, automated deploy templates)
-— the trailing newline on a typical ``echo`` is stripped, but a real
+- the trailing newline on a typical ``echo`` is stripped, but a real
 trailing newline character in the password itself can't survive a
 piped read; use the interactive form if your password ends with
 whitespace.
@@ -37,7 +37,7 @@ from layerloupe.auth.env_provider import hash_password
 def _read_password() -> str:
     """Prompt for the password twice when interactive; trust stdin otherwise.
 
-    Interactive flow rejects empty input and a mismatch — better to
+    Interactive flow rejects empty input and a mismatch - better to
     fail loud than to ship a hash of an empty string. Piped flow
     accepts whatever's on stdin verbatim (minus exactly one trailing
     newline), so a tool feeding from a secret manager isn't second-guessed.

@@ -6,7 +6,7 @@ in sync with the deployment guide's promises:
 
 * Three services: registry, layerloupe, seed.
 * Registry has a healthcheck.
-* LayerLoupe's environment matches the documented defaults — and the
+* LayerLoupe's environment matches the documented defaults - and the
   root compose is the canonical ``public`` (anonymous read-only) example;
   delete-enabled deploy lives under ``examples/admin/``.
 * Seed depends on a healthy registry and uses crane in insecure mode so
@@ -54,7 +54,7 @@ def test_compose_declares_three_services(compose_data: dict[str, Any]) -> None:
 
 def test_registry_uses_delete_enabled(compose_data: dict[str, Any]) -> None:
     """Registry-side delete capability is kept on so the ``examples/admin/``
-    scenario works against this same registry — even though the root
+    scenario works against this same registry - even though the root
     compose itself runs LayerLoupe in ``public`` (no-delete) mode."""
     env = compose_data["services"]["registry"]["environment"]
     assert env["REGISTRY_STORAGE_DELETE_ENABLED"] == "true"
@@ -93,7 +93,7 @@ def test_registry_persists_data_via_volume(compose_data: dict[str, Any]) -> None
 
 def test_layerloupe_builds_from_dockerfile(compose_data: dict[str, Any]) -> None:
     build = compose_data["services"]["layerloupe"]["build"]
-    # Either ``build: .`` shorthand or expanded form — handle both.
+    # Either ``build: .`` shorthand or expanded form - handle both.
     if isinstance(build, dict):
         assert build.get("context") == "."
     else:
@@ -114,7 +114,7 @@ def test_layerloupe_env_points_at_registry(compose_data: dict[str, Any]) -> None
 
 def test_layerloupe_runs_in_public_mode(compose_data: dict[str, Any]) -> None:
     """The root compose is the canonical ``public`` example. Anyone who
-    needs delete should follow ``examples/admin/`` instead — keeping
+    needs delete should follow ``examples/admin/`` instead - keeping
     the quickstart anonymous-only avoids shipping a fake admin password
     or making operators read up before they can browse."""
     env = compose_data["services"]["layerloupe"]["environment"]

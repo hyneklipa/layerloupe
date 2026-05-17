@@ -191,7 +191,7 @@ async def test_iter_tags_caches_full_list() -> None:
 
 
 async def test_iter_tags_separate_repos_have_separate_cache_entries() -> None:
-    """Cache key includes the path — ``foo/tags`` and ``bar/tags`` don't collide."""
+    """Cache key includes the path - ``foo/tags`` and ``bar/tags`` don't collide."""
     counter: dict[str, int] = {}
     async with RegistryClient(
         "https://registry.example.com",
@@ -274,7 +274,7 @@ async def test_cache_unaffected_when_iteration_breaks_early() -> None:
         transport=httpx.MockTransport(_instrumented_handler(counter)),
         cache_ttl=60.0,
     ) as client:
-        # First call: break after 1 item — but the cache must have stored
+        # First call: break after 1 item - but the cache must have stored
         # the full list that ``_iter_paginated_cached`` materialized.
         async for _ in client.iter_repositories():
             break
@@ -290,7 +290,7 @@ async def test_cache_unaffected_when_iteration_breaks_early() -> None:
 
 
 async def test_caches_are_per_client_instance() -> None:
-    """Each RegistryClient has its own cache — session client doesn't see global."""
+    """Each RegistryClient has its own cache - session client doesn't see global."""
     counter_a: dict[str, int] = {}
     counter_b: dict[str, int] = {}
 

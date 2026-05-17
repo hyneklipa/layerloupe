@@ -1,4 +1,4 @@
-"""Pydantic models for the five manifest variants — happy path + edge cases.
+"""Pydantic models for the five manifest variants - happy path + edge cases.
 
 Each fixture in ``tests/fixtures/`` should round-trip through its model
 without losing data the rest of the app cares about.
@@ -93,7 +93,7 @@ def test_oci_manifest_parses_fixture(manifest_oci: dict[str, Any]) -> None:
 
 
 def test_oci_manifest_subject_optional() -> None:
-    """``subject`` is an OCI 1.1 addition — pre-1.1 manifests omit it."""
+    """``subject`` is an OCI 1.1 addition - pre-1.1 manifests omit it."""
     m = OciImageManifest.model_validate(
         {
             "schemaVersion": 2,
@@ -195,7 +195,7 @@ def test_docker_schema_1_parses_fixture(manifest_v1: dict[str, Any]) -> None:
     assert all(layer.blob_sum.startswith("sha256:") for layer in m.fs_layers)
     assert len(m.history) == 2
     assert all(isinstance(entry, V1HistoryEntry) for entry in m.history)
-    # v1Compatibility is left as a raw string here — the parser layer
+    # v1Compatibility is left as a raw string here - the parser layer
     # JSON-decodes it on demand.
     assert all(entry.v1_compatibility.startswith("{") for entry in m.history)
 

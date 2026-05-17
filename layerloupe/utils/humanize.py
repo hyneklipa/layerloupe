@@ -1,4 +1,4 @@
-"""Tiny humanizers — bytes → ``"1.5 MB"``, datetime → ``"3 weeks ago"``.
+"""Tiny humanizers - bytes → ``"1.5 MB"``, datetime → ``"3 weeks ago"``.
 
 Self-contained (no ``humanize`` lib dep). Tuned for what the manifest info
 panel actually shows: layer sizes (KB-GB) and image creation timestamps
@@ -20,7 +20,7 @@ _BYTE_UNITS: tuple[tuple[str, int], ...] = (
 def human_size(num_bytes: int | None) -> str:
     """Format a byte count as ``"1.5 MB"``.
 
-    ``None`` and 0 collapse to ``"0 B"`` — useful for schema 1 layers that
+    ``None`` and 0 collapse to ``"0 B"`` - useful for schema 1 layers that
     don't carry size info. Uses binary (1 KB = 1024 B) since that's what
     Docker / ``docker images`` reports.
     """

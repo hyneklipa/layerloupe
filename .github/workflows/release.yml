@@ -41,7 +41,7 @@ jobs:
           fetch-depth: 0   # full history so release-notes can diff against the prior tag
 
       # Logins MUST happen before ``setup-buildx-action`` when the cloud
-      # driver is in play — buildx talks to the Docker Build Cloud API
+      # driver is in play - buildx talks to the Docker Build Cloud API
       # using the docker config produced by ``docker/login-action``, and
       # without an authenticated context the cloud endpoint returns 403.
 
@@ -59,7 +59,7 @@ jobs:
           password: ${{ secrets.DOCKER_PAT }}
 
       - name: Set up Buildx (Docker Build Cloud)
-        # Native amd64 + arm64 builders behind the cloud endpoint — no
+        # Native amd64 + arm64 builders behind the cloud endpoint - no
         # QEMU emulation tax on the runner, and the shared remote cache
         # is automatic (so we don't configure type=gha cache below).
         uses: docker/setup-buildx-action@v3
@@ -71,7 +71,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # Same tag set is applied to both image names — one build, one
+          # Same tag set is applied to both image names - one build, one
           # push step, two registries. Listing both here is what wires
           # multi-registry publishing in build-push-action below.
           images: |

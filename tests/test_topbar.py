@@ -2,7 +2,7 @@
 
 Pre-redesign the topbar showed a single user pill driven by the
 registry-credentials session key. The access-control redesign added a
-second, orthogonal session key (UI identity) — the topbar now shows
+second, orthogonal session key (UI identity) - the topbar now shows
 two independent pills, plus a role badge on the identity pill.
 
 The contract pinned here:
@@ -135,7 +135,7 @@ def test_admin_session_shows_identity_pill_with_admin_badge(
 def test_protected_session_shows_identity_pill_with_viewer_badge(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """In ``protected`` mode the logged-in user has an empty role-set —
+    """In ``protected`` mode the logged-in user has an empty role-set -
     the topbar surfaces this as a ``viewer`` badge so the operator
     knows delete is unavailable to them."""
     _set_protected_env(monkeypatch)
@@ -151,7 +151,7 @@ def test_protected_session_shows_identity_pill_with_viewer_badge(
 def test_identity_pill_persists_across_pages(monkeypatch: pytest.MonkeyPatch) -> None:
     """The pill is rendered by ``_shell_context``, which feeds every page
     route. A simple check that landing on different routes keeps the
-    state visible — caches stale identity bugs."""
+    state visible - caches stale identity bugs."""
     _set_admin_env(monkeypatch)
     with TestClient(app) as client:
         _login_ui(client)
@@ -212,7 +212,7 @@ def test_sign_out_form_targets_global_logout(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_sign_out_clears_both_sessions(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The single Sign-out is intentionally global — clears identity *and*
+    """The single Sign-out is intentionally global - clears identity *and*
     registry creds. Per-flow logouts exist at /web/auth/logout for
     callers that want finer control."""
     _set_admin_env(monkeypatch)

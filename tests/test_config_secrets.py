@@ -25,7 +25,7 @@ def test_file_only_returns_file_contents(tmp_path: Path) -> None:
 
 
 def test_file_strips_one_trailing_lf(tmp_path: Path) -> None:
-    """``echo $secret > file`` adds a trailing LF — we trim exactly one."""
+    """``echo $secret > file`` adds a trailing LF - we trim exactly one."""
     f = tmp_path / "secret.txt"
     f.write_text("value-with-trailing-lf\n")
     assert resolve_secret(None, f) == "value-with-trailing-lf"
@@ -45,7 +45,7 @@ def test_file_strips_only_one_newline(tmp_path: Path) -> None:
 
 
 def test_file_preserves_trailing_space(tmp_path: Path) -> None:
-    """A password can legitimately end with whitespace — preserve it."""
+    """A password can legitimately end with whitespace - preserve it."""
     f = tmp_path / "secret.txt"
     f.write_text("value-with-space \n")
     assert resolve_secret(None, f) == "value-with-space "

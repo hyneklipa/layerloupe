@@ -1,4 +1,4 @@
-# `admin-docker-secrets/` — Admin mode with file-mounted secrets
+# `admin-docker-secrets/` - Admin mode with file-mounted secrets
 
 Same access model as [`../admin/`](../admin/) (login required, delete
 granted to the admin role), but the admin password and session secret
@@ -19,7 +19,7 @@ The `secrets/` directory is bind-mounted into the container at
 locally; for real deployments your orchestrator does it.
 
 ```bash
-# Plaintext password — the file IS the secret storage.
+# Plaintext password - the file IS the secret storage.
 printf 'my-strong-password' > secrets/admin_password
 
 # Session secret (any high-entropy string).
@@ -29,7 +29,7 @@ docker compose up
 ```
 
 Open <http://localhost:8080>. Sign in with username `admin` (the
-non-secret default — change it in `docker-compose.yml`) and the
+non-secret default - change it in `docker-compose.yml`) and the
 password you wrote to `secrets/admin_password`.
 
 The files in `secrets/` are git-ignored (see `secrets/.gitignore`)
@@ -38,7 +38,7 @@ files document the expected format.
 
 ## Why plaintext in the file?
 
-The file mount is the trust boundary — secrets-management platforms
+The file mount is the trust boundary - secrets-management platforms
 (Docker Swarm secrets, K8s Secret volumes, Vault) deliver plaintext
 into a sealed channel, the same way `POSTGRES_PASSWORD_FILE` and
 friends work. Asking the operator to bcrypt-hash the password
@@ -47,7 +47,7 @@ LayerLoupe hashes it at startup so the in-memory representation is a
 hash either way.
 
 For env-sourced passwords (`ADMIN_PASSWORD_HASH`) the rules are
-different — env is leaky (`docker inspect`, `ps auxe`, deploy logs),
+different - env is leaky (`docker inspect`, `ps auxe`, deploy logs),
 so plaintext there is rejected at startup.
 
 ## Real-world: Docker Swarm
@@ -115,7 +115,7 @@ spec:
 | Variable | Source | Notes |
 |---|---|---|
 | `AUTH_MODE=admin` | env | Enables login + delete. |
-| `ADMIN_USERNAME` | env | Not a secret — keeping it inline keeps the secret file count down. |
+| `ADMIN_USERNAME` | env | Not a secret - keeping it inline keeps the secret file count down. |
 | `ADMIN_PASSWORD_FILE` | env (points at file) | The file content is the plaintext password. |
 | `SESSION_SECRET_FILE` | env (points at file) | The file content is the session-signing secret. |
 | `AUDIT_LOG_PATH` | env | Where delete events get appended as JSONL. |

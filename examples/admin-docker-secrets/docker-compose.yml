@@ -10,7 +10,7 @@
 #     # Put real values into the secret files (or generate them).
 #     echo -n "$(uv run scripts/hash-password.py 2>/dev/null || true)" > secrets/admin_password  # plaintext, NOT a hash
 #     python3 -c "import secrets; print(secrets.token_urlsafe(32))" > secrets/session_secret
-#     # ADMIN_USERNAME is not a secret — set it inline in environment.
+#     # ADMIN_USERNAME is not a secret - set it inline in environment.
 #     docker compose up
 
 services:
@@ -21,7 +21,7 @@ services:
     container_name: layerloupe-registry-secrets
     restart: unless-stopped
     environment:
-      # Mirrors ../admin/ — see that file for why this is a pair with
+      # Mirrors ../admin/ - see that file for why this is a pair with
       # AUTH_MODE on the layerloupe service.
       REGISTRY_STORAGE_DELETE_ENABLED: "true"
       # Silence registry access log; see ../admin/docker-compose.yml.
@@ -66,7 +66,7 @@ services:
       ADMIN_USERNAME: "admin"
       # The two _FILE knobs each point at a path inside the container
       # where the value lives as plaintext. The file is the trust
-      # boundary — env stays free of secrets.
+      # boundary - env stays free of secrets.
       ADMIN_PASSWORD_FILE: "/run/secrets/admin_password"
       SESSION_SECRET_FILE: "/run/secrets/session_secret"
       AUDIT_LOG_PATH: "/var/log/layerloupe/audit.log"
@@ -89,15 +89,21 @@ services:
       - -c
       - |
         set -eu
-        echo "▶ Seeding registry:5000 with public test images..."
+        echo "[i] Seeding registry:5000 with public test images..."
         for image in alpine:3.20 alpine:latest hello-world:latest busybox:1.36; do
-          echo "  • $$image  →  registry:5000/$$image"
+          echo "[i] $$image > registry:5000/$$image"
           if ! /ko-app/crane copy --insecure "$$image" "registry:5000/$$image"; then
-            echo "  ⚠ Failed to mirror $$image (offline? rate-limited?). Continuing." >&2
+            echo "[!] Failed to mirror $$image (offline? rate-limited?). Continuing." >&2
           fi
         done
-        echo "✓ Seed complete. Open http://localhost:8080 and sign in."
+        echo "[i] Seed complete. Open http://localhost:8080 and sign in."
 
 volumes:
   registry-data:
+    driver: local
   audit-log:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

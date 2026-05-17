@@ -7,7 +7,7 @@ Multi-user is intentionally not supported here; teams that need that
 plug in OIDC.
 
 In-memory the password is always a bcrypt hash, regardless of input
-shape — so the verification path is uniform and the rest of the app
+shape - so the verification path is uniform and the rest of the app
 never sees plaintext.
 """
 
@@ -21,7 +21,7 @@ from layerloupe.auth import ADMIN_ROLE, Identity
 
 _DEFAULT_GRANTED_ROLES = frozenset({ADMIN_ROLE})
 
-# Precomputed bcrypt hash of a long random byte string — used as the
+# Precomputed bcrypt hash of a long random byte string - used as the
 # decoy for timing-safe verification when the supplied username
 # doesn't match. Generated once at import time so the (expensive) salt
 # generation runs at startup, not during a login request.
@@ -31,7 +31,7 @@ _DUMMY_HASH = bcrypt.hashpw(b"timing-decoy-not-a-real-password", bcrypt.gensalt(
 class EnvAdminProvider:
     """Verifies credentials against a single env-configured admin.
 
-    Construction takes the resolved bcrypt hash directly — the caller
+    Construction takes the resolved bcrypt hash directly - the caller
     (``Settings`` validators) is responsible for hashing any plaintext
     that came in via ``ADMIN_PASSWORD_FILE``. Keeping that conversion
     out of this class means the provider has one job: verify.
@@ -65,14 +65,14 @@ class EnvAdminProvider:
     async def authenticate(self, username: str, password: str) -> Identity | None:
         # ``hmac.compare_digest`` is the standard constant-time compare
         # for same-length inputs. Different lengths leak length (an
-        # acceptable tradeoff — bcrypt verification dominates total
+        # acceptable tradeoff - bcrypt verification dominates total
         # request time by orders of magnitude).
         username_matches = hmac.compare_digest(
             username.encode("utf-8"),
             self._username.encode("utf-8"),
         )
-        # Always run bcrypt — against the real hash on a username match,
-        # against the dummy hash otherwise — so request duration doesn't
+        # Always run bcrypt - against the real hash on a username match,
+        # against the dummy hash otherwise - so request duration doesn't
         # tell an attacker whether ``username`` is the admin's.
         target_hash = self._password_hash if username_matches else _DUMMY_HASH
         try:
@@ -80,7 +80,7 @@ class EnvAdminProvider:
         except ValueError:
             # ``bcrypt.checkpw`` raises ``ValueError("Invalid salt")`` if
             # the stored hash isn't in the bcrypt ``$2b$...`` format. We
-            # treat that as "verification failed" — operator gave us a
+            # treat that as "verification failed" - operator gave us a
             # malformed hash, login fails closed, app keeps running.
             password_matches = False
         if username_matches and password_matches:

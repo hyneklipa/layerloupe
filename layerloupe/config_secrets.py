@@ -8,11 +8,11 @@ env var ending in ``_FILE`` that points to a path containing the value.
 This module is the single point where we resolve the two sources to one
 value and warn on misconfiguration (both set, file missing, file empty,
 …). The threat model assumption is that the ``*_FILE`` path comes from a
-sealed channel — Docker secrets, Kubernetes Secret volume mount, Vault
-agent injector — so the file contents are plaintext. Inline env values
+sealed channel - Docker secrets, Kubernetes Secret volume mount, Vault
+agent injector - so the file contents are plaintext. Inline env values
 typically are *not* plaintext (they're hashes, for the
 ``ADMIN_PASSWORD_HASH`` use case), but this loader itself doesn't care
-— it returns whatever string was supplied. Callers decide how to
+- it returns whatever string was supplied. Callers decide how to
 interpret it.
 """
 
@@ -41,7 +41,7 @@ def resolve_secret(
             be ``None`` if the env var isn't set.
         file_path: The ``*_FILE`` env value (e.g.
             ``ADMIN_PASSWORD_FILE``). May be ``None``.
-        name: Logical name used in warning / error messages — e.g.
+        name: Logical name used in warning / error messages - e.g.
             ``"ADMIN_PASSWORD"``. Used only for diagnostics.
 
     Returns:
@@ -50,7 +50,7 @@ def resolve_secret(
           when only the file source is set.
         - ``value`` when only the inline source is set.
         - The contents of ``file_path`` with a logged warning when both
-          are set (file wins — it's the more secure source, and an
+          are set (file wins - it's the more secure source, and an
           operator who supplied both probably added FILE later and
           forgot to drop the inline value).
 
@@ -60,7 +60,7 @@ def resolve_secret(
     """
     if file_path is not None and value is not None:
         logger.warning(
-            "Both %s and %s_FILE are set — using file value, ignoring inline.",
+            "Both %s and %s_FILE are set - using file value, ignoring inline.",
             name,
             name,
         )
@@ -76,7 +76,7 @@ def _read_secret_file(path: Path, *, name: str) -> str:
         raise SecretFileError(f"Could not read {name}_FILE at {path}: {exc}") from exc
     # Trim a single trailing newline (``echo $secret > file`` convention).
     # We don't ``.strip()`` because a secret could legitimately end with
-    # whitespace — rare, but breaking it silently would be worse than
+    # whitespace - rare, but breaking it silently would be worse than
     # reading what the operator actually put there.
     if raw.endswith("\r\n"):
         raw = raw[:-2]

@@ -1,8 +1,8 @@
 """Smoke tests for ``scripts/hash-password.py``.
 
 The interactive path uses ``getpass`` which is awkward to drive in a
-test (it bypasses ``sys.stdin``). We exercise the piped path — which
-is also the path that matters in CI / automated provisioning — and
+test (it bypasses ``sys.stdin``). We exercise the piped path - which
+is also the path that matters in CI / automated provisioning - and
 the structural properties of the file (exists, executable, shebang).
 """
 
@@ -48,7 +48,7 @@ def test_piped_password_produces_verifiable_bcrypt_hash() -> None:
     )
     stdout = result.stdout.strip()
     assert stdout.startswith("$2b$"), f"not a bcrypt hash: {stdout!r}"
-    # Verify the hash against the original plaintext — this is the
+    # Verify the hash against the original plaintext - this is the
     # only contract the script needs to honor.
     assert bcrypt.checkpw(b"hunter2", stdout.encode("ascii"))
 
@@ -88,7 +88,7 @@ def test_piped_empty_input_fails_with_clear_error() -> None:
 
 def test_piped_password_with_special_chars() -> None:
     """Operator-chosen passwords often have shell metacharacters or
-    unicode — make sure the script preserves them byte-for-byte."""
+    unicode - make sure the script preserves them byte-for-byte."""
     plaintext = "p@$$w%rd:über!#$\n with spaces"
     # Strip the LF on input ourselves (one trailing newline gets eaten
     # by the script too, so we only feed plain content).

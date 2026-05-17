@@ -4,7 +4,7 @@ Two route flavors:
 
 * **Page routes** at ``/``, ``/repositories``, ``/repositories/{repo}``,
   ``/repositories/{repo}/manifests/{ref}``. Render the full ``index.html``
-  shell with as many columns server-rendered as the URL provides info for —
+  shell with as many columns server-rendered as the URL provides info for -
   so a deep link goes straight to the right state on hard reload.
 
 * **Fragment routes** at ``/partials/...``. Return just the inner ``<ul>``
@@ -87,7 +87,7 @@ async def _fetch_repos(client: RegistryClient, q: str | None) -> tuple[list[str]
     """Return ``(repos, error)``.
 
     HTML routes prefer rendering the shell with an inline error banner over
-    a hard 5xx — operators can still interact with the UI (theme toggle,
+    a hard 5xx - operators can still interact with the UI (theme toggle,
     sign in / out) when the registry is briefly unavailable.
     """
     items: list[str] = []
@@ -125,7 +125,7 @@ async def _fetch_manifest(
     if manifest.digest is not None:
         pull_digest = _build_pull_command(public_url, repository, manifest.digest)
         # When the user navigated to a digest URL, ``pull`` already equals
-        # the digest variant — only show it once.
+        # the digest variant - only show it once.
         if pull_digest == pull:
             pull = None
     return to_unified(
@@ -144,7 +144,7 @@ async def _fetch_referrers(
     repository: str,
     manifest: UnifiedManifest | None,
 ) -> list[Referrer]:
-    """Best-effort referrers fetch — empty on any failure.
+    """Best-effort referrers fetch - empty on any failure.
 
     The web layer never wants to fail a manifest render because the
     referrers API hiccupped, so we swallow connection errors and HTTP
@@ -239,7 +239,7 @@ async def _annotation_rows_with_fallback(
 ) -> tuple[list[AnnotationRow], str | None]:
     """Return ``(rows, fallback_label)``.
 
-    Multi-arch indexes often carry no annotations of their own — useful
+    Multi-arch indexes often carry no annotations of their own - useful
     metadata sits on each per-platform child. When the index is empty we
     try the child matching the host's architecture so the panel doesn't
     look unhelpfully blank. ``fallback_label`` is the human-readable
@@ -256,7 +256,7 @@ async def _annotation_rows_with_fallback(
         None,
     )
     if pick is None:
-        # The host's arch isn't in the index — pick any non-attestation
+        # The host's arch isn't in the index - pick any non-attestation
         # child so the user still sees something.
         pick = next(
             (
@@ -286,12 +286,12 @@ def _shell_context(request: Request, settings: object) -> dict[str, Any]:
 
     Drives the topbar (Sign-in vs. user pill, Sign-out button) and the
     trash-icon visibility on manifest panels. ``is_admin`` is derived
-    from the current session ``Identity``, not from settings — so a
+    from the current session ``Identity``, not from settings - so a
     logged-in admin sees the trash icon in ``admin`` mode but not in
     ``protected`` mode (where the provider hands back an empty role
     set even for the admin credential).
     """
-    s = settings  # narrow typing — avoid importing Settings just for this
+    s = settings  # narrow typing - avoid importing Settings just for this
     identity = get_identity(request)
     return {
         "title": getattr(s, "title", "LayerLoupe"),
@@ -347,7 +347,7 @@ async def repositories_page(
     identity: BrowseAccessDep,
     q: str | None = Query(default=None),
 ) -> HTMLResponse:
-    """Same as ``/`` — explicit URL exists so links from the topbar work."""
+    """Same as ``/`` - explicit URL exists so links from the topbar work."""
     return await home(request, settings, client, identity, q)
 
 
@@ -498,7 +498,7 @@ async def tags_fragment(
       swap so the user lands on usable detail without a second click. We
       also push the URL forward to ``/repositories/<repo>/manifests/<tag>``
       for shareability.
-    * The tag-filter input. The user is still inside the same repo —
+    * The tag-filter input. The user is still inside the same repo -
       leave the manifest panel alone and just refresh the list.
     """
     try:
@@ -544,7 +544,7 @@ async def tags_fragment(
             "tag_filter": q or "",
             "selected_tag": auto_tag if auto_select else selected_tag,
             "error": error,
-            # OOB swap controls — when ``not is_tag_filter`` we always emit
+            # OOB swap controls - when ``not is_tag_filter`` we always emit
             # something into ``#info-column-body`` (a manifest, or an empty
             # placeholder if the fetch failed / the repo is empty).
             "clear_info_column": not is_tag_filter,
@@ -616,7 +616,7 @@ async def manifest_fragment(
             "error": error,
             # Tells the partial to OOB-swap the trash-icon into
             # ``#manifest-actions`` (in the Manifest column header). Only
-            # set on fragment renders — full-page renders include the icon
+            # set on fragment renders - full-page renders include the icon
             # inline via index.html, so an OOB swap there would duplicate.
             "swap_actions": True,
         },
@@ -638,11 +638,11 @@ async def delete_manifest_via_web(
     """Delete a manifest from the htmx UI.
 
     On success returns ``204`` with ``HX-Redirect: /repositories/<repo>/tags``
-    so htmx hard-navigates to the tag list — the deleted tag is already gone
+    so htmx hard-navigates to the tag list - the deleted tag is already gone
     from the freshly-rendered page, no manual fragment juggling needed. An
     audit event ``manifest_deleted`` is emitted alongside (see :mod:`layerloupe.audit`).
 
-    Gated by ``AdminDep`` — anonymous → 401, non-admin → 403. The UI
+    Gated by ``AdminDep`` - anonymous → 401, non-admin → 403. The UI
     doesn't surface the trash-icon for non-admin sessions either; this
     guard catches direct-htmx-DELETE attempts.
     """
@@ -664,7 +664,7 @@ async def delete_manifest_via_web(
 
 
 def _safe_redirect(target: str | None) -> str:
-    """Whitelist same-origin paths only — refuse external / protocol-relative URLs."""
+    """Whitelist same-origin paths only - refuse external / protocol-relative URLs."""
     if not target or not target.startswith("/") or target.startswith("//"):
         return "/"
     return target
@@ -743,7 +743,7 @@ async def login_submit(
     if not ok:
         # Re-render the form so the user can fix their credentials without
         # losing the ``next`` target. Username preserved (password not, by
-        # convention — make the user re-type to avoid stale auto-fill).
+        # convention - make the user re-type to avoid stale auto-fill).
         return templates.TemplateResponse(
             request=request,
             name="login.html",
@@ -823,7 +823,7 @@ async def ui_logout(request: Request) -> Response:
 
 @router.post("/web/logout")
 async def web_logout(request: Request) -> Response:
-    """Clear *all* session state — both UI identity and registry creds.
+    """Clear *all* session state - both UI identity and registry creds.
 
     Kept as the topbar's single "Sign out" target so users don't have
     to think about which of the two logins they're in.

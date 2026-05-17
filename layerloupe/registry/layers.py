@@ -2,7 +2,7 @@
 
 The layer info panel shows one row per Dockerfile-ish step. Some steps
 produce blobs (``RUN``, ``COPY``, ``ADD``); others are metadata-only
-(``CMD``, ``ENV``, ``LABEL`` — Docker calls these ``empty_layer``). The
+(``CMD``, ``ENV``, ``LABEL`` - Docker calls these ``empty_layer``). The
 manifest's ``layers[]`` only carries the blob-producing rows, while the
 image config's ``history[]`` carries every step. Pairing them by walking
 history and consuming layers in order recreates the build's narrative.
@@ -21,7 +21,7 @@ from datetime import datetime
 from layerloupe.registry.models import HistoryEntry
 from layerloupe.registry.parser import UnifiedLayer
 
-# Large-layer threshold — used to flag rows the user might want to optimize.
+# Large-layer threshold - used to flag rows the user might want to optimize.
 # 100 MiB is the conventional "your image is fat" line for base images, and
 # it matches what ``docker history`` highlights in the Docker Desktop UI.
 LARGE_LAYER_THRESHOLD: int = 100 * 1024 * 1024
@@ -72,7 +72,7 @@ def parse_created_by(raw: str | None) -> ParsedInstruction:
 
     Handles three formats commonly seen in the wild:
 
-    * Modern buildkit: ``"RUN apt-get update"`` — instruction is the
+    * Modern buildkit: ``"RUN apt-get update"`` - instruction is the
       first whitespace-separated word.
     * Legacy shell-wrap (real layer): ``"/bin/sh -c apt-get update"`` →
       classified as ``RUN``.
@@ -111,7 +111,7 @@ def _from_dockerfile_form(s: str, *, fallback: str) -> ParsedInstruction:
 
 @dataclass(frozen=True)
 class LayerRow:
-    """One row in the Layers tab — either a real layer or a metadata step."""
+    """One row in the Layers tab - either a real layer or a metadata step."""
 
     instruction: str | None
     """Dockerfile instruction (``"RUN"``, ``"COPY"``, …) or ``None``."""
@@ -120,7 +120,7 @@ class LayerRow:
     """The command body (``apt-get update`` for ``RUN``, etc.)."""
 
     raw_created_by: str
-    """Original unparsed ``created_by`` — useful for debugging / copy-out."""
+    """Original unparsed ``created_by`` - useful for debugging / copy-out."""
 
     created: datetime | None
 
@@ -137,7 +137,7 @@ class LayerRow:
     """Layer media type, or ``""`` for empty rows."""
 
     is_large: bool
-    """``size >= LARGE_LAYER_THRESHOLD`` — flagged in the UI."""
+    """``size >= LARGE_LAYER_THRESHOLD`` - flagged in the UI."""
 
 
 def build_layer_rows(

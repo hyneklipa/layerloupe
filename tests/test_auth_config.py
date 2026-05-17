@@ -1,7 +1,7 @@
 """Tests for ``AUTH_MODE`` + ``ADMIN_*`` settings validation.
 
 Covers the resolution rules from
-``_docs/06-ui-access-control-redesign.md`` § 3 — env vs file sources,
+``_docs/06-ui-access-control-redesign.md`` § 3 - env vs file sources,
 plaintext-in-env rejection, mode invariants, and deprecation warnings
 for the old ``UI_USERNAME`` / ``UI_PASSWORD`` / ``ALLOW_DELETE`` knobs.
 """
@@ -32,7 +32,7 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 @pytest.fixture
 def admin_hash() -> str:
-    """A real bcrypt hash for ``"hunter2"`` at low rounds — fast in tests."""
+    """A real bcrypt hash for ``"hunter2"`` at low rounds - fast in tests."""
     return hash_password("hunter2", rounds=4)
 
 
@@ -53,7 +53,7 @@ def test_public_mode_does_not_require_admin_creds() -> None:
 def test_public_mode_accepts_admin_creds_without_complaint(
     monkeypatch: pytest.MonkeyPatch, admin_hash: str
 ) -> None:
-    """Operator may have admin creds set while leaving mode at public —
+    """Operator may have admin creds set while leaving mode at public -
     e.g. flipping mode for testing. Don't raise."""
     monkeypatch.setenv("ADMIN_USERNAME", "admin")
     monkeypatch.setenv("ADMIN_PASSWORD_HASH", admin_hash)
@@ -129,7 +129,7 @@ def test_admin_password_from_file_is_hashed_at_startup(
     """Plaintext in file → bcrypt hash in memory.
 
     Verifies the hash by feeding it to ``EnvAdminProvider`` and
-    authenticating with the original plaintext — the round-trip proves
+    authenticating with the original plaintext - the round-trip proves
     we hashed (a) bcrypt-shaped and (b) the actual file contents.
     """
     pw_file = tmp_path / "admin-password"
@@ -188,7 +188,7 @@ def test_plaintext_admin_password_in_env_is_rejected(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``ADMIN_PASSWORD`` (without ``_HASH`` / ``_FILE`` suffix) must
-    fail at startup with a clear instruction — never silently accepted."""
+    fail at startup with a clear instruction - never silently accepted."""
     monkeypatch.setenv("AUTH_MODE", "admin")
     monkeypatch.setenv("ADMIN_USERNAME", "alice")
     monkeypatch.setenv("ADMIN_PASSWORD", "plaintext-please-no")
@@ -199,7 +199,7 @@ def test_plaintext_admin_password_in_env_is_rejected(
 def test_admin_password_env_doesnt_block_hash_or_file(
     monkeypatch: pytest.MonkeyPatch, admin_hash: str
 ) -> None:
-    """``ADMIN_PASSWORD`` env should only block when alone — if the
+    """``ADMIN_PASSWORD`` env should only block when alone - if the
     operator also set ``_HASH`` or ``_FILE`` they're presumably
     transitioning and we honor the right one."""
     monkeypatch.setenv("AUTH_MODE", "admin")
@@ -216,9 +216,9 @@ def test_admin_password_env_doesnt_block_hash_or_file(
 def test_retired_ui_username_is_silently_ignored(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """``UI_USERNAME`` was retired in T7.7 — ``extra="ignore"`` drops it
+    """``UI_USERNAME`` was retired in T7.7 - ``extra="ignore"`` drops it
     silently so old ``.env`` files don't crash startup. (Operators
-    relying on it never had a working feature anyway — it was unused.)"""
+    relying on it never had a working feature anyway - it was unused.)"""
     monkeypatch.setenv("UI_USERNAME", "legacy")
     monkeypatch.setenv("UI_PASSWORD", "legacy-pw")
     # No exception; the values aren't on the model.
@@ -245,5 +245,5 @@ def test_no_deprecation_warning_when_only_new_knobs_set(
     monkeypatch.setenv("SESSION_SECRET", "explicit-secret-no-autogen-warning")
     with caplog.at_level(logging.WARNING, logger="layerloupe.config"):
         get_settings()
-    # No log records at all from layerloupe.config — clean startup.
+    # No log records at all from layerloupe.config - clean startup.
     assert [rec for rec in caplog.records if rec.name == "layerloupe.config"] == []

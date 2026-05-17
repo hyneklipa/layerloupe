@@ -1,8 +1,8 @@
 """In-memory TTL cache used by :class:`RegistryClient`.
 
-Single-process, asyncio-single-threaded — no locks needed; dict mutations
+Single-process, asyncio-single-threaded - no locks needed; dict mutations
 are atomic between ``await`` points. Eviction is "drop one expired entry,
-else drop the oldest insertion" — good enough for the few hundred entries
+else drop the oldest insertion" - good enough for the few hundred entries
 a LayerLoupe instance accumulates.
 """
 
@@ -58,5 +58,5 @@ class TTLCache:
                 self._data.pop(k, None)
                 return
         if self._data:
-            # Python preserves insertion order — drop the first key.
+            # Python preserves insertion order - drop the first key.
             self._data.pop(next(iter(self._data)), None)

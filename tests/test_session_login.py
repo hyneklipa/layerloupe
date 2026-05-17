@@ -130,7 +130,7 @@ def test_login_then_subsequent_request_uses_session_creds(
         # Login probe used alice:s3cret.
         assert session_test_setup["probe_auth"][-1] == _basic_header("alice", "s3cret")
 
-        # Subsequent catalog call must carry the same creds — that's the whole point.
+        # Subsequent catalog call must carry the same creds - that's the whole point.
         response = client.get("/api/repositories")
         assert response.status_code == 200
 
@@ -186,7 +186,7 @@ def test_session_password_is_encrypted_in_cookie(
         cookie_value = client.cookies.get("session")
 
     assert cookie_value is not None
-    # The cookie format is: base64(json).timestamp.signature — try decoding the data part.
+    # The cookie format is: base64(json).timestamp.signature - try decoding the data part.
     data_part = cookie_value.split(".")[0]
     # Add padding for base64 if needed.
     padded = data_part + "=" * (-len(data_part) % 4)
@@ -198,7 +198,7 @@ def test_session_password_is_encrypted_in_cookie(
 def test_tampered_cookie_falls_back_silently(
     session_test_setup: dict[str, list[str | None]],
 ) -> None:
-    """A garbage password ciphertext shouldn't crash — just falls back to global creds."""
+    """A garbage password ciphertext shouldn't crash - just falls back to global creds."""
     with TestClient(app) as client:
         # Manually plant a bogus encrypted password into the session.
         # We can't directly set it without going through the middleware; the

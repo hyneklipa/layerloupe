@@ -2,9 +2,9 @@
 
 OCI Image Manifest carries metadata in two slots:
 
-* ``manifest.annotations`` — the modern, manifest-level dictionary
+* ``manifest.annotations`` - the modern, manifest-level dictionary
   (`org.opencontainers.image.*` is the standardized namespace).
-* ``image_config.config.Labels`` — the older Docker-style runtime labels.
+* ``image_config.config.Labels`` - the older Docker-style runtime labels.
   Most images set the same key in both for backwards compatibility.
 
 Together they describe **what the image is** (source repo, version, license,
@@ -31,7 +31,7 @@ class KnownAnnotation:
     """One-line explanation; rendered as the ``title`` attribute on hover."""
 
 
-# Order matters — the table renders these top-to-bottom in this sequence
+# Order matters - the table renders these top-to-bottom in this sequence
 # when present. We follow the OCI spec's reading order so the most
 # operationally interesting fields surface first.
 KNOWN_OCI_ANNOTATIONS: dict[str, KnownAnnotation] = {
@@ -79,7 +79,7 @@ KNOWN_OCI_ANNOTATIONS: dict[str, KnownAnnotation] = {
 
 
 def is_url(value: str) -> bool:
-    """``True`` for ``http://`` / ``https://`` strings — used to decide auto-linking."""
+    """``True`` for ``http://`` / ``https://`` strings - used to decide auto-linking."""
     return value.startswith(("http://", "https://"))
 
 
@@ -91,11 +91,11 @@ class AnnotationRow:
     """Raw annotation key (e.g. ``org.opencontainers.image.source``)."""
 
     label: str
-    """Friendly column label — :class:`KnownAnnotation.label` for known keys, else the raw key."""
+    """Friendly column label - :class:`KnownAnnotation.label` for known keys, else the raw key."""
 
     value: str
     description: str
-    """Tooltip / hover text — empty for unknown keys."""
+    """Tooltip / hover text - empty for unknown keys."""
 
     is_known: bool
     is_url: bool
@@ -108,7 +108,7 @@ def merge_annotations(
     """Combine manifest annotations and image-config labels into a typed table.
 
     Conflict resolution: ``manifest.annotations`` wins over
-    ``image_config.config.Labels`` for the same key — the manifest is the
+    ``image_config.config.Labels`` for the same key - the manifest is the
     authoritative source in modern (OCI 1.0+) images.
 
     Output order:

@@ -17,7 +17,7 @@ from tests.conftest import load_fixture_bytes
 
 @pytest.fixture
 def registry_handler() -> Iterator[dict[str, Callable[[httpx.Request], httpx.Response]]]:
-    """Slot the test fills with a request handler — wired into the registry client."""
+    """Slot the test fills with a request handler - wired into the registry client."""
     box: dict[str, Callable[[httpx.Request], httpx.Response]] = {
         "handler": lambda r: httpx.Response(404)
     }
@@ -274,7 +274,7 @@ def test_get_manifest_config_400_for_index(
 def test_get_referrers_returns_empty_when_endpoint_missing(
     registry_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """Most current registries don't implement OCI 1.1 referrers — soft-fail."""
+    """Most current registries don't implement OCI 1.1 referrers - soft-fail."""
 
     def handler(request: httpx.Request) -> httpx.Response:
         if "/referrers/" in request.url.path:

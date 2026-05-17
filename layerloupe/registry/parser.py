@@ -3,7 +3,7 @@
 The registry can return a manifest in five different shapes (OCI image, OCI
 index, Docker v2, Docker manifest list, Docker schema 1). The UI / API
 shouldn't have to branch on ``mediaType`` strings every time it wants to
-render a "size" or a "platform" — :func:`to_unified` flattens the variants
+render a "size" or a "platform" - :func:`to_unified` flattens the variants
 into a single :class:`UnifiedManifest` shape that downstream code can
 consume directly.
 
@@ -65,7 +65,7 @@ class UnifiedPlatform(BaseModel):
 
 
 class UnifiedLayer(BaseModel):
-    """Single layer descriptor — minimal subset the UI needs to render layers."""
+    """Single layer descriptor - minimal subset the UI needs to render layers."""
 
     model_config = _BASE_CONFIG
 
@@ -79,7 +79,7 @@ class UnifiedConfig(BaseModel):
 
     On schema 2 / OCI manifests the config is a separate content-addressable
     blob, so ``digest`` and ``size`` are populated. Schema 1 manifests embed
-    the config inside the manifest body itself — there is no separate blob,
+    the config inside the manifest body itself - there is no separate blob,
     so ``digest`` is ``None`` and ``size`` is 0 in that case. Callers that
     care about the distinction can branch on ``digest is None``.
     """
@@ -92,7 +92,7 @@ class UnifiedConfig(BaseModel):
 
 
 class UnifiedManifest(BaseModel):
-    """Manifest as the rest of the application sees it — variant-agnostic."""
+    """Manifest as the rest of the application sees it - variant-agnostic."""
 
     model_config = _BASE_CONFIG
 
@@ -126,12 +126,12 @@ def to_unified(
 
     Args:
         manifest_response: What :meth:`RegistryClient.get_manifest` returned.
-        image_config: Optional, but recommended for single-arch images —
+        image_config: Optional, but recommended for single-arch images -
             populates ``config.data`` and the platform info. Ignored for
             indexes (no config blob to attach).
         pull_command: Optional pre-rendered tag-pinned ``docker pull …``
             string. The parser doesn't know the public registry URL, so the
-            caller assembles this. ``None`` is fine — the UI can hide it.
+            caller assembles this. ``None`` is fine - the UI can hide it.
         pull_command_digest: Optional immutable digest-pinned variant
             (``docker pull host/repo@sha256:…``). Recommended for any
             production "pin this image" workflow.
@@ -321,7 +321,7 @@ def _build_v1_history(manifest: DockerSchema1Manifest) -> list[dict[str, Any]]:
     """Walk ``history[]`` and produce :class:`HistoryEntry`-shaped dicts.
 
     ``created_by`` is reconstructed from the first command in
-    ``container_config.Cmd`` — that's where Docker builds stored the
+    ``container_config.Cmd`` - that's where Docker builds stored the
     Dockerfile instruction (often prefixed with ``/bin/sh -c #(nop) `` for
     metadata-only ops; the parser leaves the prefix for the UI to clean up).
     """
@@ -342,7 +342,7 @@ def _build_v1_history(manifest: DockerSchema1Manifest) -> list[dict[str, Any]]:
                 "author": decoded.get("author"),
                 "comment": decoded.get("comment"),
                 # Docker spec calls this `throwaway` in v1Compatibility but
-                # `empty_layer` in the modern image config — same idea.
+                # `empty_layer` in the modern image config - same idea.
                 "empty_layer": bool(decoded.get("throwaway", False)),
             }
         )

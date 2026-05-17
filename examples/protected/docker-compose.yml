@@ -2,7 +2,7 @@
 #
 # Anyone hitting the URL is bounced to /login until they sign in with
 # the admin credentials below. After login they get the same read-only
-# UI as `public` mode — no delete capability.
+# UI as `public` mode - no delete capability.
 #
 # Bring up:
 #
@@ -41,7 +41,7 @@ services:
   # -- LayerLoupe itself --------------------------------------------------
   #
   # Built from the local Dockerfile so the example tracks the current
-  # source — change to a pinned image (``image: layerloupe:0.1.0``)
+  # source - change to a pinned image (``image: layerloupe:0.1.0``)
   # once you're deploying for real.
   layerloupe:
     build:
@@ -57,7 +57,7 @@ services:
     environment:
       REGISTRY_URL: "http://registry:5000"
       REGISTRY_PUBLIC_URL: "http://localhost:5000"
-      # Scenario knobs — these are what makes this a `protected` deploy.
+      # Scenario knobs - these are what makes this a `protected` deploy.
       AUTH_MODE: "${AUTH_MODE:-protected}"
       ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
       ADMIN_PASSWORD_HASH: "${ADMIN_PASSWORD_HASH}"
@@ -78,14 +78,19 @@ services:
       - -c
       - |
         set -eu
-        echo "▶ Seeding registry:5000 with public test images..."
+        echo "[i] Seeding registry:5000 with public test images..."
         for image in alpine:3.20 alpine:latest hello-world:latest busybox:1.36; do
-          echo "  • $$image  →  registry:5000/$$image"
+          echo "[i] $$image > registry:5000/$$image"
           if ! /ko-app/crane copy --insecure "$$image" "registry:5000/$$image"; then
-            echo "  ⚠ Failed to mirror $$image (offline? rate-limited?). Continuing." >&2
+            echo "[!] Failed to mirror $$image (offline? rate-limited?). Continuing." >&2
           fi
         done
-        echo "✓ Seed complete. Open http://localhost:8080 — you'll be asked to sign in."
+        echo "[i] Seed complete. Open http://localhost:8080 and sign in."
 
 volumes:
   registry-data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

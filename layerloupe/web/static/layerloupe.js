@@ -1,4 +1,4 @@
-/* LayerLoupe UI shell — minimal vanilla JS.
+/* LayerLoupe UI shell - minimal vanilla JS.
  *
  * Six tiny widgets:
  *   1. Theme toggle (set in <head> pre-paint script, button toggles).
@@ -133,7 +133,7 @@
         if (!text) return;
         await copyText(text);
         showToast("Copied!");
-        /* CSS swaps the icon based on this attribute — JS just toggles. */
+        /* CSS swaps the icon based on this attribute - JS just toggles. */
         btn.setAttribute("data-copied", "");
         setTimeout(() => btn.removeAttribute("data-copied"), COPIED_FLAG_MS);
       });
@@ -151,7 +151,7 @@
         const dlg = document.getElementById(btn.getAttribute("data-modal-open"));
         if (dlg?.showModal) dlg.showModal();
         else if (dlg) dlg.setAttribute("open", "");
-        /* Focus the type-to-confirm input if the modal has one — saves
+        /* Focus the type-to-confirm input if the modal has one - saves
          * the user a click and signals the intent of the gate. */
         const confirmInput = dlg?.querySelector("[data-delete-confirm-input]");
         if (confirmInput) {
@@ -187,7 +187,7 @@
     /* -- Type-to-confirm gate on delete modal ------------------------
      * The confirm button stays disabled until the user types the
      * expected ``<repo>:<tag>`` (or ``<repo>@<digest>``) string. The
-     * gate is a deliberate friction step — the icon trigger is small
+     * gate is a deliberate friction step - the icon trigger is small
      * by design and the typed-name barrier eliminates "muscle memory"
      * deletions of the wrong manifest. */
     for (const input of root.querySelectorAll("[data-delete-confirm-input]")) {
@@ -246,7 +246,7 @@
     const current = document.activeElement;
     let list = current?.closest?.(".item-list") ?? null;
     if (!list) {
-      /* No list focused — start in the repo column. */
+      /* No list focused - start in the repo column. */
       list = document.getElementById("repo-list");
     }
     if (!list) return false;
@@ -286,7 +286,7 @@
         return;
       }
 
-      /* Don't hijack typing — but only AFTER we've handled Esc above. */
+      /* Don't hijack typing - but only AFTER we've handled Esc above. */
       if (editable) return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
 
@@ -313,13 +313,13 @@
         if (navigateList(-1)) e.preventDefault();
       }
       /* Enter / Space: native browser behavior on a focused <a> already
-         activates the link, including htmx attributes — no override needed. */
+         activates the link, including htmx attributes - no override needed. */
     });
   };
 
   /* -- Active-row tracking ------------------------------------------- */
   /* htmx only swaps the click target's content (the tag list, the info
-     panel) — it doesn't re-render the source list, so without help the
+     panel) - it doesn't re-render the source list, so without help the
      ``item-row--active`` class stays on whatever item was active when
      the column was last server-rendered. We move it on click instead. */
   const bindActiveRowTracking = () => {
@@ -358,7 +358,7 @@
   /* htmx replaces fragments after page load; re-bind widgets in the new
    * DOM. We re-init the *entire document* (not just ``e.target``) because
    * for innerHTML OOB swaps htmx 2.x fires ``htmx:afterSwap`` /
-   * ``htmx:oobAfterSwap`` on the **main** swap target — its ``i.elts``
+   * ``htmx:oobAfterSwap`` on the **main** swap target - its ``i.elts``
    * stays at ``[mainTarget]`` since the innerHTML swap path (``Ve()``)
    * doesn't repopulate elts with the new children. A scoped
    * ``init(e.target)`` therefore never reaches OOB-swapped elements like
@@ -371,7 +371,7 @@
    * repository. The page itself scrolls (no nested scrollbars), so a
    * click deep in a long repo list otherwise leaves the manifest column
    * out of view. ``#tag-column-body`` is only the swap target on a fresh
-   * repo selection — tag-list filtering targets ``#tag-list``, manifest
+   * repo selection - tag-list filtering targets ``#tag-list``, manifest
    * fetches target ``#info-column-body``, so this won't fire for those. */
   document.body.addEventListener("htmx:afterSwap", (e) => {
     if (e.target && e.target.id === "tag-column-body") {

@@ -5,7 +5,7 @@ On top of the basic 200/503 contract, the endpoints add:
 * ``Cache-Control: no-store`` so a flaky proxy can't return last-known-good
   liveness for a process that's actually down.
 * Filtering ``/api/healthz`` + ``/api/readyz`` out of the structured access
-  log — k8s probes hit them every few seconds and would otherwise drown
+  log - k8s probes hit them every few seconds and would otherwise drown
   production stdout.
 """
 
@@ -141,7 +141,7 @@ def test_healthz_does_not_emit_access_log(
     capfd: pytest.CaptureFixture[str],
     healthy_registry: None,
 ) -> None:
-    """``/api/healthz`` is hit every few seconds — silence its access line."""
+    """``/api/healthz`` is hit every few seconds - silence its access line."""
     try:
         entries = _capture_logs(lambda c: c.get("/api/healthz"), capfd)
         completed = [e for e in entries if e.get("event") == "request_completed"]

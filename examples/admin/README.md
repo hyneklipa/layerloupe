@@ -1,4 +1,4 @@
-# `admin/` — Login required, admin can delete
+# `admin/` - Login required, admin can delete
 
 The full-power deployment: anonymous visitors get bounced to `/login`,
 and after signing in the admin gets the read-only browse plus a
@@ -57,7 +57,7 @@ docker compose exec layerloupe tail -f /var/log/layerloupe/audit.log
 
 | Variable | Purpose |
 |---|---|
-| `AUTH_MODE=admin` | Activates the UI surface for delete — admin login, trash icon, auth guard. |
+| `AUTH_MODE=admin` | Activates the UI surface for delete - admin login, trash icon, auth guard. |
 | `REGISTRY_STORAGE_DELETE_ENABLED=true` | Tells the registry itself to actually perform the unlink. The two flags are a pair: with only one of them on, the delete either never reaches the registry (no UI to trigger it) or the registry refuses it (`MANIFEST_DELETE_DISABLED`). |
 | `ADMIN_USERNAME` | Admin login name. |
 | `ADMIN_PASSWORD_HASH` | Bcrypt hash of the admin password. |
@@ -66,12 +66,12 @@ docker compose exec layerloupe tail -f /var/log/layerloupe/audit.log
 
 ## Want the password out of `.env`?
 
-See [`../admin-docker-secrets/`](../admin-docker-secrets/) — same
+See [`../admin-docker-secrets/`](../admin-docker-secrets/) - same
 scenario, but `ADMIN_PASSWORD_FILE` reads the password from a sealed
 secret mount instead of a hash in env.
 
 ## Registry garbage collection
 
-Deleting a manifest only unlinks it — the layer blobs persist on the
+Deleting a manifest only unlinks it - the layer blobs persist on the
 registry's disk until `registry garbage-collect` runs. The audit log
 captures the resolved digest so the operator running GC can reconcile.

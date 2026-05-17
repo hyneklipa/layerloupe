@@ -2,7 +2,7 @@
 
 The unit tests in ``test_auth_deps.py`` cover the dependencies in
 isolation against tiny ad-hoc apps. This file pins down the *real*
-app's behavior route-by-route — browse, fragment, delete — across the
+app's behavior route-by-route - browse, fragment, delete - across the
 ``(auth_mode x authenticated x is_admin)`` matrix, plus the
 HTML-vs-JSON discriminator.
 
@@ -105,7 +105,7 @@ def _login_admin(client: TestClient) -> None:
 
 
 # ----------------------------------------------------------------------
-# Browse routes — gated by ``BrowseAccessDep`` (auth-mode-aware).
+# Browse routes - gated by ``BrowseAccessDep`` (auth-mode-aware).
 # ----------------------------------------------------------------------
 
 
@@ -185,7 +185,7 @@ def test_api_browse_protected_mode_allows_authenticated(
 
 
 # ----------------------------------------------------------------------
-# HTML routes — same guard, but 401 → redirect to /login?next=...
+# HTML routes - same guard, but 401 → redirect to /login?next=...
 # ----------------------------------------------------------------------
 
 
@@ -229,7 +229,7 @@ def test_html_browse_admin_mode_redirects_anonymous_with_query(
 
 
 # ----------------------------------------------------------------------
-# Delete routes — gated by ``AdminDep``: requires admin mode + admin role.
+# Delete routes - gated by ``AdminDep``: requires admin mode + admin role.
 # ----------------------------------------------------------------------
 
 
@@ -261,7 +261,7 @@ def test_delete_protected_mode_returns_403_even_for_logged_in(
     endpoint: str,
 ) -> None:
     """``protected`` mode + logged-in admin account: still 403, because the
-    granted role-set is empty in protected mode — the credential is the
+    granted role-set is empty in protected mode - the credential is the
     admin account but the identity is plain "authenticated"."""
     _set_mode(monkeypatch, "protected")
     with TestClient(app) as client:
@@ -292,7 +292,7 @@ def test_delete_admin_mode_logged_in_returns_200(
 
 
 # ----------------------------------------------------------------------
-# Healthchecks & static — must remain unauthenticated everywhere.
+# Healthchecks & static - must remain unauthenticated everywhere.
 # ----------------------------------------------------------------------
 
 
@@ -324,7 +324,7 @@ def test_shell_context_is_admin_reflects_session(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The trash-icon trigger in the manifest column header only renders
-    when ``is_admin`` is true on the current request — which means the
+    when ``is_admin`` is true on the current request - which means the
     user is logged in *and* the mode is admin."""
     _set_mode(monkeypatch, "admin")
     with TestClient(app) as client:

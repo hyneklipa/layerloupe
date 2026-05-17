@@ -102,7 +102,7 @@ def test_public_url_can_be_overridden(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("REGISTRY_URL", "https://internal:5000")
     monkeypatch.setenv("REGISTRY_PUBLIC_URL", "https://registry.example.com")
     s = Settings()
-    # ``registry_public_url`` is a free-form string — it preserves whatever
+    # ``registry_public_url`` is a free-form string - it preserves whatever
     # the user typed (no AnyHttpUrl normalization, no trailing slash added).
     assert s.registry_public_url == "https://registry.example.com"
     assert str(s.registry_url) == "https://internal:5000/"
@@ -161,7 +161,7 @@ def test_info_endpoint_uses_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     body = r.json()
     assert body["title"] == "Test Registry"
     assert body["auth_mode"] == "admin"
-    # ``allow_delete`` mirrors ``auth_mode == "admin"`` — kept as a UX
+    # ``allow_delete`` mirrors ``auth_mode == "admin"`` - kept as a UX
     # hint for the JS layer (see ``api.system.info``).
     assert body["allow_delete"] is True
     assert "registry.example.com" in body["registry_url"]

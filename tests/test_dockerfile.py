@@ -107,7 +107,7 @@ def test_cmd_runs_uvicorn_on_0_0_0_0_8080(dockerfile_text: str) -> None:
 
 
 def test_healthcheck_present(dockerfile_text: str) -> None:
-    """Container-level liveness — orchestrators (compose, k8s) use it."""
+    """Container-level liveness - orchestrators (compose, k8s) use it."""
     assert "HEALTHCHECK" in dockerfile_text
     assert "/api/healthz" in dockerfile_text
 
@@ -141,7 +141,7 @@ def test_dockerignore_excludes(ignored: str, dockerignore_text: str) -> None:
 
 
 def test_dockerignore_does_not_exclude_pyproject(dockerignore_text: str) -> None:
-    """The deps stage needs pyproject.toml + uv.lock — don't ignore them."""
+    """The deps stage needs pyproject.toml + uv.lock - don't ignore them."""
     assert "pyproject.toml" not in dockerignore_text
     assert "uv.lock" not in dockerignore_text
 

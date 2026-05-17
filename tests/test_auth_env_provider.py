@@ -1,4 +1,4 @@
-"""Tests for ``EnvAdminProvider`` — bcrypt verification path."""
+"""Tests for ``EnvAdminProvider`` - bcrypt verification path."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from layerloupe.auth.env_provider import EnvAdminProvider, hash_password
 
 @pytest.fixture
 def admin_hash() -> str:
-    """Real bcrypt hash of ``"correct-horse-battery-staple"`` — cheap to
+    """Real bcrypt hash of ``"correct-horse-battery-staple"`` - cheap to
     reuse across tests but freshly generated per fixture so changes to
     rounds don't bleed across files."""
     return hash_password("correct-horse-battery-staple", rounds=4)
@@ -82,7 +82,7 @@ async def test_authenticate_empty_credentials_returns_none(
 
 
 async def test_authenticate_rejects_malformed_hash() -> None:
-    """A non-bcrypt hash in the env shouldn't crash — just always fail."""
+    """A non-bcrypt hash in the env shouldn't crash - just always fail."""
     provider = EnvAdminProvider(username="admin", password_hash="not-a-bcrypt-hash")
     assert await provider.authenticate("admin", "any-password") is None
 
@@ -90,7 +90,7 @@ async def test_authenticate_rejects_malformed_hash() -> None:
 async def test_authenticate_is_case_sensitive_on_username(
     provider: EnvAdminProvider,
 ) -> None:
-    """Single admin account — no canonicalization, matches must be exact."""
+    """Single admin account - no canonicalization, matches must be exact."""
     assert await provider.authenticate("Admin", "correct-horse-battery-staple") is None
     assert await provider.authenticate("ADMIN", "correct-horse-battery-staple") is None
 
