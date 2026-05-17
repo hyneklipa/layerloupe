@@ -46,8 +46,6 @@ hash, which is what `scripts/hash-password.py` is for.
 Per-deploy templates ship under [`examples/`](examples/) - `public/`,
 `protected/`, `admin/`, `admin-docker-secrets/`.
 
-See [`_docs/06-ui-access-control-redesign.md`](../_docs/06-ui-access-control-redesign.md)
-for the design rationale.
 
 ### Sessions invalidate when `AUTH_MODE` changes
 
