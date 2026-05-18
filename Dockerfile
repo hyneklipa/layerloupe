@@ -41,6 +41,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # -- Stage 2: minimal runtime image -------------------------------------
 FROM python:3.14-slim AS runtime
 
+# Pull Debian security updates that haven't yet been baked into the base
+# image (notably glibc CVEs Debian patches faster than docker-library/python).
+RUN apt-get update && \
+    apt-get upgrade -y --no-install-recommends && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 LABEL org.opencontainers.image.title="LayerLoupe" \
       org.opencontainers.image.description="Modern OCI-aware browser for Docker / OCI registries" \
       org.opencontainers.image.source="https://github.com/hyneklipa/layerloupe" \
