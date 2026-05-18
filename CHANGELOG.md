@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.1 - 2026-05-18
+
 ### Security
 
 - Apply pending Debian security updates in the runtime image so the
