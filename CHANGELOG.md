@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Security
+
+- Apply pending Debian security updates in the runtime image so the
+  published container ships with current glibc instead of waiting for
+  `docker-library/python` to rebake `python:3.14-slim`. Fixes
+  CVE-2026-4046 and CVE-2026-4437 (glibc < `2.41-12+deb13u3`) flagged
+  by Docker Scout.
+
 ## 0.2.0 - 2026-05-17
 
 ### Breaking - UI access-control redesign
