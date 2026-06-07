@@ -1,77 +1,91 @@
 /* LayerLoupe UI shell - design tokens + layout primitives. */
 
-/* -- Typography: self-hosted IBM Plex --------------------------------
- * Plex was designed for technical contexts and pairs Sans + Mono with
- * unusually warm character. Body weights only - display work happens
- * via size, not via picking up unused 200/700 ranges. */
+/* -- Typography: self-hosted Archivo ---------------------------------
+ * Archivo is the LayerLoupe brand sans (see theme-blue.css). Self-hosted
+ * woff2, latin subset, one file per weight - no CDN, works offline behind
+ * a proxy. Display work happens via size/weight, not extra ranges. The
+ * monospace face uses the system stack (no webfont) per the design tokens. */
 @font-face {
-  font-family: "IBM Plex Sans";
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-  src: url("fonts/plex-sans-300.woff2") format("woff2");
-}
-@font-face {
-  font-family: "IBM Plex Sans";
+  font-family: "Archivo";
   font-weight: 400;
   font-style: normal;
   font-display: swap;
-  src: url("fonts/plex-sans-400.woff2") format("woff2");
+  src: url("fonts/archivo-400.woff2") format("woff2");
 }
 @font-face {
-  font-family: "IBM Plex Sans";
+  font-family: "Archivo";
   font-weight: 500;
   font-style: normal;
   font-display: swap;
-  src: url("fonts/plex-sans-500.woff2") format("woff2");
+  src: url("fonts/archivo-500.woff2") format("woff2");
 }
 @font-face {
-  font-family: "IBM Plex Sans";
+  font-family: "Archivo";
   font-weight: 600;
   font-style: normal;
   font-display: swap;
-  src: url("fonts/plex-sans-600.woff2") format("woff2");
+  src: url("fonts/archivo-600.woff2") format("woff2");
 }
 @font-face {
-  font-family: "IBM Plex Mono";
-  font-weight: 400;
+  font-family: "Archivo";
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
-  src: url("fonts/plex-mono-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-  src: url("fonts/plex-mono-500.woff2") format("woff2");
+  src: url("fonts/archivo-700.woff2") format("woff2");
 }
 
-/* -- Design tokens (light) --------------------------------------------- */
+/* -- Design tokens (light) ---------------------------------------------
+ * Blue theme - the canonical token set is theme-blue.css (source of truth).
+ * Names use the ``--ll-*`` prefix; dark overrides live under
+ * ``[data-theme="dark"]`` so every ``var(--ll-*)`` consumer flips for free. */
 :root {
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-alt: #f4f6f9;
-  --surface-hover: #f8fafc;
-  --border: #e3e8ef;
-  --border-strong: #c8d0db;
-  --text: #0b1220;
-  --text-muted: #5b6573;
+  /* Brand - LayerLoupe logo blue (primary action / accent). */
+  --ll-blue: #0C7FE8;
+  --ll-blue-hover: #0A6CCB;
+  --ll-blue-press: #095BAC;
+  --ll-blue-12: rgba(12, 127, 232, .12);
+  --ll-blue-20: rgba(12, 127, 232, .20);
+  --ll-navy: #0B1320;
 
-  /* Accent + semantic palette - blue is dominant, others stay reserved
-     for verified / warning / danger signals so the eye learns the scale. */
-  --accent: #2563eb;
-  --accent-soft: #eff5ff;
-  --accent-hover: #1d4ed8;
+  /* Ink - cool slate ramp (primary → faint). */
+  --ll-ink: #0B1320;
+  --ll-ink-2: #43506A;
+  --ll-ink-3: #75839B;
+  --ll-ink-4: #A7B2C5;
+
+  /* Surfaces - page is a faint blue-grey, cards/columns are white. */
+  --ll-bg: #F4F7FB;
+  --ll-bg-2: #EEF3F9;
+  --ll-surface: #FFFFFF;
+  --ll-soft: #E7F1FD;
+  --ll-soft-2: #DCEAFB;
+  --ll-cyan: #E1F3F7;
+
+  /* Lines */
+  --ll-line: rgba(11, 19, 32, .09);
+  --ll-line-2: rgba(11, 19, 32, .16);
+
+  /* Interaction + status (brand). */
+  --ll-row-hover-strong: #E4EBF6;
+  --ll-danger: #D92D20;
+  --ll-danger-bg: #FEECEB;
+  --ll-overlay: rgba(11, 19, 32, .42);
+  --ll-shadow-pop: 0 10px 30px -12px rgba(11, 19, 32, .30);
+  --ll-shadow-modal: 0 24px 64px -16px rgba(11, 19, 32, .40);
+
+  /* Retained status tokens not in the blue theme ----------------------
+   * The prototype omits Layers / Configuration / Referrers, so theme-blue.css
+   * never defined success / warning. We keep them for the sections we retain:
+   * large-layer warnings, copy-done ticks, instruction / referrer badges,
+   * modal warnings. (Badge fills set their own hues inline.) */
   --success: #047857;
-  --success-soft: #ecfdf5;
-  --warning: #b45309;
-  --warning-soft: #fffaeb;
-  --danger: #b91c1c;
-  --danger-soft: #fef2f2;
+  --success-soft: #ECFDF5;
+  --warning: #B45309;
+  --warning-soft: #FFFAEB;
 
-  --shadow-sm: 0 1px 2px rgba(11, 18, 32, .04), 0 1px 1px rgba(11, 18, 32, .03);
-  --shadow: 0 4px 12px rgba(11, 18, 32, .06), 0 1px 3px rgba(11, 18, 32, .04);
+  /* Elevation / radius / motion / layout. */
+  --shadow-sm: 0 1px 2px rgba(11, 19, 32, .04), 0 1px 1px rgba(11, 19, 32, .03);
+  --shadow: var(--ll-shadow-pop);
   --radius: 8px;
   --radius-sm: 4px;
   --radius-pill: 999px;
@@ -79,37 +93,54 @@
   --topbar-h: 56px;
   --bottombar-h: 44px;
   --container-max: 1440px;
-  --transition: 120ms cubic-bezier(.4, 0, .2, 1);
-  --transition-slow: 220ms cubic-bezier(.4, 0, .2, 1);
-  --font-stack: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --transition: 120ms cubic-bezier(.2, .8, .2, 1);
+
+  /* Typography - Archivo (sans), system monospace. */
+  --font-sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
-/* -- Design tokens (dark) ---------------------------------------------- */
+/* -- Design tokens (dark) ----------------------------------------------
+ * Overrides the same ``--ll-*`` tokens, so every component flips for free. */
 [data-theme="dark"] {
-  --bg: #0a0e1a;
-  --surface: #0e1422;
-  --surface-alt: #161d2e;
-  --surface-hover: #131a29;
-  --border: #1e2638;
-  --border-strong: #2c3650;
-  --text: #e7edf7;
-  --text-muted: #8b95a8;
+  --ll-blue: #3D9BF2;
+  --ll-blue-hover: #5BAEF6;
+  --ll-blue-12: rgba(61, 155, 242, .16);
+  --ll-blue-20: rgba(61, 155, 242, .32);
+  --ll-navy: #060B14;
 
-  --accent: #60a5fa;
-  --accent-soft: rgba(96, 165, 250, .14);
-  --accent-hover: #93c5fd;
-  --success: #34d399;
+  --ll-ink: #E9EDF5;
+  --ll-ink-2: #AAB4C8;
+  --ll-ink-3: #7C879D;
+  --ll-ink-4: #515C72;
+
+  --ll-bg: #0B1220;
+  --ll-bg-2: #121C2E;
+  --ll-surface: #131E33;
+  --ll-soft: rgba(61, 155, 242, .16);
+  --ll-soft-2: rgba(61, 155, 242, .30);
+  --ll-cyan: rgba(127, 230, 200, .14);
+
+  --ll-line: rgba(255, 255, 255, .09);
+  --ll-line-2: rgba(255, 255, 255, .17);
+
+  --ll-row-hover-strong: rgba(61, 155, 242, .14);
+  --ll-danger: #FF6B66;
+  --ll-danger-bg: rgba(255, 107, 102, .14);
+  --ll-overlay: rgba(0, 0, 0, .55);
+  --ll-shadow-pop: 0 10px 30px -12px rgba(0, 0, 0, .6);
+  --ll-shadow-modal: 0 24px 64px -16px rgba(0, 0, 0, .7);
+
+  /* Retained status tokens (dark). */
+  --success: #34D399;
   --success-soft: rgba(52, 211, 153, .12);
-  --warning: #fbbf24;
+  --warning: #FBBF24;
   --warning-soft: rgba(251, 191, 36, .1);
-  --danger: #f87171;
-  --danger-soft: rgba(248, 113, 113, .12);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
-  --shadow: 0 8px 24px rgba(0, 0, 0, .55), 0 2px 6px rgba(0, 0, 0, .35);
+  --shadow: var(--ll-shadow-pop);
 }
 
 /* -- Reset-ish --------------------------------------------------------- */
@@ -117,23 +148,22 @@
 html, body { margin: 0; padding: 0; }
 html { font-size: 16px; }
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-stack);
+  background: var(--ll-bg);
+  color: var(--ll-ink);
+  font-family: var(--font-sans);
   font-weight: 400;
   font-size: 1rem;
   line-height: 1.55;
   letter-spacing: -.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "ss01", "ss02", "cv01";
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-a { color: var(--accent); text-decoration: none; transition: color var(--transition); }
-a:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+a { color: var(--ll-blue); text-decoration: none; transition: color var(--transition); }
+a:hover { color: var(--ll-blue-hover); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
 
 code, .mono { font-family: var(--font-mono); font-size: .92em; }
 
@@ -150,15 +180,15 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 
 /* Subtle text-selection treatment that hints at the accent without
    shouting - important for users who select digests / pull commands. */
-::selection { background: var(--accent-soft); color: var(--accent-hover); }
-[data-theme="dark"] ::selection { color: var(--accent); }
+::selection { background: var(--ll-soft); color: var(--ll-blue-hover); }
+[data-theme="dark"] ::selection { color: var(--ll-blue); }
 
 /* Default focus treatment for keyboard users: 2px ring with 2px gap so
    it visually separates from the element edge. Mouse clicks don't paint
    it (`focus-visible`). */
 :focus { outline: none; }
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ll-blue);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
@@ -177,13 +207,13 @@ main.container {
   padding-bottom: 2rem;
 }
 
-.muted { color: var(--text-muted); }
+.muted { color: var(--ll-ink-3); }
 .inline-form { display: inline; margin: 0; }
 
 /* -- Topbar ------------------------------------------------------------ */
 .topbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: var(--ll-surface);
+  border-bottom: 1px solid var(--ll-line);
   height: var(--topbar-h);
   display: flex;
   align-items: center;
@@ -203,10 +233,10 @@ main.container {
   display: inline-flex;
   align-items: center;
   gap: .5rem;
-  color: var(--text);
+  color: var(--ll-ink);
   font-weight: 600;
 }
-.brand:hover { text-decoration: none; color: var(--text); }
+.brand:hover { text-decoration: none; color: var(--ll-ink); }
 .brand-logo { height: 50px; width: auto; display: block; position: relative; top: -3px; }
 .brand-logo-dark { display: none; }
 [data-theme="dark"] .brand-logo-light { display: none; }
@@ -223,24 +253,24 @@ main.container {
   border: 0;
   padding: .35rem .6rem;
   border-radius: var(--radius);
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   font: inherit;
   cursor: pointer;
   transition: background var(--transition), color var(--transition);
 }
-.link-btn:hover { color: var(--text); background: var(--bg); }
+.link-btn:hover { color: var(--ll-ink); background: var(--ll-bg); }
 
 .icon-btn {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-line);
   padding: .35rem .55rem;
   border-radius: var(--radius);
-  color: var(--text);
+  color: var(--ll-ink);
   font: inherit;
   cursor: pointer;
   transition: background var(--transition), border-color var(--transition);
 }
-.icon-btn:hover { background: var(--surface-alt); border-color: var(--accent); }
+.icon-btn:hover { background: var(--ll-bg-2); border-color: var(--ll-blue); }
 
 /* Borderless danger variant - used for the manifest delete trigger in
  * the column header. Sized to fit within the col-head's natural baseline
@@ -253,7 +283,7 @@ main.container {
   border: 0;
   padding: 2px;
   margin: 0;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -263,11 +293,11 @@ main.container {
   transition: color var(--transition), background var(--transition);
 }
 .icon-btn--danger:hover {
-  color: var(--danger);
-  background: var(--danger-soft);
+  color: var(--ll-danger);
+  background: var(--ll-danger-bg);
 }
 .icon-btn--danger:focus-visible {
-  outline: 1px solid var(--danger);
+  outline: 1px solid var(--ll-danger);
   outline-offset: 1px;
 }
 
@@ -277,17 +307,17 @@ main.container {
   gap: .35rem;
   padding: .25rem .55rem;
   border-radius: 999px;
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
+  background: var(--ll-bg-2);
+  border: 1px solid var(--ll-line);
   font-size: .85rem;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
 }
 /* Subtle differentiation so the operator can tell the two pills apart
    at a glance - UI identity uses the accent border, registry creds
    keep the neutral border. The icons disambiguate from up close. */
 .user-pill--identity {
-  border-color: var(--accent, var(--border));
-  color: var(--text);
+  border-color: var(--ll-blue, var(--ll-line));
+  color: var(--ll-ink);
 }
 .user-pill--registry {
   /* default styling - listed for symmetry / future tweaks. */
@@ -314,14 +344,14 @@ main.container {
   line-height: 1.4;
 }
 .role-badge--admin {
-  background: color-mix(in srgb, var(--danger) 18%, transparent);
-  color: var(--danger);
-  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  background: color-mix(in srgb, var(--ll-danger) 18%, transparent);
+  color: var(--ll-danger);
+  border: 1px solid color-mix(in srgb, var(--ll-danger) 35%, transparent);
 }
 .role-badge--viewer {
-  background: var(--surface);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
+  background: var(--ll-surface);
+  color: var(--ll-ink-3);
+  border: 1px solid var(--ll-line);
 }
 
 /* -- Theme + hotkey buttons in the footer ----------------------------- */
@@ -335,14 +365,14 @@ main.container {
   border: 0;
   padding: .35rem;
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   transition: color var(--transition), background var(--transition);
 }
-.footer-icon-btn:hover { color: var(--text); background: var(--surface-alt); }
-.footer-icon-btn:focus-visible { color: var(--text); }
+.footer-icon-btn:hover { color: var(--ll-ink); background: var(--ll-bg-2); }
+.footer-icon-btn:focus-visible { color: var(--ll-ink); }
 
 /* Show the icon for the action the click *will perform*: in light mode
    we show the moon (click → switch to dark), in dark mode the sun
@@ -395,18 +425,18 @@ main.container {
   justify-content: space-between;
   padding: 0 0 .75rem;
   margin: 0 .25rem 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--ll-line);
 }
 .col-title {
   margin: 0;
   font-size: .8125rem;
   font-weight: 500;
-  color: var(--text);
+  color: var(--ll-ink);
   letter-spacing: -.005em;
 }
 .col-head .small {
   font-feature-settings: "tnum";
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
 }
 .col-body { flex: 1; padding: 0; }
 
@@ -424,31 +454,31 @@ main.container {
 .filter-input {
   margin: 0 0 .75rem;
   padding: .55rem .75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius);
   background: transparent;
-  color: var(--text);
+  color: var(--ll-ink);
   font: inherit;
   width: 100%;
   transition: border-color var(--transition), background var(--transition);
 }
 .filter-input:focus {
   outline: none;
-  border-color: var(--accent);
-  background: var(--surface);
+  border-color: var(--ll-blue);
+  background: var(--ll-surface);
 }
 
 /* -- Item lists (repos / tags) ----------------------------------------- */
 .item-list { list-style: none; margin: 0; padding: 0; }
 .item-row {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--ll-line);
   position: relative;
 }
 .item-row:last-child { border-bottom: 0; }
 .item-row a {
   display: block;
   padding: .75rem .9rem .75rem 1rem;
-  color: var(--text);
+  color: var(--ll-ink);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
@@ -457,15 +487,15 @@ main.container {
   transition: color var(--transition), background var(--transition);
 }
 .item-row a:hover {
-  color: var(--accent);
+  color: var(--ll-blue);
   text-decoration: none;
-  background: var(--surface-hover);
+  background: var(--ll-row-hover-strong);
 }
 .item-row a:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ll-blue);
   outline-offset: -2px;
-  color: var(--accent);
-  background: var(--surface-hover);
+  color: var(--ll-blue);
+  background: var(--ll-row-hover-strong);
   border-radius: var(--radius-sm);
 }
 /* Active-row treatment: a 2px accent rail flush with the left edge -
@@ -477,13 +507,13 @@ main.container {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: var(--accent);
+  background: var(--ll-blue);
   border-radius: 1px;
 }
 .item-row--active a {
-  color: var(--accent);
+  color: var(--ll-blue);
   font-weight: 500;
-  background: var(--accent-soft);
+  background: var(--ll-soft);
 }
 [data-theme="dark"] .item-row--active a { font-weight: 500; }
 .item-empty { padding: 1rem .25rem; }
@@ -496,18 +526,18 @@ main.container {
   align-items: center;
   gap: .4rem;
   padding: .375rem .85rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius-pill);
-  color: var(--text-muted);
-  background: var(--surface-alt);
+  color: var(--ll-ink-3);
+  background: var(--ll-bg-2);
   text-decoration: none;
   font-weight: 500;
   transition: color var(--transition), border-color var(--transition), background var(--transition);
 }
 .back-link:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--ll-blue);
+  border-color: var(--ll-blue);
+  background: var(--ll-soft);
   text-decoration: none;
 }
 .back-link code { font-size: .82em; font-weight: 400; }
@@ -515,7 +545,7 @@ main.container {
 .manifest-info-head {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--ll-line);
 }
 .manifest-info-title {
   margin: 0 0 1.25rem;
@@ -535,7 +565,7 @@ main.container {
 }
 .manifest-meta div { display: contents; }
 .manifest-meta dt {
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   font-size: .8125rem;
   padding-top: .15rem;
   font-weight: 400;
@@ -552,8 +582,8 @@ main.container {
 .digest-cell code {
   display: inline-block;
   padding: .2rem .55rem;
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
+  background: var(--ll-bg-2);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius-sm);
   font-size: .8rem;
   letter-spacing: -.005em;
@@ -569,7 +599,7 @@ main.container {
 .info-section-title {
   margin: 0 0 .9rem;
   font-size: 1rem;
-  color: var(--text);
+  color: var(--ll-ink);
   font-weight: 500;
   letter-spacing: -.01em;
   display: flex;
@@ -579,7 +609,7 @@ main.container {
 .info-section-title .small {
   font-weight: 400;
   font-feature-settings: "tnum";
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
 }
 
 /* -- Manifest tabs (Overview / Layers) -------------------------------
@@ -591,7 +621,7 @@ main.container {
 .tab-btns {
   display: flex;
   gap: .25rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--ll-line);
   margin: 0 0 1.25rem;
 }
 .tab-btn {
@@ -600,22 +630,22 @@ main.container {
   padding: .55rem .9rem;
   margin-bottom: -1px;
   border-bottom: 2px solid transparent;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   font: inherit;
   font-weight: 500;
   font-size: .9rem;
   cursor: pointer;
   transition: color var(--transition), border-color var(--transition);
 }
-.tab-btn:hover { color: var(--text); }
+.tab-btn:hover { color: var(--ll-ink); }
 .tab-btn--active {
-  color: var(--text);
-  border-bottom-color: var(--accent);
+  color: var(--ll-ink);
+  border-bottom-color: var(--ll-blue);
 }
 .tab-btn .small {
   font-weight: 400;
   font-feature-settings: "tnum";
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   margin-left: .15rem;
 }
 .tab-panel:not(.tab-panel--active) { display: none; }
@@ -633,10 +663,10 @@ main.container {
   align-items: center;
   gap: .5rem;
   padding: .5rem .9rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius-pill);
-  color: var(--text);
+  color: var(--ll-ink);
   font-family: var(--font-mono);
   font-size: .82rem;
   font-weight: 400;
@@ -644,26 +674,26 @@ main.container {
   transition: border-color var(--transition), background var(--transition), color var(--transition), transform var(--transition);
 }
 .platform-pill:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
+  border-color: var(--ll-blue);
+  color: var(--ll-blue);
+  background: var(--ll-soft);
 }
 .platform-pill:active { transform: translateY(1px); }
 .platform-pill--active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--ll-blue);
+  border-color: var(--ll-blue);
   color: #fff;
 }
 .platform-pill--active .muted { color: rgba(255, 255, 255, .82); }
 .platform-pill-arch { font-weight: 500; }
-.platform-pill-os { font-family: var(--font-stack); }
+.platform-pill-os { font-family: var(--font-sans); }
 
 /* -- Pull commands ----------------------------------------------------- */
 .pull-block { margin: .5rem 0 0; display: flex; flex-direction: column; gap: .5rem; }
 .pull-cmd {
-  background: var(--surface-alt);
+  background: var(--ll-bg-2);
   padding: .65rem .85rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius);
   display: flex;
   align-items: center;
@@ -671,7 +701,7 @@ main.container {
   font-family: var(--font-mono);
   transition: border-color var(--transition);
 }
-.pull-cmd:hover { border-color: var(--border-strong); }
+.pull-cmd:hover { border-color: var(--ll-line-2); }
 .pull-cmd code {
   font-size: .8125rem;
   word-break: break-all;
@@ -679,23 +709,23 @@ main.container {
   letter-spacing: -.005em;
 }
 .pull-label {
-  font-family: var(--font-stack);
+  font-family: var(--font-sans);
   font-size: .7rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: .04em;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   flex-shrink: 0;
   min-width: 3.25em;
 }
 
 .copy-btn {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius-sm);
   padding: .3rem;
   font: inherit;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   cursor: pointer;
   transition: background var(--transition), color var(--transition), border-color var(--transition);
   flex-shrink: 0;
@@ -705,7 +735,7 @@ main.container {
   width: 1.85rem;
   height: 1.85rem;
 }
-.copy-btn:not(:disabled):hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.copy-btn:not(:disabled):hover { color: var(--ll-blue); border-color: var(--ll-blue); background: var(--ll-soft); }
 .copy-btn:disabled { opacity: .5; cursor: not-allowed; }
 .copy-btn[data-copied] {
   color: var(--success);
@@ -719,10 +749,10 @@ main.container {
 
 /* -- Modal (<dialog>) -------------------------------------------------- */
 dialog.modal {
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text);
+  background: var(--ll-surface);
+  color: var(--ll-ink);
   box-shadow: 0 10px 40px rgba(0, 0, 0, .25), 0 4px 12px rgba(0, 0, 0, .12);
   padding: 1.25rem 1.5rem;
   max-width: 460px;
@@ -747,7 +777,7 @@ dialog.modal code { font-size: .85em; word-break: break-all; }
   border-radius: var(--radius-sm);
   font-size: .85rem;
 }
-[data-theme="dark"] .modal-warn { color: var(--text); }
+[data-theme="dark"] .modal-warn { color: var(--ll-ink); }
 .modal-actions {
   margin-top: 1rem;
   display: flex;
@@ -761,33 +791,33 @@ dialog.modal code { font-size: .85em; word-break: break-all; }
  * disabled (handled in JS) until the input value matches. */
 .modal-confirm-prompt {
   font-size: .85rem;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   margin: .75rem 0 .35rem;
 }
 .modal-confirm-prompt code {
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
+  background: var(--ll-bg-2);
+  border: 1px solid var(--ll-line);
   padding: .05rem .35rem;
   border-radius: var(--radius-sm);
   font-size: .85em;
-  color: var(--text);
+  color: var(--ll-ink);
   word-break: break-all;
 }
 .modal-confirm-input {
   width: 100%;
   padding: .55rem .75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius);
   background: transparent;
-  color: var(--text);
+  color: var(--ll-ink);
   font: inherit;
   font-family: var(--font-mono);
   font-size: .9rem;
 }
 .modal-confirm-input:focus {
   outline: none;
-  border-color: var(--accent);
-  background: var(--surface);
+  border-color: var(--ll-blue);
+  background: var(--ll-surface);
 }
 
 /* -- Hotkey cheat sheet ------------------------------------------------ */
@@ -802,7 +832,7 @@ dialog.modal code { font-size: .85em; word-break: break-all; }
 .hotkey-table td {
   text-align: left;
   padding: .35rem .5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--ll-line);
   vertical-align: middle;
 }
 .hotkey-table th { width: 30%; font-weight: 500; }
@@ -812,19 +842,19 @@ kbd {
   font-family: var(--font-mono);
   font-size: .75rem;
   padding: .1rem .4rem;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--ll-line-2);
   border-bottom-width: 2px;
   border-radius: 4px;
-  background: var(--surface-alt);
-  color: var(--text);
+  background: var(--ll-bg-2);
+  color: var(--ll-ink);
   min-width: 1.4em;
   text-align: center;
 }
 
 .btn-danger {
-  background: var(--danger);
+  background: var(--ll-danger);
   color: #fff;
-  border: 1px solid var(--danger);
+  border: 1px solid var(--ll-danger);
   padding: .5rem 1.1rem;
   border-radius: var(--radius);
   font: inherit;
@@ -843,8 +873,8 @@ kbd {
   left: 50%;
   transform: translateX(-50%) translateY(.5rem);
   padding: .55rem 1rem;
-  background: var(--text);
-  color: var(--surface);
+  background: var(--ll-ink);
+  color: var(--ll-surface);
   border-radius: var(--radius);
   font-size: .85rem;
   font-weight: 500;
@@ -867,14 +897,14 @@ kbd {
   margin: 0;
   font-size: .9rem;
 }
-.kv-grid dt { color: var(--text-muted); font-size: .8rem; padding-top: .1rem; }
+.kv-grid dt { color: var(--ll-ink-3); font-size: .8rem; padding-top: .1rem; }
 .kv-grid dd { margin: 0; word-break: break-word; }
 .kv-grid code { font-size: .85em; }
 
 .env-list { display: flex; flex-direction: column; gap: .15rem; max-height: 220px; overflow-y: auto; }
 .label-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .2rem; }
 .label-list li { font-size: .85rem; word-break: break-all; }
-.label-key { color: var(--text-muted); }
+.label-key { color: var(--ll-ink-3); }
 
 /* -- Referrers section (signatures, SBOMs, attestations) ------------- */
 .referrer-list {
@@ -887,9 +917,9 @@ kbd {
 }
 .referrer-row {
   padding: .65rem .85rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius);
-  background: var(--surface-alt);
+  background: var(--ll-bg-2);
 }
 .referrer-row-head {
   display: flex;
@@ -904,9 +934,9 @@ kbd {
   font-weight: 600;
   padding: .15rem .55rem;
   border-radius: 4px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-muted);
+  border: 1px solid var(--ll-line);
+  background: var(--ll-surface);
+  color: var(--ll-ink-3);
   flex-shrink: 0;
 }
 .referrer-kind--signature  { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
@@ -926,7 +956,7 @@ kbd {
   list-style: none;
   margin: .35rem 0 0;
   padding: 0;
-  border-top: 1px dashed var(--border);
+  border-top: 1px dashed var(--ll-line);
   padding-top: .35rem;
   display: flex;
   flex-direction: column;
@@ -946,19 +976,19 @@ kbd {
   text-align: left;
   vertical-align: top;
   padding: .4rem .5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--ll-line);
   word-break: break-word;
 }
 .annotations-table th {
   width: 38%;
   font-weight: 500;
-  color: var(--text);
+  color: var(--ll-ink);
 }
 /* All annotation rows get the same scope-cell treatment - the label vs.
    key distinction (visible inside the cell) carries the known/unknown
    information without needing two row styles. */
-.annotation-row th { background: var(--surface-alt); }
-.annotation-label { display: block; color: var(--text); font-weight: 500; }
+.annotation-row th { background: var(--ll-bg-2); }
+.annotation-label { display: block; color: var(--ll-ink); font-weight: 500; }
 .annotation-key {
   display: block;
   font-size: .72rem;
@@ -966,14 +996,14 @@ kbd {
   margin-top: .15rem;
 }
 .annotation-row:not(.annotation-row--known) .annotation-key {
-  color: var(--text);
+  color: var(--ll-ink);
   font-size: .82rem;
 }
 .annotation-value { word-break: break-all; }
 .annotation-link { word-break: break-all; }
 .annotation-link::after {
   content: " ↗";
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   font-size: .8em;
 }
 
@@ -990,13 +1020,13 @@ kbd {
 .layer-row {
   position: relative;
   padding: .75rem .95rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius);
-  background: var(--surface-alt);
+  background: var(--ll-bg-2);
   counter-increment: layer-counter;
   transition: border-color var(--transition);
 }
-.layer-row:hover { border-color: var(--border-strong); }
+.layer-row:hover { border-color: var(--ll-line-2); }
 .layer-row::before {
   content: counter(layer-counter, decimal-leading-zero);
   position: absolute;
@@ -1007,7 +1037,7 @@ kbd {
   font-family: var(--font-mono);
   font-size: .7rem;
   font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
 }
 .layer-row--empty {
   background: transparent;
@@ -1029,7 +1059,7 @@ kbd {
 .layer-row-foot {
   margin-top: .35rem;
   padding-top: .35rem;
-  border-top: 1px dashed var(--border);
+  border-top: 1px dashed var(--ll-line);
   display: flex;
   gap: .5rem;
   flex-wrap: wrap;
@@ -1041,7 +1071,7 @@ kbd {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
   font-size: .82rem;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
 }
 .layer-size--large { color: var(--warning); font-weight: 500; }
 
@@ -1049,7 +1079,7 @@ kbd {
   margin-left: auto;
   font-size: .75rem;
   padding: .1rem .55rem;
-  border: 1px dashed var(--border);
+  border: 1px dashed var(--ll-line);
   border-radius: 999px;
 }
 .layer-digest { word-break: break-all; font-size: .8rem; }
@@ -1058,8 +1088,8 @@ kbd {
 .dockerfile-body {
   margin: .5rem 0 0;
   padding: .55rem .75rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius-sm);
   font-size: .8rem;
   white-space: pre-wrap;
@@ -1068,7 +1098,7 @@ kbd {
   overflow-y: auto;
   line-height: 1.6;
 }
-.dockerfile-body--raw { color: var(--text-muted); }
+.dockerfile-body--raw { color: var(--ll-ink-3); }
 .dockerfile-body code { font-family: var(--font-mono); }
 
 /* Instruction badges (RUN, COPY, ENV, …). Light theme uses tinted backgrounds;
@@ -1081,9 +1111,9 @@ kbd {
   letter-spacing: .04em;
   padding: .15rem .55rem;
   border-radius: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  color: var(--text-muted);
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-line-2);
+  color: var(--ll-ink-3);
   flex-shrink: 0;
 }
 .instruction-badge--run        { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
@@ -1099,7 +1129,7 @@ kbd {
 .instruction-badge--expose,
 .instruction-badge--volume     { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
 .instruction-badge--from       { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
-.instruction-badge--unknown    { color: var(--text-muted); }
+.instruction-badge--unknown    { color: var(--ll-ink-3); }
 
 [data-theme="dark"] .instruction-badge--run        { background: rgba(59, 130, 246, .18); color: #93c5fd; border-color: rgba(59, 130, 246, .35); }
 [data-theme="dark"] .instruction-badge--copy,
@@ -1124,22 +1154,22 @@ kbd {
   gap: .25rem;
 }
 .kv-list li { font-size: .9rem; word-break: break-word; }
-.kv-key { color: var(--text-muted); font-size: .85rem; margin-right: .25rem; }
+.kv-key { color: var(--ll-ink-3); font-size: .85rem; margin-right: .25rem; }
 .mono { font-family: var(--font-mono); }
 .small { font-size: .8rem; }
 
 /* -- Errors / empty states -------------------------------------------- */
 .error-banner {
-  background: var(--danger-soft);
-  color: var(--danger);
-  border: 1px solid var(--danger);
+  background: var(--ll-danger-bg);
+  color: var(--ll-danger);
+  border: 1px solid var(--ll-danger);
   padding: .75rem 1rem;
   border-radius: var(--radius);
   margin-bottom: 1rem;
   font-size: .9rem;
 }
-[data-theme="dark"] .error-banner { color: var(--text); border-color: var(--danger); }
-.error-msg { color: var(--danger); padding: 0 1rem; }
+[data-theme="dark"] .error-banner { color: var(--ll-ink); border-color: var(--ll-danger); }
+.error-msg { color: var(--ll-danger); padding: 0 1rem; }
 
 /* Standalone error page (404 / 500) */
 .error-page {
@@ -1152,7 +1182,7 @@ kbd {
   font-size: 4rem;
   font-weight: 700;
   letter-spacing: -.03em;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
   margin: 0 0 .5rem;
   line-height: 1;
 }
@@ -1160,8 +1190,8 @@ kbd {
 .error-page p { margin: 0 0 1rem; }
 .error-detail {
   text-align: left;
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
+  background: var(--ll-bg-2);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius);
   padding: .75rem 1rem;
   font-size: .85rem;
@@ -1170,12 +1200,12 @@ kbd {
   word-break: break-word;
 }
 .link-btn--primary {
-  background: var(--accent);
+  background: var(--ll-blue);
   color: white;
   padding: .5rem 1rem;
   display: inline-block;
 }
-.link-btn--primary:hover { background: var(--accent-hover); color: white; text-decoration: none; }
+.link-btn--primary:hover { background: var(--ll-blue-hover); color: white; text-decoration: none; }
 
 /* Empty-list helper for repo / tag columns */
 .item-empty--hint { font-size: .85rem; padding: 1rem; line-height: 1.5; }
@@ -1185,8 +1215,8 @@ kbd {
 .auth-card {
   max-width: 380px;
   margin: 3rem auto;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius);
   padding: 1.75rem 1.75rem 1.5rem;
   box-shadow: var(--shadow);
@@ -1200,26 +1230,26 @@ kbd {
 
 .auth-form { display: flex; flex-direction: column; gap: 1rem; }
 .auth-field { display: flex; flex-direction: column; gap: .35rem; }
-.auth-field span { font-size: .8rem; color: var(--text-muted); letter-spacing: .04em; }
+.auth-field span { font-size: .8rem; color: var(--ll-ink-3); letter-spacing: .04em; }
 .auth-field input {
   padding: .5rem .65rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-line);
   border-radius: var(--radius);
-  background: var(--surface-alt);
-  color: var(--text);
+  background: var(--ll-bg-2);
+  color: var(--ll-ink);
   font: inherit;
 }
 .auth-field input:focus {
   outline: none;
-  border-color: var(--accent);
-  background: var(--surface);
+  border-color: var(--ll-blue);
+  background: var(--ll-surface);
 }
 .auth-actions { display: flex; justify-content: flex-end; }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--ll-blue);
   color: #fff;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--ll-blue);
   padding: .6rem 1.4rem;
   border-radius: var(--radius);
   font: inherit;
@@ -1227,18 +1257,18 @@ kbd {
   cursor: pointer;
   transition: background var(--transition), transform var(--transition);
 }
-.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-primary:hover { background: var(--ll-blue-hover); border-color: var(--ll-blue-hover); }
 .btn-primary:active { transform: translateY(1px); }
 
 /* -- Bottombar --------------------------------------------------------- */
 .bottombar {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  background: var(--ll-surface);
+  border-top: 1px solid var(--ll-line);
   min-height: var(--bottombar-h);
   display: flex;
   align-items: center;
   font-size: .85rem;
-  color: var(--text-muted);
+  color: var(--ll-ink-3);
 }
 .bottombar-inner {
   display: flex;
