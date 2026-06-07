@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Changed
+
+- UI redesign groundwork (design tokens + typography). The CSS design-token
+  layer moved to the blue `--ll-*` system (LayerLoupe logo blue `#0C7FE8`,
+  cool-slate ink ramp, blue-grey page surface) from `theme-blue.css`, with
+  matching dark overrides. The sans typeface switched from self-hosted IBM
+  Plex Sans to self-hosted **Archivo** (weights 400/500/600/700); monospace
+  now uses the system stack. No layout or behavior change yet - this is the
+  visual base for the rest of the registry-viewer redesign.
+
 ## 0.2.1 - 2026-05-18
 
 ### Security

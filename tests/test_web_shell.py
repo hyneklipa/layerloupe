@@ -115,7 +115,7 @@ def test_static_css_served() -> None:
         response = client.get("/static/layerloupe.css")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/css")
-    assert "--bg" in response.text  # design-token sanity check
+    assert "--ll-blue" in response.text  # design-token sanity check
 
 
 def test_static_js_served() -> None:
