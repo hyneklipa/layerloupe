@@ -212,6 +212,27 @@
     }
   };
 
+  /* -- Filter clear (×) button --------------------------------------- */
+  /* Clears the sibling filter input and re-fires the htmx fetch so the list
+   * resets. htmx listens for ``search`` on the input (see hx-trigger), so a
+   * dispatched ``search`` event drives the same code path as the native
+   * clear affordance. Visibility of the button is pure CSS (:placeholder-shown). */
+  const bindFilterClear = (scope) => {
+    const root = scope || document;
+    for (const btn of root.querySelectorAll(".filter-clear")) {
+      if (btn.dataset.bound) continue;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        const input = btn.parentElement?.querySelector(".filter-input");
+        if (!input) return;
+        if (input.value === "") return;
+        input.value = "";
+        input.focus();
+        input.dispatchEvent(new Event("search", { bubbles: true }));
+      });
+    }
+  };
+
   /* -- Keyboard shortcuts -------------------------------------------- */
   const isEditableTarget = (el) => {
     if (!el) return false;
@@ -345,6 +366,7 @@
     bindTabs(scope);
     bindCopyButtons(scope);
     bindModal(scope);
+    bindFilterClear(scope);
     bindKeyboardShortcuts();
     bindActiveRowTracking();
   };

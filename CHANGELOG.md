@@ -11,6 +11,15 @@
   Plex Sans to self-hosted **Archivo** (weights 400/500/600/700); monospace
   now uses the system stack. No layout or behavior change yet - this is the
   visual base for the rest of the registry-viewer redesign.
+- UI redesign: app shell + three-pane layout. The browser is now a
+  full-height app - a 60px top bar over three columns (Repositories 256px,
+  Tags 264px, Manifest fills the rest), each scrolling on its own instead of
+  the whole page. The top bar gained a `registry › repo` breadcrumb and
+  absorbed the keyboard-shortcuts and theme-toggle controls; the footer was
+  removed (version label moved into the top bar). Filter inputs became search
+  pills with a clear (×) button. Repository / tag rows restyled (mono, soft
+  selected fill, accent rail). Narrow screens stack the columns and restore
+  page scroll. No data-model or endpoint changes.
 
 ## 0.2.1 - 2026-05-18
 

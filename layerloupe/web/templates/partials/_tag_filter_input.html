@@ -3,17 +3,30 @@
    appears when starting from the empty "no repo selected" state).
    Expects ``repo`` (the repository whose tags we filter) and
    ``tag_filter`` (the current filter value). #}
-<input
-  id="tag-filter-input"
-  class="filter-input"
-  type="search"
-  name="q"
-  placeholder="Filter tags…"
-  value="{{ tag_filter }}"
-  aria-label="Filter tags"
-  hx-get="/partials/repositories/{{ repo }}/tags"
-  hx-trigger="keyup changed delay:300ms, search"
-  hx-target="#tag-list"
-  hx-swap="outerHTML"
-  hx-include="this"
->
+<div class="filter">
+  <svg class="filter-icon" viewBox="0 0 24 24" width="15" height="15" fill="none"
+       stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+       stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+  </svg>
+  <input
+    id="tag-filter-input"
+    class="filter-input"
+    type="search"
+    name="q"
+    placeholder="Filter tags…"
+    value="{{ tag_filter }}"
+    aria-label="Filter tags"
+    hx-get="/partials/repositories/{{ repo }}/tags"
+    hx-trigger="keyup changed delay:300ms, search"
+    hx-target="#tag-list"
+    hx-swap="outerHTML"
+    hx-include="this"
+  >
+  <button type="button" class="filter-clear" tabindex="-1" aria-label="Clear filter">
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </svg>
+  </button>
+</div>
