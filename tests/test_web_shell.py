@@ -44,11 +44,15 @@ def test_index_links_to_static_css_and_js() -> None:
     assert 'href="/static/favicon.svg"' in body
 
 
-def test_index_includes_brand_and_footer() -> None:
+def test_index_includes_brand_and_topbar() -> None:
     with TestClient(app) as client:
         body = client.get("/").text
     assert 'class="topbar"' in body
-    assert 'class="bottombar"' in body
+    # The footer was removed in the redesign - the version label and theme
+    # toggle moved into the top bar.
+    assert 'class="bottombar"' not in body
+    assert "topbar-version" in body
+    assert 'id="theme-toggle"' in body
     # Three-column placeholder visible on the shell.
     assert ">Repositories<" in body
     assert ">Tags<" in body

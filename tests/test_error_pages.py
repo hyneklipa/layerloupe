@@ -47,10 +47,10 @@ def test_404_for_browser_path_returns_html(
     assert "<!DOCTYPE html>" in body
     assert "404" in body
     assert "Page not found" in body
-    # The brand chrome (topbar/footer) should still render so users see
-    # they're still on the same site.
+    # The brand chrome (top bar) should still render so users see they're
+    # still on the same site. (The footer was removed in the redesign.)
     assert 'class="topbar"' in body
-    assert 'class="bottombar"' in body
+    assert 'class="bottombar"' not in body
     # Helpful "back to repositories" link.
     assert 'href="/"' in body
 

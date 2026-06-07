@@ -21,17 +21,37 @@
     }
   </script>
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <header class="topbar">
-    <div class="container topbar-inner">
-      <a class="brand" href="/" aria-label="{{ title }} home">
-        <img class="brand-logo brand-logo-light"
-             src="/static/img/layerloupe.svg"
-             alt="{{ title }}">
-        <img class="brand-logo brand-logo-dark"
-             src="/static/img/layerloupe-dark.svg"
-             alt="{{ title }}">
-      </a>
+    <div class="topbar-inner">
+      <div class="topbar-left">
+        <a class="brand" href="/" aria-label="{{ title }} home">
+          <img class="brand-logo brand-logo-light"
+               src="/static/img/layerloupe.svg"
+               alt="{{ title }}">
+          <img class="brand-logo brand-logo-dark"
+               src="/static/img/layerloupe-dark.svg"
+               alt="{{ title }}">
+        </a>
+        {# Breadcrumb: registry host, then the selected repository when the
+           page render carries one (index family). Login / error pages still
+           render the host segment for orientation. #}
+        {% set registry_host = registry_public_url|default('', true)|replace('https://', '')|replace('http://', '') %}
+        {% if registry_host %}
+          <span class="topbar-divider" aria-hidden="true"></span>
+          <nav class="breadcrumb" aria-label="Location">
+            <span class="breadcrumb-registry">{{ registry_host }}</span>
+            {% if selected_repo is defined and selected_repo %}
+              <svg class="breadcrumb-sep" viewBox="0 0 24 24" width="14" height="14"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 6l6 6-6 6"/>
+              </svg>
+              <span class="breadcrumb-repo mono">{{ selected_repo }}</span>
+            {% endif %}
+          </nav>
+        {% endif %}
+      </div>
       <nav class="topbar-actions">
         {% block topbar_actions %}
           {# Two independent sign-in surfaces - UI identity and per-user
@@ -85,21 +105,10 @@
             <a class="link-btn" href="/login?next={{ request.url.path }}">Sign in</a>
           {% endif %}
         {% endblock %}
-      </nav>
-    </div>
-  </header>
-
-  <main class="container">
-    {% block main %}{% endblock %}
-  </main>
-
-  <footer class="bottombar">
-    <div class="container bottombar-inner">
-      <span>Browsing <code>{{ registry_public_url }}</code></span>
-      <div class="bottombar-actions">
-        <button type="button" class="footer-icon-btn" data-modal-open="hotkey-modal"
+        {# Keyboard-shortcuts + theme toggle moved here from the (now removed)
+           footer. A later phase folds theme + sign-out into an avatar menu. #}
+        <button type="button" class="bar-icon-btn" data-modal-open="hotkey-modal"
                 aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
-          {# Keyboard outline glyph - small, neutral. #}
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
                stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
                stroke-linejoin="round" aria-hidden="true">
@@ -107,7 +116,7 @@
             <path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M6.5 14h11"/>
           </svg>
         </button>
-        <button type="button" class="footer-icon-btn" id="theme-toggle"
+        <button type="button" class="bar-icon-btn" id="theme-toggle"
                 aria-label="Toggle theme" title="Toggle theme">
           {# Two SVGs - sun is shown when current theme is dark (click → light),
              moon is shown when current theme is light (click → dark). The CSS
@@ -124,10 +133,14 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
-      </div>
-      <span class="bottombar-version muted">LayerLoupe v{{ version }}</span>
+        <span class="topbar-version muted" title="LayerLoupe version">v{{ version }}</span>
+      </nav>
     </div>
-  </footer>
+  </header>
+
+  <main class="app-main">
+    {% block main %}{% endblock %}
+  </main>
 
   {# Always-rendered cheat sheet - opened by the topbar button or the ? hotkey. #}
   <dialog id="hotkey-modal" class="modal hotkey-modal" aria-labelledby="hotkey-modal-title">

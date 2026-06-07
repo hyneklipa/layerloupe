@@ -45,9 +45,9 @@ def test_get_login_renders_form_when_enabled(login_enabled: None) -> None:
     assert 'name="password"' in body
     assert 'name="next"' in body
     assert 'action="/login"' in body
-    # Topbar / footer chrome from base.html.
+    # Topbar chrome from base.html (the footer was removed in the redesign).
     assert 'class="topbar"' in body
-    assert 'class="bottombar"' in body
+    assert 'class="bottombar"' not in body
 
 
 def test_get_login_returns_403_when_disabled(login_disabled: None) -> None:

@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{# Full-height three-pane shell: lock the viewport so each column scrolls on
+   its own instead of the whole page. Narrow screens opt back out (see CSS). #}
+{% block body_class %}app-shell{% endblock %}
+
 {% block main %}
   {% if error %}
     <p class="error-banner">{{ error }}</p>
@@ -8,24 +12,37 @@
   <section class="three-col" aria-label="Registry browser">
 
     {# -- Repositories column -------------------------------------------- #}
-    <article class="col" aria-labelledby="col-repos-h">
+    <article class="col col--repos" aria-labelledby="col-repos-h">
       <header class="col-head">
         <h2 id="col-repos-h" class="col-title">Repositories</h2>
         <span class="muted small">{{ repos|length }}</span>
       </header>
-      <input
-        class="filter-input"
-        type="search"
-        name="q"
-        placeholder="Filter repositories…"
-        value="{{ repo_filter }}"
-        aria-label="Filter repositories"
-        hx-get="/partials/repositories"
-        hx-trigger="keyup changed delay:300ms, search"
-        hx-target="#repo-list"
-        hx-swap="outerHTML"
-        hx-include="this"
-      >
+      <div class="filter">
+        <svg class="filter-icon" viewBox="0 0 24 24" width="15" height="15" fill="none"
+             stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+        </svg>
+        <input
+          class="filter-input"
+          type="search"
+          name="q"
+          placeholder="Filter repositories…"
+          value="{{ repo_filter }}"
+          aria-label="Filter repositories"
+          hx-get="/partials/repositories"
+          hx-trigger="keyup changed delay:300ms, search"
+          hx-target="#repo-list"
+          hx-swap="outerHTML"
+          hx-include="this"
+        >
+        <button type="button" class="filter-clear" tabindex="-1" aria-label="Clear filter">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18"/>
+          </svg>
+        </button>
+      </div>
       <div class="col-body" id="repo-column-body">
         {% include "partials/repo_list.html" %}
       </div>
@@ -36,7 +53,7 @@
        repo) so the tag-list fragment can OOB-swap them in when the user
        clicks a repo from the empty state. Without persistent slots, htmx
        has nothing to target on that first selection. #}
-    <article class="col" aria-labelledby="col-tags-h">
+    <article class="col col--tags" aria-labelledby="col-tags-h">
       <header class="col-head">
         <h2 id="col-tags-h" class="col-title">Tags</h2>
         <span id="tag-count" class="muted small">{% if selected_repo %}{{ tags|length }}{% endif %}</span>
