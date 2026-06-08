@@ -86,8 +86,8 @@ def test_home_renders_three_columns_with_repos(
     assert "library/ubuntu" in body
     # Tags column shows placeholder hint, not tag list.
     assert "Select a repository to see its tags." in body
-    # Info column shows placeholder.
-    assert "Select a tag to see its manifest details." in body
+    # Info column shows the empty-detail placeholder (nothing selected yet).
+    assert "Nothing selected yet" in body
 
 
 def test_repository_page_loads_tags_for_selected_repo(
@@ -102,8 +102,8 @@ def test_repository_page_loads_tags_for_selected_repo(
     # Tags rendered (smart-sorted: latest first).
     assert ">latest<" in body
     assert ">1.1<" in body
-    # Info column still placeholder.
-    assert "Select a tag to see its manifest details." in body
+    # Info column shows the empty-detail placeholder (repo chosen, no tag).
+    assert "Pick a tag to inspect" in body
 
 
 def test_manifest_page_renders_full_state(

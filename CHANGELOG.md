@@ -42,6 +42,13 @@
   render as a single card of label-over-key / value rows. Section headings use
   a hairline rule. The Overview / Layers tabs and the type-to-confirm delete
   gate are unchanged.
+- UI redesign: empty states + modals. The empty manifest pane is now a
+  centered **empty-detail** block (rounded tile + layers glyph, adaptive
+  heading/copy, a ⌘K hint) instead of a one-line placeholder. The keyboard
+  shortcuts dialog became a two-column key grid with a header + close button;
+  the delete dialog gained a head / body / foot shell with a danger-tinted
+  icon (the type-to-confirm gate and GC warning are unchanged). Modals share a
+  rounded 18px shell with the brand overlay/shadow.
 
 ## 0.2.1 - 2026-05-18
 

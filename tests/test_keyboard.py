@@ -161,4 +161,4 @@ def test_kbd_styling_present() -> None:
     with TestClient(app) as client:
         css = client.get("/static/layerloupe.css").text
     assert "kbd {" in css or "\nkbd {" in css
-    assert ".hotkey-table" in css
+    assert ".ll-keys" in css

@@ -188,25 +188,33 @@
 
   {# Always-rendered cheat sheet - opened by the topbar button or the ? hotkey. #}
   <dialog id="hotkey-modal" class="modal hotkey-modal" aria-labelledby="hotkey-modal-title">
-    <h3 id="hotkey-modal-title">Keyboard shortcuts</h3>
-    <table class="hotkey-table">
-      <tbody>
-        <tr><th><kbd>⌘</kbd> <kbd>K</kbd></th><td>Search (focuses the current filter)</td></tr>
-        <tr><th><kbd>/</kbd></th><td>Focus the filter for the current column</td></tr>
-        <tr><th><kbd>↑</kbd> / <kbd>k</kbd></th><td>Move up in the current list</td></tr>
-        <tr><th><kbd>↓</kbd> / <kbd>j</kbd></th><td>Move down in the current list</td></tr>
-        <tr><th><kbd>Enter</kbd></th><td>Open the focused repository / tag</td></tr>
-        <tr><th><kbd>t</kbd></th><td>Toggle light / dark theme</td></tr>
-        <tr><th><kbd>Esc</kbd></th><td>Close a modal or unfocus the filter</td></tr>
-        <tr><th><kbd>?</kbd></th><td>Show this cheat sheet</td></tr>
-      </tbody>
-    </table>
-    <p class="muted small">
-      Shortcuts are disabled while you're typing in a filter input -
-      press <kbd>Esc</kbd> first to step back out.
-    </p>
-    <div class="modal-actions">
-      <button type="button" class="link-btn" data-modal-close>Close</button>
+    <div class="modal-head">
+      <div>
+        <h3 id="hotkey-modal-title">Keyboard shortcuts</h3>
+        <p class="modal-subtitle muted">Move around LayerLoupe without the mouse.</p>
+      </div>
+      <button type="button" class="bar-icon-btn" data-modal-close aria-label="Close">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="ll-keys">
+        <div class="ll-key-row"><span>Search (focuses the current filter)</span><span class="ll-key-chips"><kbd>⌘</kbd><kbd>K</kbd></span></div>
+        <div class="ll-key-row"><span>Focus the filter for the current column</span><span class="ll-key-chips"><kbd>/</kbd></span></div>
+        <div class="ll-key-row"><span>Move down in the current list</span><span class="ll-key-chips"><kbd>↓</kbd><kbd>j</kbd></span></div>
+        <div class="ll-key-row"><span>Move up in the current list</span><span class="ll-key-chips"><kbd>↑</kbd><kbd>k</kbd></span></div>
+        <div class="ll-key-row"><span>Open the focused repository / tag</span><span class="ll-key-chips"><kbd>Enter</kbd></span></div>
+        <div class="ll-key-row"><span>Toggle light / dark theme</span><span class="ll-key-chips"><kbd>t</kbd></span></div>
+        <div class="ll-key-row"><span>Show this cheat sheet</span><span class="ll-key-chips"><kbd>?</kbd></span></div>
+        <div class="ll-key-row"><span>Close a modal or unfocus the filter</span><span class="ll-key-chips"><kbd>Esc</kbd></span></div>
+      </div>
+      <p class="muted small modal-hint">
+        Shortcuts are disabled while you're typing in a filter input -
+        press <kbd>Esc</kbd> first to step back out.
+      </p>
     </div>
   </dialog>
 

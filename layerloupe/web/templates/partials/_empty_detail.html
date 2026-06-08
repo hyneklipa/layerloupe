@@ -1,0 +1,31 @@
+{# Empty manifest pane. ``repo`` is the selected repository, or falsy when
+   nothing is selected at all - the copy adapts to which. #}
+<div class="empty-detail">
+  <div class="empty-detail-inner">
+    <span class="empty-detail-tile" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2 2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+    </span>
+    <h2 class="empty-detail-title">
+      {% if repo %}Pick a tag to inspect{% else %}Nothing selected yet{% endif %}
+    </h2>
+    <p class="empty-detail-body">
+      {% if repo %}
+        Choose a tag from <code>{{ repo }}</code> to view its manifest, digest and platforms.
+      {% else %}
+        Select a repository, then a tag - its manifest, pull commands and platforms show up here.
+      {% endif %}
+    </p>
+    <span class="empty-detail-hint">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+      </svg>
+      Tip: press <kbd>⌘</kbd><kbd>K</kbd> to jump anywhere
+    </span>
+  </div>
+</div>
