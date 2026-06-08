@@ -49,6 +49,14 @@
   the delete dialog gained a head / body / foot shell with a danger-tinted
   icon (the type-to-confirm gate and GC warning are unchanged). Modals share a
   rounded 18px shell with the brand overlay/shadow.
+- UI: paginated repo / tag lists + filter match highlighting. The lists now
+  render 24 rows at a time with a **Load more** footer ("X of Y" / "All N
+  shown"); the column scroll auto-loads the next page near the bottom. This is
+  a pure in-memory slice of the already-cached registry listing - no extra
+  registry round-trips. The active filter substring is **highlighted**
+  (`<mark>`) in repo / tag names, rendered server-side. Added **`y`** (copy
+  digest) and **`p`** (copy pull command) keyboard shortcuts. Column header
+  counts now show the full total rather than the visible page size.
 
 ## 0.2.1 - 2026-05-18
 

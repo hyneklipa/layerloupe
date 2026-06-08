@@ -291,6 +291,24 @@
     }
   };
 
+  /* -- Lazy "Load more" on column scroll ----------------------------- */
+  /* Each column scrolls on its own, so htmx's window-based ``revealed`` is
+     unreliable here. Instead, when a column is scrolled near its bottom we
+     click its visible "Load more" button (htmx then swaps in the next page).
+     The ``.htmx-request`` guard prevents firing again while one is in flight. */
+  const bindLazyLoad = (scope) => {
+    const root = scope || document;
+    for (const body of root.querySelectorAll(".col-body")) {
+      if (body.dataset.lazyBound) continue;
+      body.dataset.lazyBound = "1";
+      body.addEventListener("scroll", () => {
+        if (body.scrollHeight - body.scrollTop - body.clientHeight > 200) return;
+        const btn = body.querySelector(".ll-more-btn");
+        if (btn && !btn.classList.contains("htmx-request")) btn.click();
+      });
+    }
+  };
+
   /* -- Keyboard shortcuts -------------------------------------------- */
   const isEditableTarget = (el) => {
     if (!el) return false;
@@ -393,6 +411,27 @@
         return;
       }
 
+      /* y / p: copy the current manifest's digest / pull command. We just
+         click the matching copy button so the toast + copied state fire too. */
+      if (e.key === "y" || e.key === "Y") {
+        const btn = document.querySelector(".digest-section [data-copy]");
+        if (btn) {
+          btn.click();
+          e.preventDefault();
+        }
+        return;
+      }
+      if (e.key === "p" || e.key === "P") {
+        const btn =
+          document.querySelector(".ll-pull.is-primary [data-copy]") ||
+          document.querySelector(".pull-block [data-copy]");
+        if (btn) {
+          btn.click();
+          e.preventDefault();
+        }
+        return;
+      }
+
       if (e.key === "?") {
         const dlg = document.getElementById("hotkey-modal");
         if (dlg?.showModal && !dlg.hasAttribute("open")) {
@@ -446,6 +485,7 @@
     bindFilterClear(scope);
     bindUserMenu(scope);
     bindSearchStub(scope);
+    bindLazyLoad(scope);
     bindKeyboardShortcuts();
     bindActiveRowTracking();
   };

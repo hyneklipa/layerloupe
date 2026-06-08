@@ -17,7 +17,7 @@
         hx-swap="innerHTML"
         hx-push-url="/repositories/{{ repo }}/tags"
         title="{{ repo }}"
-      >{{ repo }}</a>
+      >{{ repo|highlight(repo_filter) }}</a>
     </li>
   {% else %}
     {% if repo_filter %}
@@ -32,4 +32,17 @@
       </li>
     {% endif %}
   {% endfor %}
+  {% if repo_more %}
+    <li class="ll-more">
+      <button type="button" class="ll-more-btn"
+              hx-get="/partials/repositories?q={{ repo_filter|urlencode }}&selected_repo={{ selected_repo|default('', true)|urlencode }}&limit={{ repo_limit + page_size }}"
+              hx-target="#repo-list"
+              hx-swap="outerHTML">
+        Load more
+      </button>
+      <span class="ll-more-meta">{{ repos|length }} of {{ repo_total }}</span>
+    </li>
+  {% elif repo_total > page_size %}
+    <li class="ll-more"><span class="ll-more-meta">All {{ repo_total }} shown</span></li>
+  {% endif %}
 </ul>

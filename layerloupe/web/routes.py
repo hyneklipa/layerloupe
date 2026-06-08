@@ -25,6 +25,7 @@ from typing import Any
 from fastapi import APIRouter, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup, escape
 
 from layerloupe import __version__
 from layerloupe.api.auth import _verify_credentials
@@ -62,6 +63,65 @@ STATIC_DIR = _HERE / "static"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.filters["human_size"] = human_size
 templates.env.filters["human_time"] = human_time
+
+
+# Default UI page size for the repo / tag lists. The registry-side fetch is
+# already capped + cached (see RegistryClient); pagination here is a pure
+# in-memory slice of that list, so "Load more" costs no extra round-trips.
+PAGE = 24
+
+
+def _highlight(text: str, query: str | None) -> Markup:
+    """Wrap the first case-insensitive ``query`` match in ``text`` with a
+    ``<mark class="ll-mark">`` (everything HTML-escaped). Empty / absent query
+    or no match returns the escaped text unchanged."""
+    q = (query or "").strip()
+    if not q:
+        return escape(text)
+    idx = text.lower().find(q.lower())
+    if idx < 0:
+        return escape(text)
+    end = idx + len(q)
+    # Markup.format escapes the interpolated slices for us.
+    return Markup('{}<mark class="ll-mark">{}</mark>{}').format(
+        text[:idx], text[idx:end], text[end:]
+    )
+
+
+templates.env.filters["highlight"] = _highlight
+
+
+def _clamp_limit(limit: int | None) -> int:
+    """Sane page limit: at least one page, never absurd."""
+    if limit is None or limit < PAGE:
+        return PAGE
+    return min(limit, 100_000)
+
+
+def _repo_ctx(repos_all: list[str], q: str | None, limit: int) -> dict[str, Any]:
+    """Repo-list template context: the visible slice + pagination metadata."""
+    total = len(repos_all)
+    return {
+        "repos": repos_all[:limit],
+        "repo_filter": q or "",
+        "repo_total": total,
+        "repo_limit": limit,
+        "repo_more": limit < total,
+        "page_size": PAGE,
+    }
+
+
+def _tag_ctx(tags_all: list[str], q: str | None, limit: int) -> dict[str, Any]:
+    """Tag-list template context: the visible slice + pagination metadata."""
+    total = len(tags_all)
+    return {
+        "tags": tags_all[:limit],
+        "tag_filter": q or "",
+        "tag_total": total,
+        "tag_limit": limit,
+        "tag_more": limit < total,
+        "page_size": PAGE,
+    }
 
 
 router = APIRouter(tags=["web"], include_in_schema=False)
@@ -345,17 +405,15 @@ async def home(
     _identity: BrowseAccessDep,
     q: str | None = Query(default=None),
 ) -> HTMLResponse:
-    repos, error = await _fetch_repos(client, q)
+    repos_all, error = await _fetch_repos(client, q)
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
             **_shell_context(request, settings),
-            "repos": repos,
-            "repo_filter": q or "",
+            **_repo_ctx(repos_all, q, PAGE),
+            **_tag_ctx([], None, PAGE),
             "selected_repo": None,
-            "tags": [],
-            "tag_filter": "",
             "selected_tag": None,
             "manifest": None,
             "error": error,
@@ -385,23 +443,21 @@ async def repository_page(
     q: str | None = Query(default=None, description="Tag filter."),
     repo_q: str | None = Query(default=None, description="Repo column filter."),
 ) -> HTMLResponse:
-    repos, repo_err = await _fetch_repos(client, repo_q)
+    repos_all, repo_err = await _fetch_repos(client, repo_q)
     try:
-        tags = await _fetch_tags(client, repository, q)
+        tags_all = await _fetch_tags(client, repository, q)
         tag_err = None
     except (RegistryHTTPError, RegistryConnectionError, RegistryError) as e:
-        tags = []
+        tags_all = []
         tag_err = f"Failed to load tags for {repository}: {e}"
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
             **_shell_context(request, settings),
-            "repos": repos,
-            "repo_filter": repo_q or "",
+            **_repo_ctx(repos_all, repo_q, PAGE),
+            **_tag_ctx(tags_all, q, PAGE),
             "selected_repo": repository,
-            "tags": tags,
-            "tag_filter": q or "",
             "selected_tag": None,
             "manifest": None,
             "error": tag_err or repo_err,
@@ -430,16 +486,16 @@ async def manifest_page(
     while keeping ``reference`` (the tag) in the URL. The tag list stays
     highlighted on the parent and the panel shows a back-to-index link.
     """
-    repos, repo_err = await _fetch_repos(client, repo_q)
+    repos_all, repo_err = await _fetch_repos(client, repo_q)
     error = repo_err
-    tags: list[str] = []
+    tags_all: list[str] = []
     manifest: UnifiedManifest | None = None
     referrers: list[Referrer] = []
     parent_reference: str | None = None
     annotations_rows: list[AnnotationRow] = []
     annotations_fallback: str | None = None
     try:
-        tags = await _fetch_tags(client, repository, tag_q)
+        tags_all = await _fetch_tags(client, repository, tag_q)
         effective_ref = platform if platform else reference
         manifest = await _fetch_manifest(
             client,
@@ -460,11 +516,9 @@ async def manifest_page(
         name="index.html",
         context={
             **_shell_context(request, settings),
-            "repos": repos,
-            "repo_filter": repo_q or "",
+            **_repo_ctx(repos_all, repo_q, PAGE),
+            **_tag_ctx(tags_all, tag_q, PAGE),
             "selected_repo": repository,
-            "tags": tags,
-            "tag_filter": tag_q or "",
             "selected_tag": reference,
             "manifest": manifest,
             "annotations_rows": annotations_rows,
@@ -489,15 +543,15 @@ async def repos_fragment(
     _identity: BrowseAccessDep,
     q: str | None = Query(default=None),
     selected_repo: str | None = Query(default=None),
+    limit: int | None = Query(default=None, description="Visible-count cap (Load more grows it)."),
 ) -> HTMLResponse:
-    repos, _err = await _fetch_repos(client, q)
+    repos_all, _err = await _fetch_repos(client, q)
     return templates.TemplateResponse(
         request=request,
         name="partials/repo_list.html",
         context={
-            "repos": repos,
+            **_repo_ctx(repos_all, q, _clamp_limit(limit)),
             "selected_repo": selected_repo,
-            "repo_filter": q or "",
             "registry_public_url": str(settings.registry_public_url or settings.registry_url),
         },
     )
@@ -512,10 +566,11 @@ async def tags_fragment(
     _identity: BrowseAccessDep,
     q: str | None = Query(default=None),
     selected_tag: str | None = Query(default=None),
+    limit: int | None = Query(default=None, description="Visible-count cap (Load more grows it)."),
 ) -> Response:
     """Tag list fragment for a repo.
 
-    Comes from two trigger sources:
+    Comes from three trigger sources:
 
     * The repo list (a fresh repo selection). We highlight the first tag
       and pre-fetch its manifest into ``#info-column-body`` via an OOB
@@ -524,16 +579,22 @@ async def tags_fragment(
       for shareability.
     * The tag-filter input. The user is still inside the same repo -
       leave the manifest panel alone and just refresh the list.
+    * The "Load more" control (``limit`` grown past one page). Like the
+      filter, it just refreshes the list - no auto-select / panel swap.
     """
     try:
-        tags = await _fetch_tags(client, repository, q)
+        tags_all = await _fetch_tags(client, repository, q)
         error = None
     except (RegistryHTTPError, RegistryConnectionError, RegistryError) as e:
-        tags = []
+        tags_all = []
         error = f"Failed to load tags: {e}"
 
+    limit = _clamp_limit(limit)
     is_tag_filter = request.headers.get("HX-Trigger") == "tag-filter-input"
-    auto_select = (not is_tag_filter) and bool(tags)
+    is_load_more = limit > PAGE
+    # Auto-select (and the manifest OOB swap) only happens on a fresh repo
+    # selection - not when filtering or paging through the same repo's tags.
+    auto_select = (not is_tag_filter) and (not is_load_more) and bool(tags_all)
 
     auto_manifest: UnifiedManifest | None = None
     auto_referrers: list[Referrer] = []
@@ -541,7 +602,7 @@ async def tags_fragment(
     auto_annotations_rows: list[AnnotationRow] = []
     auto_annotations_fallback: str | None = None
     if auto_select:
-        auto_tag = tags[0]
+        auto_tag = tags_all[0]
         try:
             auto_manifest = await _fetch_manifest(
                 client,
@@ -564,14 +625,12 @@ async def tags_fragment(
         name="partials/tag_list.html",
         context={
             "repository": repository,
-            "tags": tags,
-            "tag_filter": q or "",
+            **_tag_ctx(tags_all, q, limit),
             "selected_tag": auto_tag if auto_select else selected_tag,
             "error": error,
-            # OOB swap controls - when ``not is_tag_filter`` we always emit
-            # something into ``#info-column-body`` (a manifest, or an empty
-            # placeholder if the fetch failed / the repo is empty).
-            "clear_info_column": not is_tag_filter,
+            # OOB swap controls - only on a fresh repo selection (not filter /
+            # load-more) do we (re)populate ``#info-column-body``.
+            "clear_info_column": auto_select or (not is_tag_filter and not is_load_more),
             "auto_manifest": auto_manifest,
             "auto_tag": auto_tag,
             "auto_annotations_rows": auto_annotations_rows,
