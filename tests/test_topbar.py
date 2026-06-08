@@ -124,7 +124,7 @@ def test_admin_session_shows_identity_pill_with_admin_badge(
     with TestClient(app) as client:
         _login_ui(client)
         body = client.get("/").text
-    assert "user-pill--identity" in body
+    assert "user-menu-row--identity" in body
     assert "test-admin" in body
     # Admin role → red admin badge.
     assert "role-badge--admin" in body
@@ -142,7 +142,7 @@ def test_protected_session_shows_identity_pill_with_viewer_badge(
     with TestClient(app) as client:
         _login_ui(client)
         body = client.get("/").text
-    assert "user-pill--identity" in body
+    assert "user-menu-row--identity" in body
     assert "test-admin" in body
     assert "role-badge--viewer" in body
     assert "role-badge--admin" not in body
@@ -157,7 +157,7 @@ def test_identity_pill_persists_across_pages(monkeypatch: pytest.MonkeyPatch) ->
         _login_ui(client)
         for path in ["/", "/repositories"]:
             body = client.get(path).text
-            assert "user-pill--identity" in body, path
+            assert "user-menu-row--identity" in body, path
             assert "test-admin" in body, path
 
 
@@ -170,10 +170,10 @@ def test_registry_login_shows_registry_pill(monkeypatch: pytest.MonkeyPatch) -> 
     with TestClient(app) as client:
         _login_registry(client, monkeypatch)
         body = client.get("/").text
-    assert "user-pill--registry" in body
+    assert "user-menu-row--registry" in body
     assert "reg-user" in body
     # No identity pill because there's no UI auth.
-    assert "user-pill--identity" not in body
+    assert "user-menu-row--identity" not in body
 
 
 # -- Both pills at once -------------------------------------------------
@@ -191,8 +191,8 @@ def test_both_sessions_render_both_pills(
         _login_ui(client)
         _login_registry(client, monkeypatch)
         body = client.get("/").text
-    assert "user-pill--identity" in body
-    assert "user-pill--registry" in body
+    assert "user-menu-row--identity" in body
+    assert "user-menu-row--registry" in body
     assert "test-admin" in body
     assert "reg-user" in body
     # Exactly one Sign-out form (single global logout target).
@@ -237,13 +237,13 @@ def test_sign_out_clears_both_sessions(monkeypatch: pytest.MonkeyPatch) -> None:
 # -- CSS hooks (regression guard) ---------------------------------------
 
 
-def test_css_carries_role_badge_styles() -> None:
+def test_css_carries_account_menu_styles() -> None:
     """A future refactor that drops these classes would silently make
-    the topbar look broken (text without distinguishing background)."""
+    the account menu / avatar look broken (unstyled badge, no dropdown)."""
     with TestClient(app) as client:
         css = client.get("/static/layerloupe.css").text
-    assert ".user-pill--identity" in css
-    assert ".user-pill--registry" in css
+    assert ".avatar" in css
+    assert ".user-menu" in css
     assert ".role-badge" in css
     assert ".role-badge--admin" in css
     assert ".role-badge--viewer" in css
