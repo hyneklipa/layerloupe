@@ -716,9 +716,9 @@ body:not(.app-shell) .app-main {
 .item-row--active a:hover { background: var(--ll-soft); }
 .item-empty { padding: 18px; color: var(--ll-ink-3); font: 400 13px/1.5 var(--font-sans); }
 
-/* -- Manifest info panel ----------------------------------------------- */
-.manifest-info { padding: 0 .25rem; }
-.manifest-breadcrumb { margin: 0 0 1.25rem; font-size: .875rem; }
+/* -- Manifest detail panel --------------------------------------------- */
+.manifest-info { padding: 26px 32px 44px; max-width: 980px; }
+.manifest-breadcrumb { margin: 0 0 18px; font-size: .875rem; }
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -739,72 +739,61 @@ body:not(.app-shell) .app-main {
   text-decoration: none;
 }
 .back-link code { font-size: .82em; font-weight: 400; }
-.platform-suffix { display: inline-block; margin-left: .35rem; font-weight: 400; }
-.manifest-info-head {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
+
+/* Title block: the <repo>:<tag> hero + admin delete icon, then the facts. */
+.manifest-head {
+  margin-bottom: 28px;
+  padding-bottom: 22px;
   border-bottom: 1px solid var(--ll-line);
 }
-.manifest-info-title {
-  margin: 0 0 1.25rem;
-  font-size: 1.25rem;
-  word-break: break-all;
-  font-weight: 500;
+.manifest-title-row { display: flex; align-items: center; gap: 14px; }
+.manifest-title {
+  margin: 0;
+  min-width: 0;
+  font: 500 36px/1.05 var(--font-sans);
   letter-spacing: -.015em;
-  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.manifest-title-repo { color: var(--ll-ink-2); }
+.manifest-title-sep { color: var(--ll-ink-3); }
+.manifest-title-ref { color: var(--ll-blue); font-family: var(--font-mono); }
+.manifest-platform-note { margin: 8px 0 0; }
 
-.manifest-meta {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: .5rem 1.25rem;
-  margin: 0;
-  font-size: .875rem;
+.manifest-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px 48px;
+  margin: 22px 0 0;
 }
-.manifest-meta div { display: contents; }
-.manifest-meta dt {
-  color: var(--ll-ink-3);
-  font-size: .8125rem;
-  padding-top: .15rem;
-  font-weight: 400;
-}
-.manifest-meta dd {
-  margin: 0;
-  word-break: break-word;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Digest cell as an "instrument plate": small, framed, mono, slight
-   surface lift - looks like a serial number stamped into hardware. */
-.digest-cell { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
-.digest-cell code {
-  display: inline-block;
-  padding: .2rem .55rem;
-  background: var(--ll-bg-2);
-  border: 1px solid var(--ll-line);
-  border-radius: var(--radius-sm);
-  font-size: .8rem;
-  letter-spacing: -.005em;
-}
+.fact { display: flex; flex-direction: column; gap: 6px; }
+.fact-label { font: 600 11px/1 var(--font-sans); color: var(--ll-ink-3); }
+.fact-value { font: 400 14px/1.2 var(--font-mono); color: var(--ll-ink); font-variant-numeric: tabular-nums; }
+.fact-value b { font-weight: 600; }
 
 .manifest-platform { margin: 1.25rem 0 0; font-size: .9rem; }
 
-/* Stacked sub-sections inside the manifest panel - list-view rhythm,
-   no boxes, just generous vertical breathing room with a hairline rule
-   to separate logical groupings. */
-.info-section { margin-top: 2.25rem; padding-top: 0; }
-.info-section:first-of-type { margin-top: 1.5rem; }
+/* Sections + SectionLabel headings: title text, then a hairline that fills
+   the rest of the row. Optional count / note sits between them. */
+.info-section { margin-top: 32px; }
+.info-section:first-of-type { margin-top: 24px; }
 .info-section-title {
-  margin: 0 0 .9rem;
-  font-size: 1rem;
-  color: var(--ll-ink);
-  font-weight: 500;
-  letter-spacing: -.01em;
   display: flex;
-  align-items: baseline;
-  gap: .5rem;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+  font: 600 14px/1 var(--font-sans);
+  color: var(--ll-ink);
 }
-.info-section-title .small {
+.info-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ll-line);
+}
+.info-section-title .small,
+.info-section-title .section-note {
   font-weight: 400;
   font-feature-settings: "tnum";
   color: var(--ll-ink-3);
@@ -849,97 +838,134 @@ body:not(.app-shell) .app-main {
 .tab-panel:not(.tab-panel--active) { display: none; }
 .tab-panel .info-section:first-of-type { margin-top: 0; }
 
-/* -- Platform pills (multi-arch picker) -------------------------------- */
-.platform-help { margin: 0 0 .9rem; }
-.platform-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem;
+/* -- Platforms (multi-arch picker) - responsive card grid -------------- */
+.platform-help { margin: 0 0 12px; }
+.platform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
 }
-.platform-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .5rem .9rem;
+.ll-card {
   background: var(--ll-surface);
   border: 1px solid var(--ll-line);
-  border-radius: var(--radius-pill);
-  color: var(--ll-ink);
-  font-family: var(--font-mono);
-  font-size: .82rem;
-  font-weight: 400;
+  border-radius: 14px;
   cursor: pointer;
-  transition: border-color var(--transition), background var(--transition), color var(--transition), transform var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
-.platform-pill:hover {
-  border-color: var(--ll-blue);
-  color: var(--ll-blue);
+.ll-card:hover {
+  border-color: var(--ll-blue-20);
+  box-shadow: 0 8px 22px -12px rgba(12, 127, 232, .5);
+  transform: translateY(-1px);
+}
+.platform-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 16px;
+  text-decoration: none;
+}
+.platform-card:hover { text-decoration: none; }
+.platform-card-icon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
   background: var(--ll-soft);
+  color: var(--ll-blue);
 }
-.platform-pill:active { transform: translateY(1px); }
-.platform-pill--active {
-  background: var(--ll-blue);
-  border-color: var(--ll-blue);
-  color: #fff;
+.platform-card-icon--cyan { background: var(--ll-cyan); }
+.platform-card-body { flex: 1; min-width: 0; }
+.platform-card-arch { display: block; font: 600 15px/1.2 var(--font-mono); color: var(--ll-ink); }
+.platform-card-arch .muted { font-weight: 400; }
+.platform-card-sub {
+  display: block;
+  margin-top: 2px;
+  font: 400 11px/1.3 var(--font-mono);
+  color: var(--ll-ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.platform-pill--active .muted { color: rgba(255, 255, 255, .82); }
-.platform-pill-arch { font-weight: 500; }
-.platform-pill-os { font-family: var(--font-sans); }
+.platform-card-chev { flex: none; color: var(--ll-ink-3); }
 
 /* -- Pull commands ----------------------------------------------------- */
-.pull-block { margin: .5rem 0 0; display: flex; flex-direction: column; gap: .5rem; }
-.pull-cmd {
-  background: var(--ll-bg-2);
-  padding: .65rem .85rem;
-  border: 1px solid var(--ll-line);
-  border-radius: var(--radius);
+.pull-block { display: flex; flex-direction: column; gap: 10px; }
+.ll-pull {
   display: flex;
   align-items: center;
-  gap: .85rem;
-  font-family: var(--font-mono);
-  transition: border-color var(--transition);
-}
-.pull-cmd:hover { border-color: var(--ll-line-2); }
-.pull-cmd code {
-  font-size: .8125rem;
-  word-break: break-all;
-  flex: 1;
-  letter-spacing: -.005em;
-}
-.pull-label {
-  font-family: var(--font-sans);
-  font-size: .7rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  color: var(--ll-ink-3);
-  flex-shrink: 0;
-  min-width: 3.25em;
-}
-
-.copy-btn {
+  gap: 14px;
+  padding: 13px 16px;
   background: var(--ll-surface);
   border: 1px solid var(--ll-line);
-  border-radius: var(--radius-sm);
-  padding: .3rem;
-  font: inherit;
+  border-left: 3px solid var(--ll-line-2);
+  border-radius: 12px;
+  transition: border-color var(--transition);
+}
+.ll-pull:hover { border-color: var(--ll-blue-20); }
+.ll-pull.is-primary { border-color: var(--ll-blue-20); border-left-color: var(--ll-blue); }
+.pull-label {
+  flex: none;
+  min-width: 44px;
+  font: 500 11px/1 var(--font-mono);
   color: var(--ll-ink-3);
-  cursor: pointer;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.ll-pull.is-primary .pull-label { color: var(--ll-blue); }
+.pull-code {
+  flex: 1;
+  min-width: 0;
+  font: 400 13px/1.5 var(--font-mono);
+  color: var(--ll-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ll-pull.is-primary .pull-code { font-size: 14px; }
+
+/* -- Digest (quiet - the tag is the hero) ------------------------------ */
+.digest-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-line);
+  border-radius: 10px;
+}
+.digest-value { flex: 1; min-width: 0; color: var(--ll-ink-2); word-break: break-all; }
+
+/* -- Copy buttons (icon-only + solid primary) -------------------------- */
+.copy-btn {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.85rem;
-  height: 1.85rem;
+  gap: 6px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-line-2);
+  border-radius: 8px;
+  color: var(--ll-ink-3);
+  font: 500 13px/1 var(--font-sans);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
-.copy-btn:not(:disabled):hover { color: var(--ll-blue); border-color: var(--ll-blue); background: var(--ll-soft); }
+.copy-btn:not(:disabled):hover { background: var(--ll-bg-2); border-color: var(--ll-ink-3); color: var(--ll-ink); }
 .copy-btn:disabled { opacity: .5; cursor: not-allowed; }
-.copy-btn[data-copied] {
-  color: var(--success);
-  border-color: var(--success);
-  background: var(--success-soft);
+.copy-btn[data-copied] { color: var(--success); border-color: var(--success); background: var(--success-soft); }
+.copy-btn--solid {
+  width: auto;
+  padding: 10px 16px;
+  background: var(--ll-blue);
+  border-color: var(--ll-blue);
+  color: #fff;
 }
+.copy-btn--solid:not(:disabled):hover { background: var(--ll-blue-hover); border-color: var(--ll-blue-hover); color: #fff; }
+.copy-btn--solid[data-copied] { background: var(--success); border-color: var(--success); color: #fff; }
+.copy-btn-label { font-weight: 500; }
 .copy-icon { display: inline-block; }
 .copy-icon-done { display: none; }
 .copy-btn[data-copied] .copy-icon-default { display: none; }
@@ -1162,43 +1188,40 @@ kbd {
 }
 .referrer-annotations li { font-size: .8rem; word-break: break-all; }
 
-/* -- Annotations section table --------------------------------------- */
+/* -- Annotations: a single card of label-over-key / value rows -------- */
 .annotations-help { margin: 0 0 .75rem; }
-.annotations-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: .9rem;
+.annotations-card {
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-line);
+  border-radius: 14px;
+  overflow: hidden;
 }
-.annotations-table th,
-.annotations-table td {
-  text-align: left;
-  vertical-align: top;
-  padding: .4rem .5rem;
-  border-bottom: 1px solid var(--ll-line);
-  word-break: break-word;
+.annotation-row {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) 1fr;
+  gap: 32px;
+  align-items: center;
+  padding: 14px 20px;
 }
-.annotations-table th {
-  width: 38%;
-  font-weight: 500;
-  color: var(--ll-ink);
-}
-/* All annotation rows get the same scope-cell treatment - the label vs.
-   key distinction (visible inside the cell) carries the known/unknown
-   information without needing two row styles. */
-.annotation-row th { background: var(--ll-bg-2); }
-.annotation-label { display: block; color: var(--ll-ink); font-weight: 500; }
+.annotation-row + .annotation-row { border-top: 1px solid var(--ll-line); }
+.annotation-key-cell { min-width: 0; }
+.annotation-label { display: block; font: 500 14px/1.2 var(--font-sans); color: var(--ll-ink); }
 .annotation-key {
   display: block;
-  font-size: .72rem;
-  font-family: var(--font-mono);
-  margin-top: .15rem;
+  margin-top: 2px;
+  font: 400 11px/1.3 var(--font-mono);
+  color: var(--ll-ink-3);
+  word-break: break-all;
 }
-.annotation-row:not(.annotation-row--known) .annotation-key {
-  color: var(--ll-ink);
-  font-size: .82rem;
+.annotation-key--solo { font-size: 13px; color: var(--ll-ink); }
+.annotation-value-cell { min-width: 0; }
+.annotation-value { font: 400 14px/1.4 var(--font-mono); color: var(--ll-ink); word-break: break-all; }
+.annotation-link {
+  font: 400 14px/1.4 var(--font-mono);
+  color: var(--ll-blue);
+  text-decoration: underline;
+  word-break: break-all;
 }
-.annotation-value { word-break: break-all; }
-.annotation-link { word-break: break-all; }
 .annotation-link::after {
   content: " ↗";
   color: var(--ll-ink-3);

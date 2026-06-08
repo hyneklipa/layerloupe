@@ -254,7 +254,7 @@ def test_known_rows_carry_friendly_label(
     use_handler["handler"] = _make_handler("manifest_oci", MediaType.OCI_IMAGE_MANIFEST.value)
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text
-    assert "annotations-table" in body
+    assert "annotations-card" in body
     assert "annotation-label" in body
     assert "annotation-row--known" not in body
 
@@ -270,7 +270,7 @@ def test_image_with_only_labels_still_renders_annotations(
         body = client.get("/partials/repositories/foo/manifests/latest").text
     # image_config.json has org.opencontainers.image.source + version labels.
     assert ">Source<" in body
-    assert "annotations-table" in body
+    assert "annotations-card" in body
 
 
 def test_no_annotations_renders_empty_state(
@@ -308,7 +308,7 @@ def test_no_annotations_renders_empty_state(
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text
     assert "No annotations or labels" in body
-    assert "annotations-table" not in body
+    assert "annotations-card" not in body
 
 
 def test_labels_no_longer_in_configuration_tab(
@@ -334,14 +334,15 @@ def test_api_annotations_field_unchanged() -> None:
     assert "annotations" in schema["properties"]
 
 
-# -- CSS hooks for the table ---------------------------------------------
+# -- CSS hooks for the annotations card ----------------------------------
 
 
 def test_annotations_css_present() -> None:
     with TestClient(app) as client:
         css = client.get("/static/layerloupe.css").text
-    assert ".annotations-table" in css
-    assert ".annotation-row--known" in css
+    assert ".annotations-card" in css
+    assert ".annotation-row" in css
+    assert ".annotation-label" in css
     assert ".annotation-link" in css
 
 

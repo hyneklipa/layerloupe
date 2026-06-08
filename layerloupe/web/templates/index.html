@@ -77,19 +77,12 @@
     </article>
 
     {# -- Manifest info column ------------------------------------------- #}
-    {# ``#manifest-actions`` is a persistent slot for the trash-icon button.
-       Filled inline on full-page renders that include a manifest, and
-       OOB-swapped from manifest_info.html on htmx fragment loads. Empty
-       in the placeholder state so the icon can't be clicked when there's
-       nothing to delete. #}
+    {# The trash icon now lives next to the manifest title inside
+       manifest_info.html, so it travels with the swapped panel - no
+       persistent OOB slot needed in this header. #}
     <article class="col col--wide" aria-labelledby="col-info-h">
       <header class="col-head">
         <h2 id="col-info-h" class="col-title">Manifest</h2>
-        <div id="manifest-actions" class="manifest-actions">
-          {% if selected_tag and is_admin and manifest %}
-            {% include "partials/_manifest_delete_icon.html" %}
-          {% endif %}
-        </div>
       </header>
       <div class="col-body" id="info-column-body">
         {% if selected_tag %}

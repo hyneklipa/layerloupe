@@ -5,14 +5,6 @@
      fetch it (or the repo is empty), fall back to a placeholder. #}
   <div id="info-column-body" hx-swap-oob="innerHTML">
     {% if auto_manifest %}
-      {# ``swap_actions=False`` keeps manifest_info.html from emitting its
-         own OOB block here - that block would be NESTED inside this OOB
-         wrapper, and htmx 2.x clones the wrapper's full subtree (with
-         the inner OOB element still attached) into the live DOM before
-         processing the inner OOB. The inner swap then writes into a new
-         element instead of consuming the cloned one, leaving a stray
-         duplicate icon inside #info-column-body. We OOB the icon at the
-         top level below instead. #}
       {% with
         manifest=auto_manifest,
         reference=auto_tag,
@@ -22,8 +14,7 @@
         display_platforms=auto_display_platforms,
         referrers=auto_referrers,
         parent_reference=None,
-        error=None,
-        swap_actions=False
+        error=None
       %}
         {% include "partials/manifest_info.html" %}
       {% endwith %}
@@ -31,14 +22,9 @@
       <p class="muted item-empty">Select a tag to see its manifest details.</p>
     {% endif %}
   </div>
-  {# Top-level OOB swap for the trash icon - sibling of #info-column-body,
-     not nested inside it. Filled when there's a manifest to delete,
-     cleared otherwise so the icon can't point at stale content. #}
-  <div id="manifest-actions" hx-swap-oob="innerHTML">
-    {% if auto_manifest and is_admin %}
-      {% include "partials/_manifest_delete_icon.html" %}
-    {% endif %}
-  </div>
+  {# The trash icon is rendered inline inside manifest_info.html (next to the
+     title), so the auto-selected manifest's delete affordance arrives with the
+     #info-column-body swap above - no separate OOB needed for it. #}
   {# OOB swaps for the tag count and filter input. These slots exist in
      index.html but are empty until the first repo selection - without OOB
      refills, the filter input never appears unless the user reloads. We
