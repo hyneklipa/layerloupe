@@ -2,127 +2,160 @@
 
 {% block title_suffix %} · Sign in{% endblock %}
 
-{# Suppress the topbar's own Sign-in link while we're already on this page.
-   The theme toggle lives in the footer now and is rendered there for free. #}
+{# A focused, full-bleed login surface: drop the padded app-main and the
+   topbar's right-hand controls (sign-in there would be circular). #}
+{% block body_class %}auth-page{% endblock %}
 {% block topbar_actions %}{% endblock %}
 
 {% block main %}
-  <section class="auth-card" aria-labelledby="auth-h">
-    {# Two orthogonal sign-in surfaces share this page:
+  {% set registry_host = registry_public_url|default('', true)|replace('https://', '')|replace('http://', '') %}
+  <div class="auth-login">
+    <span class="auth-blob auth-blob--blue" aria-hidden="true"></span>
+    <span class="auth-blob auth-blob--mint" aria-hidden="true"></span>
 
-       * **UI identity** (``AUTH_MODE != public``) - logs the operator
-         into LayerLoupe itself. Writes ``session["identity"]``.
-       * **Registry credentials** (``ALLOW_REGISTRY_LOGIN=true``) -
-         supplies per-user creds for the upstream registry. Writes
-         ``session["registry_username"]`` + encrypted password.
+    <section class="auth-card" aria-labelledby="auth-h">
+      <img class="auth-logo auth-logo-light" src="/static/img/layerloupe.svg" alt="{{ title }}">
+      <img class="auth-logo auth-logo-dark" src="/static/img/layerloupe-dark.svg" alt="{{ title }}">
 
-       The page shows whichever forms are enabled. Both on at once → two
-       headings on the same card, with a clear separator. Neither on →
-       the route never gets here (login_page() 403s upstream). #}
+      {# Two orthogonal sign-in surfaces share this page:
 
-    {% if ui_login_enabled and registry_login_enabled %}
-      <h1 id="auth-h">Sign in to {{ title }}</h1>
-      <p class="muted">
-        Two separate logins live on this page - pick the one you need.
-        Each writes its own session key, so signing in to one doesn't
-        log you out of the other.
-      </p>
-    {% elif ui_login_enabled %}
-      <h1 id="auth-h">Sign in to {{ title }}</h1>
-      <p class="muted">
-        Enter your LayerLoupe credentials. They're verified against the
-        admin password configured for this instance.
-      </p>
-    {% else %}
-      <h1 id="auth-h">Sign in to the registry</h1>
-      <p class="muted">
-        Enter the credentials your registry recognizes.
-        They're stored only in your session cookie (encrypted).
-      </p>
-    {% endif %}
+         * **UI identity** (``AUTH_MODE != public``) - logs the operator
+           into LayerLoupe itself. Writes ``session["identity"]``.
+         * **Registry credentials** (``ALLOW_REGISTRY_LOGIN=true``) -
+           supplies per-user creds for the upstream registry. Writes
+           ``session["registry_username"]`` + encrypted password.
 
-    {% if ui_login_enabled %}
-      {% if registry_login_enabled %}
-        <h2 class="auth-section">LayerLoupe sign-in</h2>
-      {% endif %}
+         The page shows whichever forms are enabled. Both on at once → two
+         headings on the same card, with a clear separator. Neither on →
+         the route never gets here (login_page() 403s upstream). #}
 
-      {% if ui_error %}
-        <p class="error-banner" role="alert">{{ ui_error }}</p>
-      {% endif %}
-
-      <form method="post" action="/web/auth/login" class="auth-form" autocomplete="on">
-        <input type="hidden" name="next" value="{{ next }}">
-
-        <label class="auth-field">
-          <span>Username</span>
-          <input
-            type="text"
-            name="username"
-            value="{{ ui_username }}"
-            required
-            {% if not registry_login_enabled %}autofocus{% endif %}
-            autocomplete="username"
-          >
-        </label>
-
-        <label class="auth-field">
-          <span>Password</span>
-          <input
-            type="password"
-            name="password"
-            required
-            autocomplete="current-password"
-          >
-        </label>
-
-        <div class="auth-actions">
-          <button type="submit" class="btn-primary">Sign in</button>
-        </div>
-      </form>
-    {% endif %}
-
-    {% if registry_login_enabled %}
-      {% if ui_login_enabled %}
-        <h2 class="auth-section">Registry credentials</h2>
-        <p class="muted">
-          Provide per-user credentials for the upstream registry -
-          optional, used in addition to LayerLoupe sign-in above.
+      {% if ui_login_enabled and registry_login_enabled %}
+        <h1 id="auth-h" class="auth-title">Sign in to {{ title }}</h1>
+        <p class="auth-subtitle muted">
+          Two separate logins live on this page - pick the one you need.
+          Each writes its own session key, so signing in to one doesn't
+          log you out of the other.
+        </p>
+      {% elif ui_login_enabled %}
+        <h1 id="auth-h" class="auth-title">Sign in</h1>
+        <p class="auth-subtitle muted">
+          Enter your LayerLoupe credentials. They're verified against the
+          admin password configured for this instance.
+        </p>
+      {% else %}
+        <h1 id="auth-h" class="auth-title">Sign in to the registry</h1>
+        <p class="auth-subtitle muted">
+          Enter the credentials your registry recognizes.
+          They're stored only in your session cookie (encrypted).
         </p>
       {% endif %}
 
-      {% if error %}
-        <p class="error-banner" role="alert">{{ error }}</p>
+      {% if registry_host %}
+        <label class="auth-field auth-field--readonly">
+          <span>Registry</span>
+          <input value="{{ registry_host }}" readonly tabindex="-1" aria-label="Registry host">
+        </label>
       {% endif %}
 
-      <form method="post" action="/login" class="auth-form" autocomplete="on">
-        <input type="hidden" name="next" value="{{ next }}">
+      {% if ui_login_enabled %}
+        {% if registry_login_enabled %}
+          <h2 class="auth-section">LayerLoupe sign-in</h2>
+        {% endif %}
 
-        <label class="auth-field">
-          <span>Username</span>
-          <input
-            type="text"
-            name="username"
-            value="{{ username }}"
-            required
-            {% if not ui_login_enabled %}autofocus{% endif %}
-            autocomplete="username"
-          >
-        </label>
+        {% if ui_error %}
+          <p class="error-banner" role="alert">{{ ui_error }}</p>
+        {% endif %}
 
-        <label class="auth-field">
-          <span>Password</span>
-          <input
-            type="password"
-            name="password"
-            required
-            autocomplete="current-password"
-          >
-        </label>
+        <form method="post" action="/web/auth/login" class="auth-form" autocomplete="on">
+          <input type="hidden" name="next" value="{{ next }}">
 
-        <div class="auth-actions">
-          <button type="submit" class="btn-primary">Sign in to registry</button>
-        </div>
-      </form>
-    {% endif %}
-  </section>
+          <label class="auth-field">
+            <span>Username</span>
+            <input
+              type="text"
+              name="username"
+              value="{{ ui_username }}"
+              required
+              {% if not registry_login_enabled %}autofocus{% endif %}
+              autocomplete="username"
+            >
+          </label>
+
+          <label class="auth-field">
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              required
+              autocomplete="current-password"
+            >
+          </label>
+
+          <button type="submit" class="btn-primary auth-submit">
+            Sign in
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </button>
+        </form>
+      {% endif %}
+
+      {% if registry_login_enabled %}
+        {% if ui_login_enabled %}
+          <h2 class="auth-section">Registry credentials</h2>
+          <p class="auth-subtitle muted">
+            Provide per-user credentials for the upstream registry -
+            optional, used in addition to LayerLoupe sign-in above.
+          </p>
+        {% endif %}
+
+        {% if error %}
+          <p class="error-banner" role="alert">{{ error }}</p>
+        {% endif %}
+
+        <form method="post" action="/login" class="auth-form" autocomplete="on">
+          <input type="hidden" name="next" value="{{ next }}">
+
+          <label class="auth-field">
+            <span>Username</span>
+            <input
+              type="text"
+              name="username"
+              value="{{ username }}"
+              required
+              {% if not ui_login_enabled %}autofocus{% endif %}
+              autocomplete="username"
+            >
+          </label>
+
+          <label class="auth-field">
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              required
+              autocomplete="current-password"
+            >
+          </label>
+
+          <button type="submit" class="btn-primary auth-submit">
+            Sign in to registry
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </button>
+        </form>
+      {% endif %}
+
+      {# "Continue with SSO" from the design is intentionally omitted: there's
+         no SSO backend yet (the auth provider abstraction is groundwork for a
+         future OIDC provider). Render it here once such a provider exists. #}
+
+      <p class="auth-help muted">
+        Trouble signing in? Contact your registry admin.
+      </p>
+    </section>
+  </div>
 {% endblock %}

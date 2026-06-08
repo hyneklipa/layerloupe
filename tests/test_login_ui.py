@@ -48,6 +48,14 @@ def test_get_login_renders_form_when_enabled(login_enabled: None) -> None:
     # Topbar chrome from base.html (the footer was removed in the redesign).
     assert 'class="topbar"' in body
     assert 'class="bottombar"' not in body
+    # Redesigned card: decorative blobs, logo, and the informational Registry
+    # field. "Continue with SSO" stays out until there's an SSO backend.
+    assert 'class="auth-login"' in body
+    assert "auth-blob" in body
+    assert "auth-logo" in body
+    assert ">Registry<" in body
+    assert "registry.example.com" in body
+    assert "Continue with SSO" not in body
 
 
 def test_get_login_returns_403_when_disabled(login_disabled: None) -> None:
