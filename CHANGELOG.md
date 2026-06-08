@@ -63,6 +63,11 @@
   primary button. The dual sign-in surfaces (LayerLoupe identity + per-user
   registry credentials) and their endpoints are unchanged. "Continue with SSO"
   from the mockup is intentionally omitted until there's an SSO backend.
+- UI redesign: polish. Honor `prefers-reduced-motion` (near-instant
+  transitions, no smooth scroll). Narrow-screen refinements below the
+  column-stacking breakpoint (tighter top bar / manifest padding, wrapping
+  title, stacked annotation rows). Removed dead CSS left over from the
+  redesign (`.container`, `.kv-list`, stale `.manifest-meta` reference).
 
 ## 0.2.1 - 2026-05-18
 

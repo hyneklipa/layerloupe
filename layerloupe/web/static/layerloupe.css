@@ -180,7 +180,7 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 /* Anything carrying digits-as-data wants tabular numerals so columns
    line up cleanly: file sizes, layer counts, byte totals, durations. */
 .tabular,
-.manifest-meta dd,
+.fact-value,
 .layer-size,
 .referrer-size,
 .col-head .small,
@@ -204,13 +204,6 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 }
 
 /* -- Layout primitives ------------------------------------------------- */
-.container {
-  width: 100%;
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: 0 1.25rem;
-}
-
 /* Main region. On app-shell pages it's a flex column that fills the space
    under the top bar (the three-pane layout takes over from there). On other
    pages it just grows so footer-less content sits naturally. */
@@ -1454,16 +1447,6 @@ kbd {
 [data-theme="dark"] .instruction-badge--volume     { background: rgba(14, 165, 233, .15); color: #7dd3fc; border-color: rgba(14, 165, 233, .3); }
 [data-theme="dark"] .instruction-badge--from       { background: rgba(220, 38, 38, .15); color: #fca5a5; border-color: rgba(220, 38, 38, .3); }
 
-.kv-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: .25rem;
-}
-.kv-list li { font-size: .9rem; word-break: break-word; }
-.kv-key { color: var(--ll-ink-3); font-size: .85rem; margin-right: .25rem; }
 .mono { font-family: var(--font-mono); }
 .small { font-size: .8rem; }
 
@@ -1611,4 +1594,29 @@ body.auth-page .app-main { padding: 0; }
 }
 .btn-primary:hover { background: var(--ll-blue-hover); border-color: var(--ll-blue-hover); }
 .btn-primary:active { transform: translateY(1px); }
+
+/* -- Motion preferences ------------------------------------------------ */
+/* Honor the OS "reduce motion" setting: near-instant transitions, no smooth
+   scroll, single-shot animations. The design's hovers/lifts still apply, just
+   without the easing. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -- Narrow-screen refinements (below the column-stacking breakpoint) --- */
+@media (max-width: 560px) {
+  .topbar { padding: 0 14px; }
+  .manifest-info { padding: 20px 16px 32px; }
+  .manifest-title { font-size: 28px; white-space: normal; }
+  .manifest-facts { gap: 16px 28px; }
+  /* Stack each annotation row (label above value) so nothing gets crushed. */
+  .annotation-row { grid-template-columns: 1fr; gap: 6px; }
+}
 
