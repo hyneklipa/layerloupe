@@ -19,7 +19,9 @@
         {% include "partials/manifest_info.html" %}
       {% endwith %}
     {% else %}
-      <p class="muted item-empty">Select a tag to see its manifest details.</p>
+      {% with repo=repository %}
+        {% include "partials/_empty_detail.html" %}
+      {% endwith %}
     {% endif %}
   </div>
   {# The trash icon is rendered inline inside manifest_info.html (next to the

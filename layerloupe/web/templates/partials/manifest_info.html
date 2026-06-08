@@ -417,36 +417,52 @@
     {% if is_admin %}
       {% set delete_target = repository ~ ('@' if reference.startswith('sha256:') else ':') ~ reference %}
       <dialog id="delete-modal" class="modal" aria-labelledby="delete-modal-title">
-        <h3 id="delete-modal-title">Delete this manifest?</h3>
-        <p>
-          You are about to delete
-          <code>{{ delete_target }}</code>.
-        </p>
-        {% if manifest and manifest.digest %}
-          <p class="muted small">
-            Resolves to digest <code>{{ manifest.digest }}</code>.
+        <div class="modal-head">
+          <span class="modal-danger-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
+                 stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"/>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+          </span>
+          <div>
+            <h3 id="delete-modal-title">Delete this manifest?</h3>
+            <p class="modal-subtitle">
+              <code>{{ delete_target }}</code> will be permanently removed from the
+              registry. This cannot be undone.
+            </p>
+            {% if manifest and manifest.digest %}
+              <p class="muted small">
+                Resolves to digest <code>{{ manifest.digest }}</code>.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="modal-body">
+          <p class="modal-warn">
+            ⚠ This unlinks the manifest, but layer blobs remain on disk until
+            <code>registry garbage-collect</code> runs on the registry host.
           </p>
-        {% endif %}
-        <p class="modal-warn">
-          ⚠ This unlinks the manifest, but layer blobs remain on disk until
-          <code>registry garbage-collect</code> runs on the registry host.
-        </p>
-        <label class="modal-confirm-prompt" for="delete-confirm-input">
-          Type <code>{{ delete_target }}</code> to confirm:
-        </label>
-        <input
-          id="delete-confirm-input"
-          class="modal-confirm-input"
-          type="text"
-          autocomplete="off"
-          autocapitalize="off"
-          autocorrect="off"
-          spellcheck="false"
-          data-delete-confirm-input
-          data-delete-confirm-expected="{{ delete_target }}"
-          aria-label="Type the manifest name to confirm deletion"
-        >
-        <div class="modal-actions">
+          <label class="modal-confirm-prompt" for="delete-confirm-input">
+            Type <code>{{ delete_target }}</code> to confirm:
+          </label>
+          <input
+            id="delete-confirm-input"
+            class="modal-confirm-input"
+            type="text"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            data-delete-confirm-input
+            data-delete-confirm-expected="{{ delete_target }}"
+            aria-label="Type the manifest name to confirm deletion"
+          >
+        </div>
+        <div class="modal-foot">
           <button type="button" class="link-btn" data-modal-close>Cancel</button>
           <button type="button" class="btn-danger"
                   disabled
