@@ -57,6 +57,12 @@
   (`<mark>`) in repo / tag names, rendered server-side. Added **`y`** (copy
   digest) and **`p`** (copy pull command) keyboard shortcuts. Column header
   counts now show the full total rather than the visible page size.
+- UI redesign: login. The sign-in card was restyled to the design - decorative
+  blurred blobs behind a rounded 20px card, the brand logo in-card, labelled
+  fields, an informational read-only **Registry** field, and a full-width
+  primary button. The dual sign-in surfaces (LayerLoupe identity + per-user
+  registry credentials) and their endpoints are unchanged. "Continue with SSO"
+  from the mockup is intentionally omitted until there's an SSO backend.
 
 ## 0.2.1 - 2026-05-18
 
