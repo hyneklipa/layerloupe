@@ -30,6 +30,18 @@
   shortcut to toggle the theme. Avatar shows initials derived from the
   username, or a neutral glyph when anonymous. No endpoint changes (sign-in /
   sign-out targets unchanged).
+- UI redesign: manifest detail. The detail pane now leads with a large
+  `repo:tag` title (tag in brand-blue mono) and an at-a-glance fact row, with
+  the admin delete icon moved inline next to the title (the old
+  `#manifest-actions` column-header slot and its out-of-band swap are gone -
+  the icon travels with the panel). Pull commands became bordered rows (a
+  primary tag row with a solid Copy button + a secondary digest row); the full
+  digest moved to its own quiet section. The multi-arch platform picker is now
+  a responsive **card grid** (arch/os, child digest · size, hover lift) instead
+  of pills - `UnifiedPlatform` gained a `size` field to back it. Annotations
+  render as a single card of label-over-key / value rows. Section headings use
+  a hairline rule. The Overview / Layers tabs and the type-to-confirm delete
+  gate are unchanged.
 
 ## 0.2.1 - 2026-05-18
 

@@ -638,11 +638,6 @@ async def manifest_fragment(
             "parent_reference": parent_reference,
             "is_admin": get_identity(request).is_admin,
             "error": error,
-            # Tells the partial to OOB-swap the trash-icon into
-            # ``#manifest-actions`` (in the Manifest column header). Only
-            # set on fragment renders - full-page renders include the icon
-            # inline via index.html, so an OOB swap there would duplicate.
-            "swap_actions": True,
         },
     )
 

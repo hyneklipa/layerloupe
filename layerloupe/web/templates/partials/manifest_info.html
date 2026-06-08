@@ -2,8 +2,12 @@
 
    Image manifests are organized into two tabs (Overview / Layers) so the
    often-large Layers section doesn't dominate the panel by default. Index
-   manifests skip the tabs since they have no layers. #}
-{%- macro copy_button(text, label) -%}
+   manifests skip the tabs since they have no layers.
+
+   The whole panel is swapped into #info-column-body on navigation, so the
+   delete icon (next to the title) and the delete modal travel with it - no
+   out-of-band swaps needed. #}
+{%- macro copy_icon_btn(text, label) -%}
 <button type="button" class="copy-btn" data-copy="{{ text }}"
         aria-label="{{ label }}" title="{{ label }}">
   <svg class="copy-icon copy-icon-default" viewBox="0 0 24 24" width="14" height="14"
@@ -19,17 +23,64 @@
   </svg>
 </button>
 {%- endmacro -%}
-{# When loaded as an htmx fragment, OOB-swap the trash icon into the
-   Manifest column header. On full-page renders ``swap_actions`` is unset
-   and index.html renders the icon inline instead - avoids duplicating
-   the element id. #}
-{% if swap_actions %}
-  <div id="manifest-actions" hx-swap-oob="innerHTML">
-    {% if is_admin and manifest %}
-      {% include "partials/_manifest_delete_icon.html" %}
-    {% endif %}
+{%- macro copy_solid_btn(text, label) -%}
+<button type="button" class="copy-btn copy-btn--solid" data-copy="{{ text }}"
+        aria-label="{{ label }}" title="{{ label }}">
+  <svg class="copy-icon copy-icon-default" viewBox="0 0 24 24" width="14" height="14"
+       fill="none" stroke="currentColor" stroke-width="1.6"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="8" y="8" width="12" height="12" rx="2"/>
+    <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>
+  </svg>
+  <svg class="copy-icon copy-icon-done" viewBox="0 0 24 24" width="14" height="14"
+       fill="none" stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M5 12.5l4.5 4.5L19 7"/>
+  </svg>
+  <span class="copy-btn-label">Copy</span>
+</button>
+{%- endmacro -%}
+{# Annotations rendered as a single card of label-over-key / value rows. #}
+{%- macro annotations_card(rows, fallback_source) -%}
+{% if rows %}
+  {% if fallback_source %}
+    <p class="muted small annotations-help">
+      The index itself carries no annotations - showing the
+      <code>{{ fallback_source }}</code> child manifest's metadata.
+    </p>
+  {% else %}
+    <p class="muted small annotations-help">
+      Combined manifest annotations and image-config labels.
+      Recognized OCI keys are surfaced with their friendly name.
+    </p>
+  {% endif %}
+  <div class="annotations-card">
+    {% for row in rows %}
+      <div class="annotation-row">
+        <div class="annotation-key-cell"
+             {% if row.description %}title="{{ row.description }}"{% endif %}>
+          {% if row.is_known %}
+            <span class="annotation-label">{{ row.label }}</span>
+            <code class="annotation-key">{{ row.key }}</code>
+          {% else %}
+            <code class="annotation-key annotation-key--solo">{{ row.key }}</code>
+          {% endif %}
+        </div>
+        <div class="annotation-value-cell">
+          {% if row.is_url %}
+            <a href="{{ row.value }}" target="_blank" rel="noopener noreferrer"
+               class="annotation-link">{{ row.value }}</a>
+          {% else %}
+            <code class="annotation-value">{{ row.value }}</code>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
   </div>
+{% else %}
+  <p class="muted">No annotations or labels on this manifest.</p>
 {% endif %}
+{%- endmacro -%}
 {% if error %}
   <p class="error-msg">{{ error }}</p>
 {% elif manifest %}
@@ -45,57 +96,80 @@
       </nav>
     {% endif %}
 
-    {# -- Header ------------------------------------------------------- #}
-    <header class="manifest-info-head">
-      <h3 class="manifest-info-title">
-        {% set display_ref = parent_reference if parent_reference else reference %}
-        <span>{{ repository }}</span>{% if display_ref.startswith('sha256:') %}<span class="muted">@</span>{% else %}<span class="muted">:</span>{% endif %}<span>{{ display_ref }}</span>
-        {% if parent_reference %}
-          <span class="muted small platform-suffix">· platform <code>{{ manifest.digest[:19] }}…</code></span>
+    {# -- Title block: <repo>:<tag>, admin delete icon, then the fact row -- #}
+    {% set display_ref = parent_reference if parent_reference else reference %}
+    <header class="manifest-head">
+      <div class="manifest-title-row">
+        <h1 class="manifest-title">
+          <span class="manifest-title-repo">{{ repository }}</span><span class="manifest-title-sep">{% if display_ref.startswith('sha256:') %}@{% else %}:{% endif %}</span><span class="manifest-title-ref">{{ display_ref }}</span>
+        </h1>
+        {% if is_admin and manifest %}
+          {% include "partials/_manifest_delete_icon.html" %}
         {% endif %}
-      </h3>
+      </div>
+      {% if parent_reference %}
+        <p class="manifest-platform-note muted small">
+          platform child <code>{{ manifest.digest[:19] }}…</code>
+        </p>
+      {% endif %}
 
-      <dl class="manifest-meta">
-        <div><dt>Type</dt><dd>{{ manifest.type }} <span class="muted small">· schema v{{ manifest.schema_version }}</span></dd></div>
+      <div class="manifest-facts">
+        <div class="fact">
+          <span class="fact-label">Type</span>
+          <span class="fact-value"><b>{{ manifest.type }}</b> <span class="muted">· schema v{{ manifest.schema_version }}</span></span>
+        </div>
         {% if manifest.type == "image" %}
-          <div><dt>Size</dt><dd>{{ manifest.size|human_size }} <span class="muted small">· {{ manifest.layers|length }} layer{{ '' if manifest.layers|length == 1 else 's' }}</span></dd></div>
+          <div class="fact">
+            <span class="fact-label">Size</span>
+            <span class="fact-value">{{ manifest.size|human_size }} <span class="muted">· {{ manifest.layers|length }} layer{{ '' if manifest.layers|length == 1 else 's' }}</span></span>
+          </div>
         {% else %}
-          <div><dt>Size (manifests)</dt><dd>{{ manifest.size|human_size }} <span class="muted small">· {{ display_platforms|length }} platform{{ '' if display_platforms|length == 1 else 's' }}</span></dd></div>
-        {% endif %}
-        {% if manifest.config and manifest.config.data and manifest.config.data.created %}
-          <div><dt>Created</dt><dd>{{ manifest.config.data.created|human_time }} <span class="muted small">· {{ manifest.config.data.created }}</span></dd></div>
-        {% endif %}
-        {% if manifest.digest %}
-          <div>
-            <dt>Digest</dt>
-            <dd class="digest-cell">
-              <code class="mono small">{{ manifest.digest }}</code>
-              {{ copy_button(manifest.digest, "Copy digest") }}
-            </dd>
+          <div class="fact">
+            <span class="fact-label">Manifest size</span>
+            <span class="fact-value">{{ manifest.size|human_size }} <span class="muted">· {{ display_platforms|length }} platform{{ '' if display_platforms|length == 1 else 's' }}</span></span>
           </div>
         {% endif %}
-      </dl>
+        {% if manifest.config and manifest.config.data and manifest.config.data.created %}
+          <div class="fact">
+            <span class="fact-label">Created</span>
+            <span class="fact-value">{{ manifest.config.data.created|human_time }}</span>
+          </div>
+        {% endif %}
+      </div>
     </header>
 
     {# -- Pull commands ----------------------------------------------- #}
     {% if manifest.pull_command or manifest.pull_command_digest %}
       <section class="info-section pull-section">
-        <h4 class="info-section-title">Pull</h4>
+        <h4 class="info-section-title">
+          Pull <span class="section-note muted small">docker · podman · containerd compatible</span>
+        </h4>
         <div class="pull-block">
           {% if manifest.pull_command %}
-            <div class="pull-cmd" data-pull-variant="tag">
-              <span class="pull-label muted small">tag</span>
-              <code>{{ manifest.pull_command }}</code>
-              {{ copy_button(manifest.pull_command, "Copy tag-pinned pull command") }}
+            <div class="ll-pull is-primary" data-pull-variant="tag">
+              <span class="pull-label">tag</span>
+              <code class="pull-code">{{ manifest.pull_command }}</code>
+              {{ copy_solid_btn(manifest.pull_command, "Copy tag-pinned pull command") }}
             </div>
           {% endif %}
           {% if manifest.pull_command_digest %}
-            <div class="pull-cmd" data-pull-variant="digest">
-              <span class="pull-label muted small">digest</span>
-              <code>{{ manifest.pull_command_digest }}</code>
-              {{ copy_button(manifest.pull_command_digest, "Copy digest-pinned pull command (immutable)") }}
+            <div class="ll-pull" data-pull-variant="digest">
+              <span class="pull-label">digest</span>
+              <code class="pull-code">{{ manifest.pull_command_digest }}</code>
+              {{ copy_icon_btn(manifest.pull_command_digest, "Copy digest-pinned pull command (immutable)") }}
             </div>
           {% endif %}
+        </div>
+      </section>
+    {% endif %}
+
+    {# -- Digest (intentionally quiet - the tag is the hero) ----------- #}
+    {% if manifest.digest %}
+      <section class="info-section digest-section">
+        <h4 class="info-section-title">Digest</h4>
+        <div class="digest-row">
+          <code class="digest-value mono small">{{ manifest.digest }}</code>
+          {{ copy_icon_btn(manifest.digest, "Copy digest") }}
         </div>
       </section>
     {% endif %}
@@ -107,19 +181,34 @@
         <p class="muted small platform-help">
           This is a multi-arch index. Pick a platform to inspect its child manifest.
         </p>
-        <div class="platform-pills" role="list">
+        <div class="platform-grid" role="list">
           {% for p in display_platforms %}
             {# Plain anchor - full page navigation. htmx in-place swap was
                flaky on browser back/forward when combined with the OOB
                auto-select swap; a real reload guarantees correct state. #}
             <a
               role="listitem"
-              class="platform-pill"
+              class="ll-card platform-card"
               href="/repositories/{{ repository }}/manifests/{{ reference }}?platform={{ p.digest }}"
               title="{{ p.digest }}"
             >
-              <span class="platform-pill-arch">{{ p.architecture }}{% if p.variant %}/{{ p.variant }}{% endif %}</span>
-              <span class="platform-pill-os muted small">{{ p.os }}</span>
+              <span class="platform-card-icon{% if loop.index0 % 2 %} platform-card-icon--cyan{% endif %}" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+                     stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                     stroke-linejoin="round">
+                  <rect x="6" y="6" width="12" height="12" rx="2"/>
+                  <path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/>
+                </svg>
+              </span>
+              <span class="platform-card-body">
+                <span class="platform-card-arch">{{ p.architecture }}{% if p.variant %}/{{ p.variant }}{% endif %} <span class="muted">/ {{ p.os }}</span></span>
+                <code class="platform-card-sub">{{ p.digest[:19] }}…{% if p.size %} · {{ p.size|human_size }}{% endif %}</code>
+              </span>
+              <svg class="platform-card-chev" viewBox="0 0 24 24" width="16" height="16"
+                   fill="none" stroke="currentColor" stroke-width="1.6"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 6l6 6-6 6"/>
+              </svg>
             </a>
           {% endfor %}
         </div>
@@ -207,47 +296,7 @@
             <h4 class="info-section-title">
               Annotations <span class="small">({{ annotations_rows|length }})</span>
             </h4>
-            {% if annotations_rows %}
-              {% if annotations_fallback_source %}
-                <p class="muted small annotations-help">
-                  The index itself carries no annotations - showing the
-                  <code>{{ annotations_fallback_source }}</code> child manifest's metadata.
-                </p>
-              {% else %}
-                <p class="muted small annotations-help">
-                  Combined manifest annotations and image-config labels.
-                  Recognized OCI keys are surfaced with their friendly name.
-                </p>
-              {% endif %}
-              <table class="annotations-table">
-                <tbody>
-                  {% for row in annotations_rows %}
-                    <tr class="annotation-row">
-                      <th scope="row"
-                          {% if row.description %}title="{{ row.description }}"{% endif %}
-                      >
-                        {% if row.is_known %}
-                          <span class="annotation-label">{{ row.label }}</span>
-                          <code class="annotation-key muted small">{{ row.key }}</code>
-                        {% else %}
-                          <code class="annotation-key">{{ row.key }}</code>
-                        {% endif %}
-                      </th>
-                      <td>
-                        {% if row.is_url %}
-                          <a href="{{ row.value }}" target="_blank" rel="noopener noreferrer"
-                             class="annotation-link">{{ row.value }}</a>
-                        {% else %}
-                          <code class="annotation-value">{{ row.value }}</code>
-                        {% endif %}
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            {% else %}
-              <p class="muted">No annotations or labels on this manifest.</p>
-            {% endif %}
+            {{ annotations_card(annotations_rows, annotations_fallback_source) }}
           </section>
 
           {% if referrers %}
@@ -350,53 +399,12 @@
 
     {% else %}
 
-      {# Index manifest: no Layers / Configuration sections - only annotations
-         (renders below). Tabs would just have an empty Layers panel. #}
+      {# Index manifest: no Layers / Configuration sections - only annotations. #}
       <section class="info-section annotations-section" aria-label="Annotations">
         <h4 class="info-section-title">
           Annotations <span class="small">({{ annotations_rows|length }})</span>
         </h4>
-        {% if annotations_rows %}
-          {% if annotations_fallback_source %}
-            <p class="muted small annotations-help">
-              The index itself carries no annotations - showing the
-              <code>{{ annotations_fallback_source }}</code> child manifest's metadata.
-            </p>
-          {% else %}
-            <p class="muted small annotations-help">
-              Combined manifest annotations and image-config labels.
-              Recognized OCI keys are surfaced with their friendly name.
-            </p>
-          {% endif %}
-          <table class="annotations-table">
-            <tbody>
-              {% for row in annotations_rows %}
-                <tr class="annotation-row">
-                  <th scope="row"
-                      {% if row.description %}title="{{ row.description }}"{% endif %}
-                  >
-                    {% if row.is_known %}
-                      <span class="annotation-label">{{ row.label }}</span>
-                      <code class="annotation-key muted small">{{ row.key }}</code>
-                    {% else %}
-                      <code class="annotation-key">{{ row.key }}</code>
-                    {% endif %}
-                  </th>
-                  <td>
-                    {% if row.is_url %}
-                      <a href="{{ row.value }}" target="_blank" rel="noopener noreferrer"
-                         class="annotation-link">{{ row.value }}</a>
-                    {% else %}
-                      <code class="annotation-value">{{ row.value }}</code>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <p class="muted">No annotations or labels on this manifest.</p>
-        {% endif %}
+        {{ annotations_card(annotations_rows, annotations_fallback_source) }}
       </section>
 
     {% endif %}
@@ -404,8 +412,8 @@
     {# -- Delete-confirm modal ----------------------------------------- #}
     {# The modal lives inside the swappable manifest panel (so its
        repository/reference fields stay consistent with the displayed
-       manifest), but it's opened by the icon button in the column
-       header. ``data-modal-open`` finds it by id regardless of nesting. #}
+       manifest), opened by the trash icon next to the title.
+       ``data-modal-open`` finds it by id regardless of nesting. #}
     {% if is_admin %}
       {% set delete_target = repository ~ ('@' if reference.startswith('sha256:') else ':') ~ reference %}
       <dialog id="delete-modal" class="modal" aria-labelledby="delete-modal-title">

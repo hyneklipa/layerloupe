@@ -289,56 +289,54 @@ def test_css_includes_modal_styles() -> None:
     assert ".modal-confirm-prompt" in css
 
 
-# -- Trash icon trigger in the Manifest column header -------------------
+# -- Trash icon trigger next to the manifest title ----------------------
 
 
-def test_trash_icon_lives_in_manifest_column_header(
+def test_trash_icon_lives_next_to_title(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
     allow_delete: None,
 ) -> None:
-    """The trigger is an icon button in the col-head, not a big red button
-    at the bottom of the panel - so it doesn't visually invite clicks.
-    The button must reach the modal (data-modal-open) and carry an
-    accessible label since it has no visible text."""
+    """The trigger is a subtle icon button beside the <repo>:<tag> title
+    (not a big red button) so it doesn't visually invite clicks. It must
+    reach the modal (data-modal-open) and carry an accessible label since
+    it has no visible text."""
     with TestClient(app) as client:
         _login_admin(client)
         body = client.get("/repositories/foo/manifests/latest").text
-    assert 'id="manifest-actions"' in body
     assert 'class="icon-btn icon-btn--danger"' in body
     assert 'data-modal-open="delete-modal"' in body
     assert 'aria-label="Delete this manifest"' in body
-    # The old prominent footer button must be gone.
+    # The icon sits inside the title row; no footer button.
+    assert "manifest-title-row" in body
     assert "manifest-info-foot" not in body
 
 
-def test_manifest_actions_slot_present_even_when_empty(
+def test_no_trash_icon_when_no_manifest_selected(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
     disallow_delete: None,
 ) -> None:
-    """The slot must exist as an OOB target even when delete is disabled
-    (or no manifest is selected) - otherwise an htmx-loaded manifest with
-    delete enabled has nowhere to inject the icon."""
+    """With no tag selected (the placeholder state) there's nothing to
+    delete, so the trash icon must not render. The old OOB slot is gone -
+    the icon now travels inline with the swapped panel."""
     with TestClient(app) as client:
         body = client.get("/").text
-    assert 'id="manifest-actions"' in body
-    # No icon content yet - the slot is empty.
     assert "icon-btn--danger" not in body
+    assert 'id="manifest-actions"' not in body
 
 
-def test_manifest_fragment_oob_swaps_trash_icon(
+def test_manifest_fragment_renders_trash_icon_inline(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
     allow_delete: None,
 ) -> None:
-    """When htmx loads a manifest via /partials/.../manifests/<tag>, the
-    response must include an OOB swap that fills #manifest-actions in the
-    column header. Without this, clicking a tag from a no-manifest state
-    would never show the trash icon."""
+    """When htmx loads a manifest fragment, the trash icon is part of the
+    swapped panel (beside the title) - no out-of-band swap needed."""
     with TestClient(app) as client:
         _login_admin(client)
         body = client.get("/partials/repositories/foo/manifests/latest").text
-    assert 'id="manifest-actions"' in body
-    assert 'hx-swap-oob="innerHTML"' in body
     assert "icon-btn--danger" in body
+    assert 'data-modal-open="delete-modal"' in body
+    # No OOB swap for the icon anymore.
+    assert 'id="manifest-actions"' not in body
 
 
 # -- Type-to-confirm gate -----------------------------------------------
@@ -378,49 +376,35 @@ def test_modal_confirm_string_uses_at_for_digest_reference(
     assert 'data-delete-confirm-expected="foo@sha256:' in body
 
 
-def test_tags_fragment_emits_single_top_level_manifest_actions_oob(
+def test_tags_fragment_includes_inline_trash_icon(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
     allow_delete: None,
 ) -> None:
-    """Regression: htmx 2.x's nested-OOB handling clones the outer wrapper's
-    full subtree (with the inner OOB element still attached) into the live
-    DOM before processing the inner OOB, leaving a duplicate icon. To avoid
-    that, the trash icon must be OOB-swapped at the TOP level of tag_list
-    - sibling of #info-column-body, not nested inside it."""
+    """Picking a repo auto-selects its first tag and OOB-swaps that manifest
+    into #info-column-body. The trash icon is inline in that swapped panel -
+    there's no separate #manifest-actions OOB anymore."""
     with TestClient(app) as client:
         _login_admin(client)
         body = client.get("/partials/repositories/foo/tags").text
-    # Exactly one #manifest-actions appears in the response (the top-level
-    # OOB swap), and it sits OUTSIDE the #info-column-body OOB wrapper.
-    assert body.count('id="manifest-actions"') == 1
-    info_open = body.find('id="info-column-body"')
-    info_close = body.find("</div>", info_open)
-    actions_pos = body.find('id="manifest-actions"')
-    # The actions div must come AFTER the info-column-body's closing div,
-    # not nested inside it.
-    assert actions_pos > info_close
+    # The auto-selected manifest panel carries the inline delete icon.
+    assert "icon-btn--danger" in body
+    # The old top-level #manifest-actions OOB slot is gone.
+    assert 'id="manifest-actions"' not in body
 
 
-def test_manifest_info_skips_oob_block_when_swap_actions_false(
+def test_tags_fragment_oob_swaps_info_count_and_filter(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
     allow_delete: None,
 ) -> None:
-    """When manifest_info.html is included from tag_list.html (which wraps
-    it in an OOB div), it must be rendered with swap_actions=False so it
-    doesn't emit its own OOB block - that nested OOB caused the duplicate
-    icon bug. The manifest_fragment route still uses swap_actions=True,
-    where it's the top-level response and the OOB is safe."""
+    """The repo-selection tag fragment OOB-swaps three slots: the manifest
+    panel (#info-column-body), the tag count, and the tag filter input."""
     with TestClient(app) as client:
         _login_admin(client)
-        # tags_fragment includes manifest_info.html with swap_actions=False;
-        # the top-level OOB is emitted by tag_list.html itself.
-        tags_body = client.get("/partials/repositories/foo/tags").text
-        # manifest_fragment renders manifest_info.html as the root - top-level
-        # OOB block fires here, populating the col-head icon directly.
-        manifest_body = client.get("/partials/repositories/foo/manifests/latest").text
-    assert tags_body.count("hx-swap-oob") >= 3  # info-column-body + count + filter + actions
-    # In the manifest fragment, exactly one #manifest-actions OOB at top level.
-    assert manifest_body.count('id="manifest-actions"') == 1
+        body = client.get("/partials/repositories/foo/tags").text
+    assert body.count("hx-swap-oob") >= 3  # info-column-body + count + filter
+    assert 'id="info-column-body"' in body
+    assert 'id="tag-count"' in body
+    assert 'id="tag-filter-slot"' in body
 
 
 def test_layerloupe_js_reinits_document_after_htmx_swap() -> None:

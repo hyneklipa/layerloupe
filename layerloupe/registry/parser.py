@@ -62,6 +62,7 @@ class UnifiedPlatform(BaseModel):
     os: str
     variant: str | None = None
     digest: str | None = None  # set when this platform points at a child manifest
+    size: int = 0  # child-manifest descriptor size (index entries); 0 for images
 
 
 class UnifiedLayer(BaseModel):
@@ -374,6 +375,7 @@ def _platforms_from_index(entries: list) -> list[UnifiedPlatform]:  # type: igno
                     architecture=_UNKNOWN_PLATFORM_ARCH,
                     os=_UNKNOWN_PLATFORM_OS,
                     digest=entry.digest,
+                    size=entry.size,
                 )
             )
         else:
@@ -383,6 +385,7 @@ def _platforms_from_index(entries: list) -> list[UnifiedPlatform]:  # type: igno
                     os=plat.os,
                     variant=plat.variant,
                     digest=entry.digest,
+                    size=entry.size,
                 )
             )
     return platforms

@@ -93,8 +93,8 @@ def test_single_arch_image_hides_platform_pills(
         body = client.get("/partials/repositories/foo/manifests/latest").text
 
     # Single-arch images don't get the multi-arch picker section.
-    assert "platform-pills" not in body
-    assert "data-platform-pill" not in body
+    assert "platform-grid" not in body
+    assert "platform-card" not in body
     # The single-platform inline label should appear instead.
     assert "Platform:" in body
     assert "amd64" in body
@@ -149,7 +149,7 @@ def test_single_arch_image_shows_layers_with_sizes(
 # -- Multi-arch index: pills visible, no per-image sections --------------
 
 
-def test_multi_arch_index_shows_platform_pills(
+def test_multi_arch_index_shows_platform_cards(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
     use_handler["handler"] = _make_handler("manifest_index", MediaType.OCI_IMAGE_INDEX.value)
@@ -157,12 +157,12 @@ def test_multi_arch_index_shows_platform_pills(
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text
 
-    # Pill list rendered with both architectures from the fixture.
-    assert "platform-pills" in body
-    assert "platform-pill" in body
+    # Card grid rendered with both architectures from the fixture.
+    assert "platform-grid" in body
+    assert "platform-card" in body
     assert "amd64" in body
     assert "arm64" in body
-    # Each pill carries the child-manifest digest (sha256:...).
+    # Each card carries the child-manifest digest (sha256:...).
     assert "sha256:e692418e" in body  # first 8 hex chars of fixture digest
 
 
@@ -181,10 +181,11 @@ def test_multi_arch_index_hides_image_sections(
     assert "2 platforms" in body
 
 
-def test_multi_arch_index_pills_use_plain_anchor_navigation(
+def test_multi_arch_index_cards_use_plain_anchor_navigation(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """Pill is a plain ``<a href>`` so browser back/forward stay reliable.
+    """Each platform card is a plain ``<a href>`` so browser back/forward
+    stay reliable.
 
     htmx in-place swap was tried earlier but proved flaky on history
     restore when combined with the OOB auto-select swap.
@@ -194,13 +195,13 @@ def test_multi_arch_index_pills_use_plain_anchor_navigation(
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text
 
-    assert "platform-pill" in body
+    assert "platform-card" in body
     assert "?platform=sha256:" in body
     assert 'href="/repositories/foo/manifests/latest?platform=sha256:' in body
-    # No htmx plumbing on pills - full reload is the design.
-    pill_section = body.split('class="platform-pills"')[1].split("</div>")[0]
-    assert "hx-get" not in pill_section
-    assert "hx-push-url" not in pill_section
+    # No htmx plumbing on cards - full reload is the design.
+    card_section = body.split('class="platform-grid"')[1].split("</div>")[0]
+    assert "hx-get" not in card_section
+    assert "hx-push-url" not in card_section
 
 
 # -- Header always present, regardless of variant -------------------------
@@ -214,14 +215,35 @@ def test_header_includes_digest_and_pull_command(
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text
 
-    # Digest visible in header.
-    assert "manifest-info-head" in body
+    # Title block present.
+    assert "manifest-head" in body
     # Pull command rendered.
     assert "docker pull" in body
     assert "foo:latest" in body
     # Copy buttons present (their JS click-handler is wired separately).
     assert "copy-btn" in body
     assert "data-copy=" in body
+
+
+def test_title_block_pull_and_digest_use_redesigned_markup(
+    use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
+) -> None:
+    """Regression for the F3 detail redesign: the title block (repo:tag hero +
+    fact row), the .ll-pull rows (primary tag / secondary digest), and the
+    standalone digest section all render."""
+    use_handler["handler"] = _make_handler("manifest_oci", MediaType.OCI_IMAGE_MANIFEST.value)
+
+    with TestClient(app) as client:
+        body = client.get("/partials/repositories/foo/manifests/latest").text
+
+    # Title block + fact row.
+    assert "manifest-title" in body
+    assert "manifest-facts" in body
+    assert "fact-label" in body
+    # Pull rows use the redesigned .ll-pull (primary tag variant present).
+    assert "ll-pull is-primary" in body
+    # Digest gets its own quiet section.
+    assert "digest-row" in body
 
 
 def test_header_humanizes_created_when_image_config_present(
@@ -267,14 +289,14 @@ def test_layerloupe_js_includes_widget_bindings() -> None:
     assert "htmx:afterSwap" in js  # re-binds widgets after fragment swap
 
 
-def test_platform_pill_anchor_href_includes_platform_query(
+def test_platform_card_anchor_href_includes_platform_query(
     use_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """Pill href carries ``?platform=<digest>`` so refresh / share works."""
+    """Card href carries ``?platform=<digest>`` so refresh / share works."""
     use_handler["handler"] = _make_handler("manifest_index", MediaType.OCI_IMAGE_INDEX.value)
 
     with TestClient(app) as client:
         body = client.get("/partials/repositories/foo/manifests/latest").text
 
-    assert "platform-pill" in body
+    assert "platform-card" in body
     assert "?platform=sha256:" in body
