@@ -18,6 +18,7 @@ helpers so a click and a reload land on the same data.
 from __future__ import annotations
 
 import platform as _platform_mod
+import re
 from pathlib import Path
 from typing import Any
 
@@ -281,6 +282,25 @@ async def _annotation_rows_with_fallback(
     return rows, f"{pick.architecture}{variant}/{pick.os}"
 
 
+def _avatar_initials(name: str | None) -> str | None:
+    """Derive up-to-two-letter avatar initials from a username / email.
+
+    Drops any ``@domain`` suffix, splits on non-alphanumerics, and takes the
+    first letter of the first two parts (``hana.jelinkova`` → ``HJ``); a single
+    token falls back to its first two characters (``admin`` → ``AD``). Returns
+    ``None`` when there's no usable name (anonymous - the UI shows a glyph).
+    """
+    if not name:
+        return None
+    local = name.split("@", 1)[0]
+    parts = [p for p in re.split(r"[^A-Za-z0-9]+", local) if p]
+    if not parts:
+        return None
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return (parts[0][0] + parts[1][0]).upper()
+
+
 def _shell_context(request: Request, settings: object) -> dict[str, Any]:
     """Topbar / footer context shared by every page render.
 
@@ -293,6 +313,11 @@ def _shell_context(request: Request, settings: object) -> dict[str, Any]:
     """
     s = settings  # narrow typing - avoid importing Settings just for this
     identity = get_identity(request)
+    registry_username = (
+        request.session.get("registry_username") if hasattr(request, "session") else None
+    )
+    # Avatar initials: prefer the UI identity, else the registry username.
+    display_name = identity.username if not identity.is_anonymous else registry_username
     return {
         "title": getattr(s, "title", "LayerLoupe"),
         "version": __version__,
@@ -303,10 +328,9 @@ def _shell_context(request: Request, settings: object) -> dict[str, Any]:
         "auth_mode": getattr(s, "auth_mode", "public"),
         "identity": identity,
         "is_admin": identity.is_admin,
-        "session_username": request.session.get("registry_username")
-        if hasattr(request, "session")
-        else None,
+        "session_username": registry_username,
         "ui_username": identity.username if not identity.is_anonymous else None,
+        "avatar_initials": _avatar_initials(display_name),
     }
 
 

@@ -49,9 +49,9 @@ def test_index_includes_brand_and_topbar() -> None:
         body = client.get("/").text
     assert 'class="topbar"' in body
     # The footer was removed in the redesign - the version label and theme
-    # toggle moved into the top bar.
+    # toggle moved into the top bar's account menu.
     assert 'class="bottombar"' not in body
-    assert "topbar-version" in body
+    assert "user-menu-version" in body
     assert 'id="theme-toggle"' in body
     # Three-column placeholder visible on the shell.
     assert ">Repositories<" in body

@@ -351,34 +351,146 @@ body:not(.app-shell) .app-main {
   outline-offset: 1px;
 }
 
-.user-pill {
+/* -- Top-bar search stub ---------------------------------------------- */
+.topsearch {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 300px;
+  max-width: 34vw;
+  padding: 8px 12px;
+  background: var(--ll-bg);
+  border: 1px solid var(--ll-line);
+  border-radius: 999px;
+  color: var(--ll-ink-3);
+  font: inherit;
+  font-size: 13px;
+  cursor: text;
+  transition: border-color var(--transition);
+}
+.topsearch:hover { border-color: var(--ll-ink-4); }
+.topsearch:focus-visible { border-color: var(--ll-blue); }
+.topsearch svg { flex: none; }
+.topsearch-text {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kbd-chip {
   display: inline-flex;
   align-items: center;
-  gap: .35rem;
-  padding: .25rem .55rem;
+  justify-content: center;
+  min-width: 18px;
+  height: 19px;
+  padding: 0 5px;
+  font: 500 11px/1 var(--font-mono);
+  color: var(--ll-ink-2);
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-line-2);
+  border-radius: 5px;
+}
+@media (max-width: 720px) {
+  .topsearch-text, .kbd-chip { display: none; }
+  .topsearch { width: auto; }
+}
+
+/* Help glyph button (a "?" rather than an icon). */
+.bar-icon-btn--glyph { font-weight: 600; font-size: 15px; line-height: 1; }
+
+/* -- Avatar + account menu -------------------------------------------- */
+.user-menu-wrap { position: relative; }
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
-  background: var(--ll-bg-2);
+  border: 0;
+  background: var(--ll-soft);
+  color: var(--ll-blue);
+  font: 600 13px/1 var(--font-sans);
+  cursor: pointer;
+  transition: box-shadow var(--transition);
+}
+.avatar:hover { box-shadow: 0 0 0 3px var(--ll-blue-12); }
+.avatar svg { display: block; }
+
+.user-menu {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  min-width: 240px;
+  padding: 6px;
+  background: var(--ll-surface);
   border: 1px solid var(--ll-line);
-  font-size: .85rem;
-  color: var(--ll-ink-3);
+  border-radius: 12px;
+  box-shadow: var(--ll-shadow-pop);
+  z-index: 60;
 }
-/* Subtle differentiation so the operator can tell the two pills apart
-   at a glance - UI identity uses the accent border, registry creds
-   keep the neutral border. The icons disambiguate from up close. */
-.user-pill--identity {
-  border-color: var(--ll-blue, var(--ll-line));
+.user-menu[hidden] { display: none; }
+.user-menu-head { padding: 6px 10px 8px; }
+.user-menu-row { display: flex; align-items: center; gap: 8px; }
+.user-menu-row + .user-menu-row { margin-top: 4px; }
+.user-menu-name {
+  font: 600 13px/1.2 var(--font-sans);
   color: var(--ll-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.user-pill--registry {
-  /* default styling - listed for symmetry / future tweaks. */
+.user-menu-sub { margin-left: auto; font: 400 11px/1.3 var(--font-mono); }
+.user-menu-sep { height: 1px; background: var(--ll-line); margin: 6px 4px; }
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font: 500 13px/1.2 var(--font-sans);
+  color: var(--ll-ink);
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
 }
-.user-pill-name {
-  font-weight: 500;
-}
-.user-pill svg {
+.user-menu-item:hover { background: var(--ll-bg-2); }
+.user-menu-icon { flex: none; color: var(--ll-ink-3); }
+.user-menu-item--danger { color: var(--ll-danger); }
+.user-menu-item--danger:hover { background: var(--ll-danger-bg); }
+.user-menu-item--danger .user-menu-icon { color: var(--ll-danger); }
+.user-menu-form { margin: 0; }
+.user-menu-hint { margin-left: auto; color: var(--ll-ink-3); font: 500 11px/1 var(--font-mono); }
+.user-menu-version { padding: 6px 10px 4px; font-size: 11px; }
+
+/* Dark-mode toggle pill - on/off mirrors the active theme purely via CSS. */
+.toggle-pill {
+  position: relative;
   flex: none;
-  opacity: .75;
+  width: 34px;
+  height: 20px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--ll-line-2);
+  transition: background var(--transition);
 }
+.toggle-pill::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #fff;
+  transition: transform var(--transition);
+}
+[data-theme="dark"] #theme-toggle .toggle-pill { background: var(--ll-blue); }
+[data-theme="dark"] #theme-toggle .toggle-pill::after { transform: translateX(14px); }
 
 /* Role badge sits inside the identity pill. ``admin`` carries the
    destructive-action colour so it visually telegraphs "this user can
@@ -419,17 +531,6 @@ body:not(.app-shell) .app-main {
 }
 .bar-icon-btn:hover { color: var(--ll-ink); background: var(--ll-bg-2); border-color: var(--ll-line); }
 .bar-icon-btn:focus-visible { color: var(--ll-ink); }
-
-/* Show the icon for the action the click *will perform*: in light mode
-   we show the moon (click → switch to dark), in dark mode the sun
-   (click → switch to light). The previous mask-based approach went
-   invisible in light mode because the SVG mask had two ``fill``
-   attributes; using inline ``<svg fill="currentColor">`` avoids the bug
-   entirely. */
-.theme-icon-sun { display: none; }
-.theme-icon-moon { display: inline-block; }
-[data-theme="dark"] .theme-icon-sun { display: inline-block; }
-[data-theme="dark"] .theme-icon-moon { display: none; }
 
 /* -- Three-pane browser layout ----------------------------------------
  * Full-height flex row: fixed Repositories / Tags rails, the manifest pane

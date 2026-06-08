@@ -54,86 +54,130 @@
       </div>
       <nav class="topbar-actions">
         {% block topbar_actions %}
-          {# Two independent sign-in surfaces - UI identity and per-user
-             registry credentials - each may be present or absent on a
-             given request. We show whichever pills apply; the single
-             Sign-out form below clears both at once. #}
+          {# Two orthogonal sessions - UI identity and per-user registry
+             credentials - each may be present or absent. The account menu
+             below surfaces whichever applies, plus a single Sign-out that
+             clears both. #}
           {% set has_ui_identity = identity and not identity.is_anonymous %}
           {% set has_registry_creds = session_username %}
           {% set login_available = (auth_mode and auth_mode != "public") or allow_registry_login %}
 
-          {% if has_ui_identity %}
-            <span class="user-pill user-pill--identity"
-                  title="Signed in to {{ title }} as {{ identity.username }}">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
-                   stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                   stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
-              </svg>
-              <span class="user-pill-name">{{ identity.username }}</span>
-              {% if identity.is_admin %}
-                <span class="role-badge role-badge--admin"
-                      title="Has the admin role - can delete tags">admin</span>
-              {% else %}
-                <span class="role-badge role-badge--viewer"
-                      title="Read-only - no delete capability">viewer</span>
+          {# Search box - visual stub for now: clicking it (or ⌘K) focuses the
+             current column's filter. A real command palette comes later. #}
+          <button type="button" class="topsearch" data-search-stub
+                  aria-label="Search - focuses the current filter">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                 stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+            </svg>
+            <span class="topsearch-text">Search repos, tags, digests…</span>
+            <span class="kbd-chip">⌘</span><span class="kbd-chip">K</span>
+          </button>
+
+          {# Help - opens the keyboard-shortcuts modal. #}
+          <button type="button" class="bar-icon-btn bar-icon-btn--glyph"
+                  data-modal-open="hotkey-modal"
+                  aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">?</button>
+
+          {# Account / settings menu. Always present (it hosts theme + shortcuts);
+             the auth row adapts to the session. The avatar shows initials when
+             we know who you are, else a neutral glyph. #}
+          <div class="user-menu-wrap">
+            <button type="button" class="avatar" data-user-menu-toggle
+                    aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+              {% if avatar_initials %}{{ avatar_initials }}{% else %}
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none"
+                     stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                     stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+                </svg>
               {% endif %}
-            </span>
-          {% endif %}
+            </button>
+            <div class="user-menu" data-user-menu hidden role="menu">
+              <div class="user-menu-head">
+                {% if has_ui_identity %}
+                  <div class="user-menu-row user-menu-row--identity">
+                    <span class="user-menu-name">{{ identity.username }}</span>
+                    {% if identity.is_admin %}
+                      <span class="role-badge role-badge--admin"
+                            title="Has the admin role - can delete tags">admin</span>
+                    {% else %}
+                      <span class="role-badge role-badge--viewer"
+                            title="Read-only - no delete capability">viewer</span>
+                    {% endif %}
+                  </div>
+                {% endif %}
+                {% if has_registry_creds %}
+                  <div class="user-menu-row user-menu-row--registry">
+                    <span class="user-menu-name">{{ session_username }}</span>
+                    <span class="user-menu-sub muted">registry</span>
+                  </div>
+                {% endif %}
+                {% if not has_ui_identity and not has_registry_creds %}
+                  <div class="user-menu-row user-menu-row--anon">
+                    <span class="user-menu-name">Guest</span>
+                  </div>
+                {% endif %}
+              </div>
 
-          {% if has_registry_creds %}
-            <span class="user-pill user-pill--registry"
-                  title="Per-user registry credentials: {{ session_username }}">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
-                   stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                   stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 8l-9-5-9 5 9 5 9-5z"/>
-                <path d="M3 16l9 5 9-5"/>
-                <path d="M3 12l9 5 9-5"/>
-              </svg>
-              <span class="user-pill-name">{{ session_username }}</span>
-            </span>
-          {% endif %}
+              <div class="user-menu-sep"></div>
 
-          {% if has_ui_identity or has_registry_creds %}
-            <form method="post" action="/web/logout" class="inline-form"
-                  title="Clears both UI identity and registry credentials">
-              <button type="submit" class="link-btn">Sign out</button>
-            </form>
-          {% elif login_available %}
-            <a class="link-btn" href="/login?next={{ request.url.path }}">Sign in</a>
-          {% endif %}
+              {# Dark-mode toggle. id reused by the theme JS; the pill's on/off
+                 state is driven purely by [data-theme] in CSS - no extra wiring. #}
+              <button type="button" class="user-menu-item" id="theme-toggle"
+                      aria-label="Toggle dark mode">
+                <svg class="user-menu-icon" viewBox="0 0 24 24" width="16" height="16"
+                     fill="currentColor" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+                <span>Dark mode</span>
+                <span class="toggle-pill" aria-hidden="true"></span>
+              </button>
+
+              <button type="button" class="user-menu-item" data-modal-open="hotkey-modal">
+                <svg class="user-menu-icon" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                     stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                     stroke-linejoin="round" aria-hidden="true">
+                  <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
+                  <path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M6.5 14h11"/>
+                </svg>
+                <span>Keyboard shortcuts</span>
+                <span class="user-menu-hint">?</span>
+              </button>
+
+              {% if has_ui_identity or has_registry_creds %}
+                <div class="user-menu-sep"></div>
+                <form method="post" action="/web/logout" class="user-menu-form"
+                      title="Clears both UI identity and registry credentials">
+                  <button type="submit" class="user-menu-item user-menu-item--danger">
+                    <svg class="user-menu-icon" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                         stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                         stroke-linejoin="round" aria-hidden="true">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                      <path d="M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                    <span>Sign out</span>
+                  </button>
+                </form>
+              {% elif login_available %}
+                <div class="user-menu-sep"></div>
+                <a class="user-menu-item" href="/login?next={{ request.url.path }}">
+                  <svg class="user-menu-icon" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                       stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                       stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                    <path d="M10 17l5-5-5-5M15 12H3"/>
+                  </svg>
+                  <span>Sign in</span>
+                </a>
+              {% endif %}
+
+              <div class="user-menu-sep"></div>
+              <div class="user-menu-version muted">LayerLoupe v{{ version }}</div>
+            </div>
+          </div>
         {% endblock %}
-        {# Keyboard-shortcuts + theme toggle moved here from the (now removed)
-           footer. A later phase folds theme + sign-out into an avatar menu. #}
-        <button type="button" class="bar-icon-btn" data-modal-open="hotkey-modal"
-                aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
-               stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-               stroke-linejoin="round" aria-hidden="true">
-            <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
-            <path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M6.5 14h11"/>
-          </svg>
-        </button>
-        <button type="button" class="bar-icon-btn" id="theme-toggle"
-                aria-label="Toggle theme" title="Toggle theme">
-          {# Two SVGs - sun is shown when current theme is dark (click → light),
-             moon is shown when current theme is light (click → dark). The CSS
-             toggles visibility based on ``[data-theme]`` so we never hit the
-             ``currentColor`` mask quirk that left the icon invisible before. #}
-          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="16" height="16"
-               fill="none" stroke="currentColor" stroke-width="1.6"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-          </svg>
-          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="16" height="16"
-               fill="currentColor" aria-hidden="true">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-        </button>
-        <span class="topbar-version muted" title="LayerLoupe version">v{{ version }}</span>
       </nav>
     </div>
   </header>
@@ -147,10 +191,12 @@
     <h3 id="hotkey-modal-title">Keyboard shortcuts</h3>
     <table class="hotkey-table">
       <tbody>
+        <tr><th><kbd>⌘</kbd> <kbd>K</kbd></th><td>Search (focuses the current filter)</td></tr>
         <tr><th><kbd>/</kbd></th><td>Focus the filter for the current column</td></tr>
         <tr><th><kbd>↑</kbd> / <kbd>k</kbd></th><td>Move up in the current list</td></tr>
         <tr><th><kbd>↓</kbd> / <kbd>j</kbd></th><td>Move down in the current list</td></tr>
         <tr><th><kbd>Enter</kbd></th><td>Open the focused repository / tag</td></tr>
+        <tr><th><kbd>t</kbd></th><td>Toggle light / dark theme</td></tr>
         <tr><th><kbd>Esc</kbd></th><td>Close a modal or unfocus the filter</td></tr>
         <tr><th><kbd>?</kbd></th><td>Show this cheat sheet</td></tr>
       </tbody>

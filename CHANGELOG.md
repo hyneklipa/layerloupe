@@ -20,6 +20,16 @@
   pills with a clear (×) button. Repository / tag rows restyled (mono, soft
   selected fill, accent rail). Narrow screens stack the columns and restore
   page scroll. No data-model or endpoint changes.
+- UI redesign: account menu + top-bar controls. The two user pills (UI
+  identity / registry credentials) collapsed into an **avatar dropdown** that
+  shows the username(s), role badge, a **Dark mode** toggle, **Keyboard
+  shortcuts**, and **Sign out / Sign in** - and is always present (it hosts
+  theme + shortcuts even for anonymous browsing). The standalone theme toggle
+  moved into this menu. Added a search-box stub (clicking it or **⌘K** focuses
+  the current filter; full command palette is future work) and a **`t`**
+  shortcut to toggle the theme. Avatar shows initials derived from the
+  username, or a neutral glyph when anonymous. No endpoint changes (sign-in /
+  sign-out targets unchanged).
 
 ## 0.2.1 - 2026-05-18
 

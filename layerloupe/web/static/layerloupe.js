@@ -233,6 +233,64 @@
     }
   };
 
+  /* -- Account menu (avatar dropdown) -------------------------------- */
+  const closeUserMenu = (menu) => {
+    if (!menu) return;
+    menu.hidden = true;
+    menu
+      .closest(".user-menu-wrap")
+      ?.querySelector("[data-user-menu-toggle]")
+      ?.setAttribute("aria-expanded", "false");
+  };
+
+  const bindUserMenu = (scope) => {
+    const root = scope || document;
+    for (const toggle of root.querySelectorAll("[data-user-menu-toggle]")) {
+      if (toggle.dataset.bound) continue;
+      toggle.dataset.bound = "1";
+      const wrap = toggle.closest(".user-menu-wrap");
+      const menu = wrap?.querySelector("[data-user-menu]");
+      if (!menu) continue;
+      toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (menu.hidden) {
+          menu.hidden = false;
+          toggle.setAttribute("aria-expanded", "true");
+        } else {
+          closeUserMenu(menu);
+        }
+      });
+      /* Keep the menu open while toggling theme; close it for anything that
+         navigates or opens a dialog (shortcuts, sign in / out). */
+      menu.addEventListener("click", (e) => {
+        if (e.target.closest("#theme-toggle")) return;
+        if (e.target.closest("a, button")) closeUserMenu(menu);
+      });
+    }
+    /* One document-level handler closes any open menu on an outside click. */
+    if (!document.body.dataset.userMenuBound) {
+      document.body.dataset.userMenuBound = "1";
+      document.addEventListener("click", (e) => {
+        for (const menu of document.querySelectorAll("[data-user-menu]:not([hidden])")) {
+          const wrap = menu.closest(".user-menu-wrap");
+          if (wrap && !wrap.contains(e.target)) closeUserMenu(menu);
+        }
+      });
+    }
+  };
+
+  /* -- Search stub --------------------------------------------------- */
+  /* No command palette yet - clicking the top-bar search focuses the current
+     column filter (same effect as ⌘K / "/"). */
+  const bindSearchStub = (scope) => {
+    const root = scope || document;
+    for (const btn of root.querySelectorAll("[data-search-stub]")) {
+      if (btn.dataset.bound) continue;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => focusFilter());
+    }
+  };
+
   /* -- Keyboard shortcuts -------------------------------------------- */
   const isEditableTarget = (el) => {
     if (!el) return false;
@@ -300,6 +358,12 @@
           e.preventDefault();
           return;
         }
+        const openMenu = document.querySelector("[data-user-menu]:not([hidden])");
+        if (openMenu) {
+          closeUserMenu(openMenu);
+          e.preventDefault();
+          return;
+        }
         if (editable) {
           target.blur();
           e.preventDefault();
@@ -307,12 +371,25 @@
         return;
       }
 
-      /* Don't hijack typing - but only AFTER we've handled Esc above. */
+      /* ⌘K / Ctrl-K: search. No command palette yet, so focus the current
+         column filter - works even while typing in another field. */
+      if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+        if (focusFilter()) e.preventDefault();
+        return;
+      }
+
+      /* Don't hijack typing - but only AFTER we've handled Esc / ⌘K above. */
       if (editable) return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
 
       if (e.key === "/") {
         if (focusFilter()) e.preventDefault();
+        return;
+      }
+
+      if (e.key === "t" || e.key === "T") {
+        setTheme(currentTheme() === "dark" ? "light" : "dark");
+        e.preventDefault();
         return;
       }
 
@@ -367,6 +444,8 @@
     bindCopyButtons(scope);
     bindModal(scope);
     bindFilterClear(scope);
+    bindUserMenu(scope);
+    bindSearchStub(scope);
     bindKeyboardShortcuts();
     bindActiveRowTracking();
   };
