@@ -157,6 +157,13 @@ def test_focus_visible_outline_styled() -> None:
     assert ":focus-visible" in css
 
 
+def test_reduced_motion_respected() -> None:
+    """Users who ask the OS to reduce motion must get near-instant transitions."""
+    with TestClient(app) as client:
+        css = client.get("/static/layerloupe.css").text
+    assert "prefers-reduced-motion" in css
+
+
 def test_kbd_styling_present() -> None:
     with TestClient(app) as client:
         css = client.get("/static/layerloupe.css").text
