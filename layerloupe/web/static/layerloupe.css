@@ -750,6 +750,36 @@ body:not(.app-shell) .app-main {
   font: 400 12px/1 var(--font-sans);
 }
 
+/* Filter match highlight (server-rendered around the matched substring). */
+.ll-mark {
+  background: var(--ll-soft-2);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+/* Pagination footer ("Load more" / "All N shown") - last row of a list. */
+.ll-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px 22px;
+}
+.ll-more-btn {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ll-line-2);
+  background: var(--ll-surface);
+  color: var(--ll-ink);
+  font: 500 12px/1 var(--font-sans);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.ll-more-btn:hover { background: var(--ll-bg-2); border-color: var(--ll-ink-3); }
+.ll-more-btn.htmx-request { opacity: .6; cursor: progress; }
+.ll-more-meta { font: 400 11px/1 var(--font-mono); color: var(--ll-ink-3); }
+
 /* -- Manifest detail panel --------------------------------------------- */
 .manifest-info { padding: 26px 32px 44px; max-width: 980px; }
 .manifest-breadcrumb { margin: 0 0 18px; font-size: .875rem; }

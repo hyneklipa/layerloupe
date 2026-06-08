@@ -32,7 +32,7 @@
      refills, the filter input never appears unless the user reloads. We
      skip these on the tag-filter trigger path (clear_info_column is False
      there) to avoid replacing the input the user is typing into. #}
-  <span id="tag-count" class="muted small" hx-swap-oob="innerHTML">{{ tags|length }}</span>
+  <span id="tag-count" class="muted small" hx-swap-oob="innerHTML">{{ tag_total }}</span>
   <div id="tag-filter-slot" hx-swap-oob="innerHTML">
     {% with repo=repository %}
       {% include "partials/_tag_filter_input.html" %}
@@ -56,7 +56,7 @@
           hx-swap="innerHTML"
           hx-push-url="/repositories/{{ repository }}/manifests/{{ tag }}"
           title="{{ tag }}"
-        >{{ tag }}</a>
+        >{{ tag|highlight(tag_filter) }}</a>
       </li>
     {% else %}
       {% if tag_filter %}
@@ -70,5 +70,18 @@
         </li>
       {% endif %}
     {% endfor %}
+    {% if tag_more %}
+      <li class="ll-more">
+        <button type="button" class="ll-more-btn"
+                hx-get="/partials/repositories/{{ repository }}/tags?q={{ tag_filter|urlencode }}&selected_tag={{ selected_tag|default('', true)|urlencode }}&limit={{ tag_limit + page_size }}"
+                hx-target="#tag-list"
+                hx-swap="outerHTML">
+          Load more
+        </button>
+        <span class="ll-more-meta">{{ tags|length }} of {{ tag_total }}</span>
+      </li>
+    {% elif tag_total > page_size %}
+      <li class="ll-more"><span class="ll-more-meta">All {{ tag_total }} shown</span></li>
+    {% endif %}
   </ul>
 {% endif %}

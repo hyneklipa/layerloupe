@@ -15,7 +15,7 @@
     <article class="col col--repos" aria-labelledby="col-repos-h">
       <header class="col-head">
         <h2 id="col-repos-h" class="col-title">Repositories</h2>
-        <span class="muted small">{{ repos|length }}</span>
+        <span class="muted small">{{ repo_total }}</span>
       </header>
       <div class="filter">
         <svg class="filter-icon" viewBox="0 0 24 24" width="15" height="15" fill="none"
@@ -56,7 +56,7 @@
     <article class="col col--tags" aria-labelledby="col-tags-h">
       <header class="col-head">
         <h2 id="col-tags-h" class="col-title">Tags</h2>
-        <span id="tag-count" class="muted small">{% if selected_repo %}{{ tags|length }}{% endif %}</span>
+        <span id="tag-count" class="muted small">{% if selected_repo %}{{ tag_total }}{% endif %}</span>
       </header>
       <div id="tag-filter-slot">
         {% if selected_repo %}
