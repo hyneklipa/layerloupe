@@ -41,7 +41,7 @@ services:
   # -- LayerLoupe itself --------------------------------------------------
   #
   # Built from the local Dockerfile so the example tracks the current
-  # source - change to a pinned image (``image: layerloupe:0.2.1``)
+  # source - change to a pinned image (``image: layerloupe:0.3.0``)
   # once you're deploying for real.
   layerloupe:
     build:

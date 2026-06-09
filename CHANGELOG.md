@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-06-09
+
 ### Changed
 
 - UI redesign groundwork (design tokens + typography). The CSS design-token
