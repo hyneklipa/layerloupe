@@ -50,7 +50,7 @@
   icon (the type-to-confirm gate and GC warning are unchanged). Modals share a
   rounded 18px shell with the brand overlay/shadow.
 - UI: paginated repo / tag lists + filter match highlighting. The lists now
-  render 24 rows at a time with a **Load more** footer ("X of Y" / "All N
+  render 50 rows at a time with a **Load more** footer ("X of Y" / "All N
   shown"); the column scroll auto-loads the next page near the bottom. This is
   a pure in-memory slice of the already-cached registry listing - no extra
   registry round-trips. The active filter substring is **highlighted**
