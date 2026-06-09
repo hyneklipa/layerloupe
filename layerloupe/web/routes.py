@@ -68,7 +68,7 @@ templates.env.filters["human_time"] = human_time
 # Default UI page size for the repo / tag lists. The registry-side fetch is
 # already capped + cached (see RegistryClient); pagination here is a pure
 # in-memory slice of that list, so "Load more" costs no extra round-trips.
-PAGE = 24
+PAGE = 50
 
 
 def _highlight(text: str, query: str | None) -> Markup:

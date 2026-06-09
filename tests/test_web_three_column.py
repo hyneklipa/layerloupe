@@ -469,18 +469,18 @@ def _many_repos_handler(
 def test_repo_list_shows_first_page_with_load_more(
     web_handler: dict[str, Callable[[httpx.Request], httpx.Response]],
 ) -> None:
-    """With more than one page of repos, only the first 24 render and a
+    """With more than one page of repos, only the first PAGE (50) render and a
     "Load more" footer reports the running count."""
-    web_handler["handler"] = _many_repos_handler([f"repo-{i:02d}" for i in range(30)])
+    web_handler["handler"] = _many_repos_handler([f"repo-{i:02d}" for i in range(60)])
     with TestClient(app) as client:
         body = client.get("/").text
     assert "repo-00" in body
-    assert "repo-23" in body
-    assert "repo-24" not in body  # beyond the first page
+    assert "repo-49" in body
+    assert "repo-50" not in body  # beyond the first page
     assert "Load more" in body
-    assert "24 of 30" in body
+    assert "50 of 60" in body
     # The column header count reflects the full total, not the page size.
-    assert ">30<" in body
+    assert ">60<" in body
 
 
 def test_repo_list_load_more_reveals_the_rest(
@@ -488,11 +488,11 @@ def test_repo_list_load_more_reveals_the_rest(
 ) -> None:
     """Growing ``limit`` past the total shows everything and swaps the footer
     to the terminal "All N shown" state."""
-    web_handler["handler"] = _many_repos_handler([f"repo-{i:02d}" for i in range(30)])
+    web_handler["handler"] = _many_repos_handler([f"repo-{i:02d}" for i in range(60)])
     with TestClient(app) as client:
-        body = client.get("/partials/repositories?limit=48").text
-    assert "repo-29" in body
-    assert "All 30 shown" in body
+        body = client.get("/partials/repositories?limit=100").text
+    assert "repo-59" in body
+    assert "All 60 shown" in body
     assert "Load more" not in body
 
 
@@ -510,7 +510,7 @@ def test_tag_list_paginates_with_load_more(
 ) -> None:
     """Tags paginate the same way; a grown ``limit`` is a load-more (no
     auto-select / manifest fetch), so a manifest-less handler is fine."""
-    tags = [f"9.0.{i}" for i in range(30)]
+    tags = [f"9.0.{i}" for i in range(60)]
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/v2/_catalog":
@@ -522,8 +522,8 @@ def test_tag_list_paginates_with_load_more(
     web_handler["handler"] = handler
     with TestClient(app) as client:
         first = client.get("/partials/repositories/x/tags?q=9").text
-        full = client.get("/partials/repositories/x/tags?q=9&limit=48").text
+        full = client.get("/partials/repositories/x/tags?q=9&limit=100").text
     assert "Load more" in first
-    assert "24 of 30" in first
-    assert "All 30 shown" in full
+    assert "50 of 60" in first
+    assert "All 60 shown" in full
     assert "Load more" not in full
