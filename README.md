@@ -227,7 +227,7 @@ The full developer cycle:
 uv run ruff check .          # lint
 uv run ruff format .         # format (use --check in CI)
 uv run mypy layerloupe       # type-check (strict)
-uv run pytest                # ~600 tests, runs in ~10s
+uv run pytest                # ~840 tests, runs in ~15s
 uv run pre-commit install    # one-time, then hooks run on git commit
 ```
 
